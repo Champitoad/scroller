@@ -344,7 +344,7 @@ viewAddFlowerZone location context newAtomName flowers =
             mkFakeFormula whiskedWhites
 
           "yolky paste" ->
-            mkFakeFormula yolkyPaste
+            mkFakeFormula yolkPaste
 
           "thick paste" ->
             mkFakeFormula thickPaste

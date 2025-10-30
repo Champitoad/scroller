@@ -5297,13 +5297,13 @@ var $author$project$Model$Formula$Image = function (a) {
 };
 var $author$project$Model$Mascarpone$sugar = $author$project$Model$Formula$Atom(
 	$author$project$Model$Formula$Image(
-		{description: 'sugar', src: 'https://cdn-icons-png.flaticon.com/256/5900/5900648.png'}));
+		{description: 'sugar', src: 'public/assets/img/sugar.png'}));
 var $author$project$Model$Mascarpone$yolk = $author$project$Model$Formula$Atom(
 	$author$project$Model$Formula$Image(
-		{description: 'yolk', src: 'https://images.eatthismuch.com/img/105_erin_m_38ebb126-d5cc-406a-be89-860441cb8cb4.png'}));
-var $author$project$Model$Mascarpone$yolkyPaste = $author$project$Model$Formula$Atom(
+		{description: 'yolk', src: 'public/assets/img/yolk.png'}));
+var $author$project$Model$Mascarpone$yolkPaste = $author$project$Model$Formula$Atom(
 	$author$project$Model$Formula$Image(
-		{description: 'yolky paste', src: 'https://www.peteandgerrys.com/cdn/shop/articles/egg-yolk-sauce-web.jpg?v=1681295675'}));
+		{description: 'yolk paste', src: 'public/assets/img/yolk-paste.png'}));
 var $author$project$Model$Mascarpone$beat = A2(
 	$author$project$Model$Flower$entails,
 	_List_fromArray(
@@ -5313,14 +5313,14 @@ var $author$project$Model$Mascarpone$beat = A2(
 		]),
 	_List_fromArray(
 		[
-			$author$project$Model$Flower$f($author$project$Model$Mascarpone$yolkyPaste)
+			$author$project$Model$Flower$f($author$project$Model$Mascarpone$yolkPaste)
 		]));
 var $author$project$Model$Mascarpone$egg = $author$project$Model$Formula$Atom(
 	$author$project$Model$Formula$Image(
-		{description: 'egg', src: 'https://icons.iconarchive.com/icons/google/noto-emoji-food-drink/256/32390-egg-icon.png'}));
+		{description: 'egg', src: 'public/assets/img/egg.png'}));
 var $author$project$Model$Mascarpone$white = $author$project$Model$Formula$Atom(
 	$author$project$Model$Formula$Image(
-		{description: 'white', src: 'https://images.eatthismuch.com/img/104_ldementhon_c4a1f6c1-fd55-4433-a3d1-9f2f927c2426.png'}));
+		{description: 'white', src: 'public/assets/img/white.png'}));
 var $author$project$Model$Mascarpone$crack = A2(
 	$author$project$Model$Flower$entails,
 	_List_fromArray(
@@ -5334,13 +5334,13 @@ var $author$project$Model$Mascarpone$crack = A2(
 		]));
 var $author$project$Model$Mascarpone$mascarponeCream = $author$project$Model$Formula$Atom(
 	$author$project$Model$Formula$Image(
-		{description: 'mascarpone cream', src: 'https://anitalianinmykitchen.com/wp-content/uploads/2020/02/mascarpone-cream-sq-1-of-1.jpg'}));
+		{description: 'mascarpone cream', src: 'public/assets/img/mascarpone-cream.png'}));
 var $author$project$Model$Mascarpone$thickPaste = $author$project$Model$Formula$Atom(
 	$author$project$Model$Formula$Image(
-		{description: 'thick paste', src: 'https://stressbaking.com/wp-content/uploads/2015/07/mascarpone-whipped-cream-square.jpg'}));
+		{description: 'thick paste', src: 'public/assets/img/thick-paste.png'}));
 var $author$project$Model$Mascarpone$whiskedWhites = $author$project$Model$Formula$Atom(
 	$author$project$Model$Formula$Image(
-		{description: 'whisked whites', src: 'https://cdn.apartmenttherapy.info/image/upload/f_jpg,q_auto:eco,c_fill,g_auto,w_1500,ar_1:1/k%2Farchive%2F269de951aa95bc2b31c971ab0be50822e12d90b4'}));
+		{description: 'whisked whites', src: 'public/assets/img/whisked-whites.png'}));
 var $author$project$Model$Mascarpone$fold = A2(
 	$author$project$Model$Flower$entails,
 	_List_fromArray(
@@ -5758,12 +5758,12 @@ var $author$project$Model$Goal$manualExamples = function () {
 }();
 var $author$project$Model$Mascarpone$mascarpone = $author$project$Model$Formula$Atom(
 	$author$project$Model$Formula$Image(
-		{description: 'mascarpone', src: 'https://cdn.iconscout.com/icon/premium/png-256-thumb/mascarpone-8021586-6817680.png?f=webp'}));
+		{description: 'mascarpone', src: 'public/assets/img/mascarpone.png'}));
 var $author$project$Model$Mascarpone$stir = A2(
 	$author$project$Model$Flower$entails,
 	_List_fromArray(
 		[
-			$author$project$Model$Flower$f($author$project$Model$Mascarpone$yolkyPaste),
+			$author$project$Model$Flower$f($author$project$Model$Mascarpone$yolkPaste),
 			$author$project$Model$Flower$f($author$project$Model$Mascarpone$mascarpone)
 		]),
 	_List_fromArray(
@@ -7145,7 +7145,6 @@ var $elm$url$Url$Parser$top = $elm$url$Url$Parser$Parser(
 			[state]);
 	});
 var $author$project$View$Route$routeParser = function () {
-	var refl = $elm$url$Url$Parser$s('flowerprover');
 	var lix = A2(
 		$elm$url$Url$Parser$slash,
 		$elm$url$Url$Parser$s('Labo'),
@@ -7172,14 +7171,6 @@ var $author$project$View$Route$routeParser = function () {
 					$elm$url$Url$Parser$slash,
 					lix,
 					$elm$url$Url$Parser$s('index.html'))),
-				A2($elm$url$Url$Parser$map, $author$project$View$Route$App, refl),
-				A2(
-				$elm$url$Url$Parser$map,
-				$author$project$View$Route$App,
-				A2(
-					$elm$url$Url$Parser$slash,
-					refl,
-					$elm$url$Url$Parser$s('index.html'))),
 				A2(
 				$elm$url$Url$Parser$map,
 				$author$project$View$Route$Manual,
@@ -7190,13 +7181,6 @@ var $author$project$View$Route$routeParser = function () {
 				A2(
 					$elm$url$Url$Parser$slash,
 					lix,
-					$elm$url$Url$Parser$s('manual'))),
-				A2(
-				$elm$url$Url$Parser$map,
-				$author$project$View$Route$Manual,
-				A2(
-					$elm$url$Url$Parser$slash,
-					refl,
 					$elm$url$Url$Parser$s('manual')))
 			]));
 }();
@@ -7922,13 +7906,10 @@ var $author$project$Update$App$update = F2(
 					var url = urlRequest.a;
 					var newPath = function () {
 						var _v9 = url.host;
-						switch (_v9) {
-							case 'www.lix.polytechnique.fr':
-								return '/Labo/Pablo.DONATO/flowerprover' + url.path;
-							case 'pablogician.refl.fr':
-								return '/flowerprover' + url.path;
-							default:
-								return url.path;
+						if (_v9 === 'www.lix.polytechnique.fr') {
+							return '/Labo/Pablo.DONATO/flowerprover' + url.path;
+						} else {
+							return url.path;
 						}
 					}();
 					var newUrl = _Utils_update(
@@ -19041,7 +19022,7 @@ var $author$project$View$Goal$viewAddFlowerZone = F4(
 					case 'whisked whites':
 						return $author$project$Model$Flower$mkFakeFormula($author$project$Model$Mascarpone$whiskedWhites);
 					case 'yolky paste':
-						return $author$project$Model$Flower$mkFakeFormula($author$project$Model$Mascarpone$yolkyPaste);
+						return $author$project$Model$Flower$mkFakeFormula($author$project$Model$Mascarpone$yolkPaste);
 					case 'thick paste':
 						return $author$project$Model$Flower$mkFakeFormula($author$project$Model$Mascarpone$thickPaste);
 					case 'mascarpone cream':

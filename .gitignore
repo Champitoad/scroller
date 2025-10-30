@@ -4,3 +4,5 @@ elm-stuff
 repl-temp-*
 # output
 main.js
+zui-demo
+*.xopp
