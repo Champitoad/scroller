@@ -5353,21 +5353,25 @@ var $author$project$Model$Mascarpone$fold = A2(
 			$author$project$Model$Flower$f($author$project$Model$Mascarpone$mascarponeCream)
 		]));
 var $author$project$Model$Goal$App = {$: 'App'};
+var $author$project$Model$Goal$Justifying = {$: 'Justifying'};
+var $author$project$Model$Goal$ProofMode = function (a) {
+	return {$: 'ProofMode', a: a};
+};
 var $author$project$Model$Flower$Context = F2(
 	function (zipper, polarity) {
 		return {polarity: polarity, zipper: zipper};
 	});
-var $author$project$Model$Goal$Justifying = {$: 'Justifying'};
 var $author$project$Model$Flower$Pos = {$: 'Pos'};
-var $author$project$Model$Goal$ProofMode = function (a) {
-	return {$: 'ProofMode', a: a};
-};
+var $author$project$Model$Goal$initialNavigation = _List_fromArray(
+	[
+		A2($author$project$Model$Flower$Context, _List_Nil, $author$project$Model$Flower$Pos)
+	]);
 var $author$project$Model$Goal$fromBouquet = function (bouquet) {
 	return {
-		context: A2($author$project$Model$Flower$Context, _List_Nil, $author$project$Model$Flower$Pos),
 		focus: bouquet,
 		location: $author$project$Model$Goal$App,
-		mode: $author$project$Model$Goal$ProofMode($author$project$Model$Goal$Justifying)
+		mode: $author$project$Model$Goal$ProofMode($author$project$Model$Goal$Justifying),
+		navigation: $author$project$Model$Goal$initialNavigation
 	};
 };
 var $norpan$elm_html5_drag_drop$Html5$DragDrop$NotDragging = {$: 'NotDragging'};
@@ -5595,10 +5599,10 @@ var $author$project$Model$Goal$manualExamples = function () {
 		function (id, mode, bouquet) {
 			return $author$project$Model$Goal$mkSandbox(
 				{
-					context: A2($author$project$Model$Flower$Context, _List_Nil, $author$project$Model$Flower$Pos),
 					focus: bouquet,
 					location: $author$project$Model$Goal$Manual(id),
-					mode: mode
+					mode: mode,
+					navigation: $author$project$Model$Goal$initialNavigation
 				});
 		});
 	var examples = _List_fromArray(
@@ -14790,6 +14794,7 @@ var $author$project$View$Manual$resetButton = function (id) {
 				$author$project$Update$App$ResetSandbox(id))
 		});
 };
+var $mdgriffith$elm_ui$Element$fillPortion = $mdgriffith$elm_ui$Internal$Model$Fill;
 var $mdgriffith$elm_ui$Element$rgb = F3(
 	function (r, g, b) {
 		return A4($mdgriffith$elm_ui$Internal$Model$Rgba, r, g, b, 1);
@@ -14833,6 +14838,16 @@ var $author$project$Model$Flower$PetalData = F5(
 var $author$project$Model$Flower$PistilData = F3(
 	function (metadata, pistilMetadata, petals) {
 		return {metadata: metadata, petals: petals, pistilMetadata: pistilMetadata};
+	});
+var $author$project$Model$Goal$changeFocus = F2(
+	function (context, navigation) {
+		if (navigation.b) {
+			var rest = navigation.b;
+			return A2($elm$core$List$cons, context, rest);
+		} else {
+			return _List_fromArray(
+				[context]);
+		}
 	});
 var $author$project$Update$Rules$Crop = {$: 'Crop'};
 var $author$project$Model$Flower$Neg = {$: 'Neg'};
@@ -14927,6 +14942,14 @@ var $author$project$View$Goal$cropAction = F3(
 					$elm$html$Html$Attributes$title('Remove Flower')),
 				actionableStyle.active)) : actionableStyle.inactive;
 	});
+var $author$project$Model$Goal$current = function (navigation) {
+	if (navigation.b) {
+		var context = navigation.a;
+		return context;
+	} else {
+		return A2($author$project$Model$Flower$Context, _List_Nil, $author$project$Model$Flower$Pos);
+	}
+};
 var $norpan$elm_html5_drag_drop$Html5$DragDrop$DragEnd = {$: 'DragEnd'};
 var $norpan$elm_html5_drag_drop$Html5$DragDrop$DragStart = F2(
 	function (a, b) {
@@ -15151,19 +15174,21 @@ var $norpan$elm_html5_drag_drop$Html5$DragDrop$droppable = F2(
 					$norpan$elm_html5_drag_drop$Html5$DragDrop$positionDecoder))
 			]);
 	});
+var $author$project$View$Style$negativeColor = A3($mdgriffith$elm_ui$Element$rgb, 0.18, 0.2, 0.25);
+var $author$project$View$Style$positiveColor = A3($mdgriffith$elm_ui$Element$rgb, 1, 1, 1);
 var $author$project$View$Style$flowerBackgroundColor = function (polarity) {
 	if (polarity.$ === 'Pos') {
-		return A3($mdgriffith$elm_ui$Element$rgb, 1, 1, 1);
+		return $author$project$View$Style$positiveColor;
 	} else {
-		return A3($mdgriffith$elm_ui$Element$rgb, 0, 0, 0);
+		return $author$project$View$Style$negativeColor;
 	}
 };
 var $author$project$View$Style$flowerBorderWidth = 3;
 var $author$project$View$Style$flowerForegroundColor = function (polarity) {
 	if (polarity.$ === 'Pos') {
-		return A3($mdgriffith$elm_ui$Element$rgb, 0, 0, 0);
+		return $author$project$View$Style$negativeColor;
 	} else {
-		return A3($mdgriffith$elm_ui$Element$rgb, 1, 1, 1);
+		return $author$project$View$Style$positiveColor;
 	}
 };
 var $mdgriffith$elm_ui$Element$toRgb = function (_v0) {
@@ -19283,11 +19308,12 @@ var $author$project$View$Goal$viewStatement = function (formula) {
 var $author$project$View$Goal$viewFormula = F3(
 	function (dnd, _v0, data) {
 		var mode = _v0.mode;
-		var context = _v0.context;
+		var navigation = _v0.navigation;
 		var location = _v0.location;
 		var metadata = data.metadata;
 		var statement = data.statement;
 		var form = $author$project$Model$Flower$Formula(data);
+		var context = $author$project$Model$Goal$current(navigation);
 		var reorderDragAction = function () {
 			if (mode.$ === 'EditMode') {
 				return A5($author$project$View$Events$dragAction, $author$project$View$Goal$reorderColor, dnd, location, context.zipper, form);
@@ -19604,7 +19630,7 @@ var $author$project$Utils$List$zipperMap = F2(
 var $author$project$View$Goal$viewBouquet = F4(
 	function (dnd, goal, newAtomName, bouquet) {
 		var mode = goal.mode;
-		var context = goal.context;
+		var navigation = goal.navigation;
 		var location = goal.location;
 		var spaceSize = function () {
 			if (location.$ === 'App') {
@@ -19629,43 +19655,25 @@ var $author$project$View$Goal$viewBouquet = F4(
 				$mdgriffith$elm_ui$Element$padding(spaceSize),
 				$mdgriffith$elm_ui$Element$spacing(spaceSize)
 			]);
-		var flowerEl = function (_v36) {
+		var context = $author$project$Model$Goal$current(navigation);
+		var dropAction = function (_v36) {
 			var left = _v36.a;
 			var right = _v36.b;
-			return A2(
-				$author$project$View$Goal$viewFlower,
-				dnd,
-				_Utils_update(
-					goal,
-					{
-						context: _Utils_update(
-							context,
-							{
-								zipper: A2(
-									$elm$core$List$cons,
-									A2($author$project$Model$Flower$mkBouquet, left, right),
-									context.zipper)
-							})
-					}));
-		};
-		var dropAction = function (_v35) {
-			var left = _v35.a;
-			var right = _v35.b;
-			_v26$2:
+			_v27$2:
 			while (true) {
 				switch (mode.$) {
 					case 'ProofMode':
 						if (mode.a.$ === 'Importing') {
-							var _v27 = mode.a;
-							var _v28 = $norpan$elm_html5_drag_drop$Html5$DragDrop$getDragId(dnd);
-							if (_v28.$ === 'Just') {
-								var source = _v28.a.source;
+							var _v28 = mode.a;
+							var _v29 = $norpan$elm_html5_drag_drop$Html5$DragDrop$getDragId(dnd);
+							if (_v29.$ === 'Just') {
+								var source = _v29.a.source;
 								if (A2($author$project$Model$Flower$justifies, source, context.zipper)) {
 									var dropStyle = $author$project$View$Style$droppable($author$project$View$Goal$importColor);
 									var dropTargetStyle = function () {
-										var _v29 = $norpan$elm_html5_drag_drop$Html5$DragDrop$getDropId(dnd);
-										if ((_v29.$ === 'Just') && (_v29.a.$ === 'Just')) {
-											var target = _v29.a.a.target;
+										var _v30 = $norpan$elm_html5_drag_drop$Html5$DragDrop$getDropId(dnd);
+										if ((_v30.$ === 'Just') && (_v30.a.$ === 'Just')) {
+											var target = _v30.a.a.target;
 											return _Utils_eq(
 												A2(
 													$elm$core$List$cons,
@@ -19700,24 +19708,24 @@ var $author$project$View$Goal$viewBouquet = F4(
 								return _List_Nil;
 							}
 						} else {
-							break _v26$2;
+							break _v27$2;
 						}
 					case 'EditMode':
 						if (mode.a.$ === 'Reordering') {
-							var _v30 = mode.a;
-							var _v31 = $norpan$elm_html5_drag_drop$Html5$DragDrop$getDragId(dnd);
-							if (_v31.$ === 'Just') {
-								var source = _v31.a.source;
-								var content = _v31.a.content;
+							var _v31 = mode.a;
+							var _v32 = $norpan$elm_html5_drag_drop$Html5$DragDrop$getDragId(dnd);
+							if (_v32.$ === 'Just') {
+								var source = _v32.a.source;
+								var content = _v32.a.content;
 								if (source.b && (source.a.$ === 'Bouquet')) {
 									var sourceBouquet = source.a.a;
 									var sourceParent = source.b;
 									if (_Utils_eq(sourceParent, context.zipper)) {
-										var _v33 = _Utils_Tuple2(
+										var _v34 = _Utils_Tuple2(
 											$elm$core$List$length(sourceBouquet.left),
 											$elm$core$List$length(left));
-										var sourceIndex = _v33.a;
-										var index = _v33.b;
+										var sourceIndex = _v34.a;
+										var index = _v34.b;
 										if (_Utils_eq(sourceIndex, index) || _Utils_eq(index, sourceIndex + 1)) {
 											return _List_Nil;
 										} else {
@@ -19742,9 +19750,9 @@ var $author$project$View$Goal$viewBouquet = F4(
 											}();
 											var dropStyle = $author$project$View$Style$droppable($author$project$View$Goal$reorderColor);
 											var dropTargetStyle = function () {
-												var _v34 = $norpan$elm_html5_drag_drop$Html5$DragDrop$getDropId(dnd);
-												if ((_v34.$ === 'Just') && (_v34.a.$ === 'Just')) {
-													var target = _v34.a.a.target;
+												var _v35 = $norpan$elm_html5_drag_drop$Html5$DragDrop$getDropId(dnd);
+												if ((_v35.$ === 'Just') && (_v35.a.$ === 'Just')) {
+													var target = _v35.a.a.target;
 													return _Utils_eq(
 														A2(
 															$elm$core$List$cons,
@@ -19783,13 +19791,35 @@ var $author$project$View$Goal$viewBouquet = F4(
 								return _List_Nil;
 							}
 						} else {
-							break _v26$2;
+							break _v27$2;
 						}
 					default:
-						break _v26$2;
+						break _v27$2;
 				}
 			}
 			return _List_Nil;
+		};
+		var flowerEl = function (_v26) {
+			var left = _v26.a;
+			var right = _v26.b;
+			return A2(
+				$author$project$View$Goal$viewFlower,
+				dnd,
+				_Utils_update(
+					goal,
+					{
+						navigation: A2(
+							$author$project$Model$Goal$changeFocus,
+							_Utils_update(
+								context,
+								{
+									zipper: A2(
+										$elm$core$List$cons,
+										A2($author$project$Model$Flower$mkBouquet, left, right),
+										context.zipper)
+								}),
+							goal.navigation)
+					}));
 		};
 		var borderAttrs = _List_fromArray(
 			[
@@ -19898,7 +19928,7 @@ var $author$project$View$Goal$viewBouquet = F4(
 var $author$project$View$Goal$viewFlower = F3(
 	function (dnd, goal, flower) {
 		var mode = goal.mode;
-		var context = goal.context;
+		var navigation = goal.navigation;
 		var location = goal.location;
 		if (flower.$ === 'Formula') {
 			var formula = flower.a;
@@ -19908,6 +19938,7 @@ var $author$project$View$Goal$viewFlower = F3(
 			var metadata = data.metadata;
 			var pistil = data.pistil;
 			var petals = data.petals;
+			var context = $author$project$Model$Goal$current(navigation);
 			var color = function () {
 				switch (mode.$) {
 					case 'ProofMode':
@@ -20043,7 +20074,7 @@ var $author$project$View$Goal$viewGarden = F3(
 var $author$project$View$Goal$viewPetal = F4(
 	function (dnd, goal, _v9, petal) {
 		var mode = goal.mode;
-		var context = goal.context;
+		var navigation = goal.navigation;
 		var location = goal.location;
 		var metadata = _v9.metadata;
 		var petalMetadata = _v9.petalMetadata;
@@ -20058,6 +20089,7 @@ var $author$project$View$Goal$viewPetal = F4(
 				return 10;
 			}
 		}();
+		var context = $author$project$Model$Goal$current(navigation);
 		var newZipper = A2(
 			$elm$core$List$cons,
 			A5($author$project$Model$Flower$mkPetal, metadata, petalMetadata, pistil, left, right),
@@ -20127,16 +20159,19 @@ var $author$project$View$Goal$viewPetal = F4(
 					_Utils_update(
 						goal,
 						{
-							context: _Utils_update(
-								context,
-								{zipper: newZipper})
+							navigation: A2(
+								$author$project$Model$Goal$changeFocus,
+								_Utils_update(
+									context,
+									{zipper: newZipper}),
+								goal.navigation)
 						}),
 					petal)));
 	});
 var $author$project$View$Goal$viewPistil = F4(
 	function (dnd, goal, _v0, pistil) {
 		var mode = goal.mode;
-		var context = goal.context;
+		var navigation = goal.navigation;
 		var location = goal.location;
 		var metadata = _v0.metadata;
 		var pistilMetadata = _v0.pistilMetadata;
@@ -20148,6 +20183,7 @@ var $author$project$View$Goal$viewPistil = F4(
 				return 5;
 			}
 		}();
+		var context = $author$project$Model$Goal$current(navigation);
 		var newZipper = A2(
 			$elm$core$List$cons,
 			A3($author$project$Model$Flower$mkPistil, metadata, pistilMetadata, petals),
@@ -20246,17 +20282,22 @@ var $author$project$View$Goal$viewPistil = F4(
 					_Utils_update(
 						goal,
 						{
-							context: _Utils_update(
-								context,
-								{
-									polarity: $author$project$Model$Flower$invert(context.polarity),
-									zipper: newZipper
-								})
+							navigation: A2(
+								$author$project$Model$Goal$changeFocus,
+								_Utils_update(
+									context,
+									{
+										polarity: $author$project$Model$Flower$invert(context.polarity),
+										zipper: newZipper
+									}),
+								goal.navigation)
 						}),
 					pistil)));
 	});
 var $author$project$View$Goal$viewGoal = F2(
 	function (dnd, goal) {
+		var goalHeight = $mdgriffith$elm_ui$Element$height(
+			$mdgriffith$elm_ui$Element$fillPortion(4));
 		var congratsFontSize = function () {
 			var _v2 = goal.location;
 			if (_v2.$ === 'App') {
@@ -20266,23 +20307,34 @@ var $author$project$View$Goal$viewGoal = F2(
 			}
 		}();
 		var goalEl = function (_v1) {
-			return ($elm$core$List$isEmpty(goal.focus) && (!$author$project$View$Goal$inEditMode(goal))) ? $author$project$View$Style$centered(
+			return ($elm$core$List$isEmpty(goal.focus) && (!$author$project$View$Goal$inEditMode(goal))) ? A2(
+				$mdgriffith$elm_ui$Element$el,
+				_List_fromArray(
+					[
+						$mdgriffith$elm_ui$Element$width($mdgriffith$elm_ui$Element$fill),
+						goalHeight
+					]),
 				A2(
 					$mdgriffith$elm_ui$Element$el,
-					_Utils_ap(
-						$author$project$View$Style$fillXY,
-						_List_fromArray(
-							[
-								$mdgriffith$elm_ui$Element$Font$size(congratsFontSize),
-								$mdgriffith$elm_ui$Element$Font$color(
-								$author$project$Utils$Color$toElement(
-									$author$project$Utils$Color$fromRgb(
-										{blue: 0.6, green: 0.6, red: 0.6}))),
-								$mdgriffith$elm_ui$Element$padding(20)
-							])),
+					_List_fromArray(
+						[
+							$mdgriffith$elm_ui$Element$centerX,
+							$mdgriffith$elm_ui$Element$centerY,
+							$mdgriffith$elm_ui$Element$Font$size(congratsFontSize),
+							$mdgriffith$elm_ui$Element$Font$color(
+							$author$project$Utils$Color$toElement(
+								$author$project$Utils$Color$fromRgb(
+									{blue: 0.6, green: 0.6, red: 0.6}))),
+							$mdgriffith$elm_ui$Element$padding(20)
+						]),
 					$mdgriffith$elm_ui$Element$text('Proof complete!'))) : A2(
 				$mdgriffith$elm_ui$Element$el,
-				A2($elm$core$List$cons, $mdgriffith$elm_ui$Element$scrollbars, $author$project$View$Style$fillXY),
+				_List_fromArray(
+					[
+						$mdgriffith$elm_ui$Element$scrollbars,
+						$mdgriffith$elm_ui$Element$width($mdgriffith$elm_ui$Element$fill),
+						goalHeight
+					]),
 				A4($author$project$View$Goal$viewBouquet, dnd, goal, '', goal.focus));
 		};
 		var _v0 = goal.mode;
@@ -20292,7 +20344,11 @@ var $author$project$View$Goal$viewGoal = F2(
 			case 'EditMode':
 				return goalEl(_Utils_Tuple0);
 			default:
-				return $author$project$View$Widgets$fullPageTextMessage('Working on it!');
+				return A2(
+					$mdgriffith$elm_ui$Element$el,
+					_List_fromArray(
+						[goalHeight, $mdgriffith$elm_ui$Element$centerX]),
+					$author$project$View$Widgets$fullPageTextMessage('Working on it!'));
 		}
 	});
 var $author$project$View$Manual$viewSandbox = F3(
@@ -20713,8 +20769,6 @@ var $author$project$View$Manual$page = function (model) {
 				$author$project$View$Manual$navbar
 			]));
 };
-var $mdgriffith$elm_ui$Internal$Model$Right = {$: 'Right'};
-var $mdgriffith$elm_ui$Element$alignRight = $mdgriffith$elm_ui$Internal$Model$AlignX($mdgriffith$elm_ui$Internal$Model$Right);
 var $mdgriffith$elm_ui$Internal$Flag$bgGradient = $mdgriffith$elm_ui$Internal$Flag$flag(10);
 var $mdgriffith$elm_ui$Element$Background$gradient = function (_v0) {
 	var angle = _v0.angle;
@@ -20756,6 +20810,78 @@ var $mdgriffith$elm_ui$Element$Background$gradient = function (_v0) {
 		}
 	}
 };
+var $mdgriffith$elm_ui$Element$Border$roundEach = function (_v0) {
+	var topLeft = _v0.topLeft;
+	var topRight = _v0.topRight;
+	var bottomLeft = _v0.bottomLeft;
+	var bottomRight = _v0.bottomRight;
+	return A2(
+		$mdgriffith$elm_ui$Internal$Model$StyleClass,
+		$mdgriffith$elm_ui$Internal$Flag$borderRound,
+		A3(
+			$mdgriffith$elm_ui$Internal$Model$Single,
+			'br-' + ($elm$core$String$fromInt(topLeft) + ('-' + ($elm$core$String$fromInt(topRight) + ($elm$core$String$fromInt(bottomLeft) + ('-' + $elm$core$String$fromInt(bottomRight)))))),
+			'border-radius',
+			$elm$core$String$fromInt(topLeft) + ('px ' + ($elm$core$String$fromInt(topRight) + ('px ' + ($elm$core$String$fromInt(bottomRight) + ('px ' + ($elm$core$String$fromInt(bottomLeft) + 'px'))))))));
+};
+var $mdgriffith$elm_ui$Element$Border$widthXY = F2(
+	function (x, y) {
+		return A2(
+			$mdgriffith$elm_ui$Internal$Model$StyleClass,
+			$mdgriffith$elm_ui$Internal$Flag$borderWidth,
+			A5(
+				$mdgriffith$elm_ui$Internal$Model$BorderWidth,
+				'b-' + ($elm$core$String$fromInt(x) + ('-' + $elm$core$String$fromInt(y))),
+				y,
+				x,
+				y,
+				x));
+	});
+var $mdgriffith$elm_ui$Element$Border$widthEach = function (_v0) {
+	var bottom = _v0.bottom;
+	var top = _v0.top;
+	var left = _v0.left;
+	var right = _v0.right;
+	return (_Utils_eq(top, bottom) && _Utils_eq(left, right)) ? (_Utils_eq(top, right) ? $mdgriffith$elm_ui$Element$Border$width(top) : A2($mdgriffith$elm_ui$Element$Border$widthXY, left, top)) : A2(
+		$mdgriffith$elm_ui$Internal$Model$StyleClass,
+		$mdgriffith$elm_ui$Internal$Flag$borderWidth,
+		A5(
+			$mdgriffith$elm_ui$Internal$Model$BorderWidth,
+			'b-' + ($elm$core$String$fromInt(top) + ('-' + ($elm$core$String$fromInt(right) + ('-' + ($elm$core$String$fromInt(bottom) + ('-' + $elm$core$String$fromInt(left))))))),
+			top,
+			right,
+			bottom,
+			left));
+};
+var $author$project$View$Shelf$viewShelf = function (goal) {
+	return A2(
+		$mdgriffith$elm_ui$Element$row,
+		_List_fromArray(
+			[
+				$mdgriffith$elm_ui$Element$width($mdgriffith$elm_ui$Element$fill),
+				$mdgriffith$elm_ui$Element$height(
+				$mdgriffith$elm_ui$Element$fillPortion(1)),
+				$mdgriffith$elm_ui$Element$padding(15),
+				$mdgriffith$elm_ui$Element$Background$gradient(
+				{
+					angle: 0,
+					steps: _List_fromArray(
+						[
+							A3($mdgriffith$elm_ui$Element$rgb, 0.85, 0.85, 0.85),
+							A3($mdgriffith$elm_ui$Element$rgb, 0.9, 0.9, 0.9)
+						])
+				}),
+				$mdgriffith$elm_ui$Element$Border$color(
+				A3($mdgriffith$elm_ui$Element$rgb, 0.6, 0.6, 0.6)),
+				$mdgriffith$elm_ui$Element$Border$widthEach(
+				{bottom: 3, left: 0, right: 0, top: 0}),
+				$mdgriffith$elm_ui$Element$Border$roundEach(
+				{bottomLeft: 30, bottomRight: 30, topLeft: 0, topRight: 0})
+			]),
+		_List_Nil);
+};
+var $mdgriffith$elm_ui$Internal$Model$Right = {$: 'Right'};
+var $mdgriffith$elm_ui$Element$alignRight = $mdgriffith$elm_ui$Internal$Model$AlignX($mdgriffith$elm_ui$Internal$Model$Right);
 var $author$project$Update$App$Auto = {$: 'Auto'};
 var $avh4$elm_color$Color$black = A4($avh4$elm_color$Color$RgbaSpace, 0 / 255, 0 / 255, 0 / 255, 1.0);
 var $avh4$elm_color$Color$rgb = F3(
@@ -20770,29 +20896,16 @@ var $author$project$View$Widgets$defaultButtonStyle = {
 	width: $rtfeldman$elm_css$Css$px($author$project$View$Widgets$defaultButtonSize)
 };
 var $author$project$View$Widgets$defaultButton = $author$project$View$Widgets$button($author$project$View$Widgets$defaultButtonStyle);
-var $elm$svg$Svg$circle = $elm$svg$Svg$trustedNode('circle');
-var $elm$svg$Svg$Attributes$cx = _VirtualDom_attribute('cx');
-var $elm$svg$Svg$Attributes$cy = _VirtualDom_attribute('cy');
-var $elm$svg$Svg$Attributes$r = _VirtualDom_attribute('r');
-var $feathericons$elm_feather$FeatherIcons$settings = A2(
+var $feathericons$elm_feather$FeatherIcons$zap = A2(
 	$feathericons$elm_feather$FeatherIcons$makeBuilder,
-	'settings',
+	'zap',
 	_List_fromArray(
 		[
 			A2(
-			$elm$svg$Svg$circle,
+			$elm$svg$Svg$polygon,
 			_List_fromArray(
 				[
-					$elm$svg$Svg$Attributes$cx('12'),
-					$elm$svg$Svg$Attributes$cy('12'),
-					$elm$svg$Svg$Attributes$r('3')
-				]),
-			_List_Nil),
-			A2(
-			$elm$svg$Svg$path,
-			_List_fromArray(
-				[
-					$elm$svg$Svg$Attributes$d('M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z')
+					$elm$svg$Svg$Attributes$points('13 2 3 14 12 14 11 22 21 10 12 10 13 2')
 				]),
 			_List_Nil)
 		]));
@@ -20808,13 +20921,17 @@ var $author$project$View$Toolbar$viewAutoButton = function (mode) {
 		{
 			action: $author$project$View$Widgets$Msg($author$project$Update$App$Auto),
 			enabled: enabled,
-			icon: $feathericons$elm_feather$FeatherIcons$settings,
+			icon: $feathericons$elm_feather$FeatherIcons$zap,
 			title: 'Auto'
 		});
 };
 var $author$project$View$Widgets$Link = function (a) {
 	return {$: 'Link', a: a};
 };
+var $elm$svg$Svg$circle = $elm$svg$Svg$trustedNode('circle');
+var $elm$svg$Svg$Attributes$cx = _VirtualDom_attribute('cx');
+var $elm$svg$Svg$Attributes$cy = _VirtualDom_attribute('cy');
+var $elm$svg$Svg$Attributes$r = _VirtualDom_attribute('r');
 var $feathericons$elm_feather$FeatherIcons$helpCircle = A2(
 	$feathericons$elm_feather$FeatherIcons$makeBuilder,
 	'help-circle',
@@ -20866,20 +20983,6 @@ var $mdgriffith$elm_ui$Element$rgb255 = F3(
 	function (red, green, blue) {
 		return A4($mdgriffith$elm_ui$Internal$Model$Rgba, red / 255, green / 255, blue / 255, 1);
 	});
-var $mdgriffith$elm_ui$Element$Border$roundEach = function (_v0) {
-	var topLeft = _v0.topLeft;
-	var topRight = _v0.topRight;
-	var bottomLeft = _v0.bottomLeft;
-	var bottomRight = _v0.bottomRight;
-	return A2(
-		$mdgriffith$elm_ui$Internal$Model$StyleClass,
-		$mdgriffith$elm_ui$Internal$Flag$borderRound,
-		A3(
-			$mdgriffith$elm_ui$Internal$Model$Single,
-			'br-' + ($elm$core$String$fromInt(topLeft) + ('-' + ($elm$core$String$fromInt(topRight) + ($elm$core$String$fromInt(bottomLeft) + ('-' + $elm$core$String$fromInt(bottomRight)))))),
-			'border-radius',
-			$elm$core$String$fromInt(topLeft) + ('px ' + ($elm$core$String$fromInt(topRight) + ('px ' + ($elm$core$String$fromInt(bottomRight) + ('px ' + ($elm$core$String$fromInt(bottomLeft) + 'px'))))))));
-};
 var $avh4$elm_color$Color$toCssString = function (_v0) {
 	var r = _v0.a;
 	var g = _v0.b;
@@ -21140,6 +21243,10 @@ var $author$project$View$Toolbar$viewToolbar = function (model) {
 				$mdgriffith$elm_ui$Element$width($mdgriffith$elm_ui$Element$fill),
 				$mdgriffith$elm_ui$Element$height($mdgriffith$elm_ui$Element$shrink),
 				$mdgriffith$elm_ui$Element$padding(15),
+				$mdgriffith$elm_ui$Element$Border$widthEach(
+				{bottom: 0, left: 0, right: 0, top: 1}),
+				$mdgriffith$elm_ui$Element$Border$color(
+				A3($mdgriffith$elm_ui$Element$rgb, 0.6, 0.6, 0.6)),
 				$mdgriffith$elm_ui$Element$Background$gradient(
 				{
 					angle: 0,
@@ -21191,6 +21298,7 @@ var $author$project$View$App$view = function (model) {
 	switch (_v0.$) {
 		case 'App':
 			var toolbar = $author$project$View$Toolbar$viewToolbar(model);
+			var shelf = $author$project$View$Shelf$viewShelf(model.goal);
 			var goal = A2($author$project$View$Goal$viewGoal, model.dragDrop, model.goal);
 			var app = A2(
 				$mdgriffith$elm_ui$Element$layout,
@@ -21199,7 +21307,7 @@ var $author$project$View$App$view = function (model) {
 					$mdgriffith$elm_ui$Element$column,
 					$author$project$View$Style$fillXY,
 					_List_fromArray(
-						[goal, toolbar])));
+						[shelf, goal, toolbar])));
 			return {
 				body: _List_fromArray(
 					[

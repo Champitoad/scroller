@@ -74,7 +74,7 @@ type History
             , next : Maybe Model }
 
 
-getHistory : Model ->  { prev : Maybe Model, next : Maybe Model }
+getHistory : Model -> { prev : Maybe Model, next : Maybe Model }
 getHistory model =
   let (History history) = model.history in
   history
