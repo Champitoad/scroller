@@ -344,11 +344,12 @@ walk net path =
           case judgment.shape of
             Formula _ -> Nothing
             Scroll { interaction, outloop, inloops } ->
-              let scroll =
-                { metadata = judgment.metadata
-                , ident = judgment.ident
-                , justif = judgment.justif
-                , interaction = interaction }
+              let
+                scroll =
+                  { metadata = judgment.metadata
+                  , ident = judgment.ident
+                  , justif = judgment.justif
+                  , interaction = interaction }
               in
               if n == 0 then
                 let zOutloop = mkZOutloop scroll inloops in
