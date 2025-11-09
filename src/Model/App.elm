@@ -1,6 +1,6 @@
 module Model.App exposing (..)
 
-import Model.Flower exposing (..)
+import Model.Scroll exposing (..)
 import Model.Mascarpone exposing (..)
 import Model.Goal as Goal exposing (Goal, Location, Sandboxes, manualExamples)
 
@@ -16,7 +16,7 @@ type alias FlowerDragId
   = { location : Location, source : Zipper, content : Flower }
 
 type alias FlowerDropId
-  = Maybe { location : Location, target : Zipper, content : Bouquet }
+  = Maybe { location : Location, target : Zipper, content : Net }
 
 type alias FlowerDnD
   = DnD.Model FlowerDragId FlowerDropId
@@ -39,7 +39,7 @@ type alias Model
 
 init : Url.Url -> Browser.Navigation.Key -> Model
 init url key =
-  { goal = Goal.fromBouquet [entails [crack, whisk, beat, stir, fold] [entails [f egg, f sugar, f mascarpone] [f mascarponeCream]]]
+  { goal = Goal.fromNet [entails [crack, whisk, beat, stir, fold] [entails [f egg, f sugar, f mascarpone] [f mascarponeCream]]]
   , history = History { prev = Nothing, next = Nothing }
   , manualExamples = manualExamples
   , dragDrop = DnD.init

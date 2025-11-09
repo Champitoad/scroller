@@ -2,7 +2,7 @@ module View.Manual exposing (..)
 
 import View.Style exposing (..)
 import View.Goal exposing (..)
-import Model.Flower exposing (..)
+import Model.Scroll exposing (..)
 import Model.Goal exposing (..)
 import Model.App exposing (..)
 import Update.App exposing (..)
@@ -137,9 +137,9 @@ body { manualExamples, dragDrop } =
       , tcol
           [ par [ t"It is called a ", b"flower", t"." ]
           , par [ t"a, b, c and d are ", b"atoms", t"." ]
-          , par [ t"a and b are in the ", b"pistil", t" (upper part of the box)." ]
-          , par [ t"c and d are each in a ", b"petal", t"." ]
-          , par [ t"Petals form the ", b"corolla", t" (lower part of the box)." ]
+          , par [ t"a and b are in the ", b"outloop", t" (upper part of the box)." ]
+          , par [ t"c and d are each in a ", b"inloop", t"." ]
+          , par [ t"Inloops form the ", b"corolla", t" (lower part of the box)." ]
           ]
       , tcol
           [ par [ t"Flowers represent ", b"logical statements", t":" ]
@@ -147,14 +147,14 @@ body { manualExamples, dragDrop } =
               [ par [ i"If a ", b"and", i" b are true," ]
               , par [ b"then", i" either c ", b"or", i" d is true." ] ]
           , par [ t"Juxtaposition is interpreted as ", b"conjunction", t"." ]
-          , par [ t"A pistil ", b"implies", t" the ", b"disjunction", t" of its petals." ]
+          , par [ t"A outloop ", b"implies", t" the ", b"disjunction", t" of its inloops." ]
           ]
       , par [ t"Flowers can be ", b"proved", t", ", b"edited",  t" and ", b"navigated", t"." ]
 
       , h1 proofIcon "Proof Mode"
 
       , h2 "QED"
-      , par [ t"Click on an ", el greenActionable.active (text "empty petal"), t" to erase its flower." ]
+      , par [ t"Click on an ", el greenActionable.active (text "empty inloop"), t" to erase its flower." ]
       , sandbox "QED"
       , par [ t"Note that emptiness is interpreted as ", b"truth", t"." ]
       
@@ -163,7 +163,7 @@ body { manualExamples, dragDrop } =
       , sandbox "Justify"
 
       , h2 "Unlock"
-      , par [ t"Click on an ", el orangeActionable.active (text "empty pistil"), t" to unlock its petal." ]
+      , par [ t"Click on an ", el orangeActionable.active (text "empty outloop"), t" to unlock its inloop." ]
       , sandbox "Unlock"
       , par [ t"Note that flowers can be ", b"nested", t" inside each other." ]
       
@@ -174,7 +174,7 @@ body { manualExamples, dragDrop } =
       , sandbox "Import"
 
       , h2 "Case"
-      , par [ t"Click on an ", el orangeActionable.active (text "empty pistil"), t" to turn its attached petals into pistils." ]
+      , par [ t"Click on an ", el orangeActionable.active (text "empty outloop"), t" to turn its attached inloops into outloops." ]
       , sandbox "Case"
 
       , h2 "Decompose"

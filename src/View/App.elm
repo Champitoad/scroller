@@ -46,7 +46,7 @@ view model =
           viewToolbar model
         
         app =
-          column fillXY [ shelf, goal, toolbar ]
+          column fillXY [ goal, toolbar ]
           |> layout []
       in
       { title = "Flower Prover"

@@ -2,7 +2,7 @@ port module Update.App exposing (..)
 
 import Update.Rules exposing (..)
 
-import Model.Flower exposing (..)
+import Model.Scroll exposing (..)
 import Model.Goal exposing (..)
 import Model.App exposing (..)
 
@@ -22,9 +22,9 @@ port dragstart : Value -> Cmd msg
 
 
 type Msg
-  = Action Rule Location Zipper Bouquet
+  = Action Rule Location Zipper Net
   | Auto
-  | SetGoal Bouquet
+  | SetGoal Net
   | ChangeUIMode UIMode
   | Undo
   | Redo
@@ -137,15 +137,15 @@ handleDragDropMsg dndMsg model =
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg ({ goal, manualExamples } as model) =
   case msg of
-    Action rule location zipper bouquet ->
+    Action rule location zipper net ->
       let
         newFocus =
-          apply rule zipper bouquet
+          apply rule zipper net
 
         newMode =
           case goal.mode of
             EditMode interaction surgery ->
-              EditMode interaction (operate rule zipper bouquet surgery)
+              EditMode interaction (operate rule zipper net surgery)
             _ ->
               goal.mode
         
@@ -180,8 +180,8 @@ update msg ({ goal, manualExamples } as model) =
         , history = History { prev = Just model, next = Nothing } }
       , Cmd.none )
     
-    SetGoal bouquet ->
-      ( { model | goal = { goal | focus = bouquet } }, Cmd.none )
+    SetGoal net ->
+      ( { model | goal = { goal | focus = net } }, Cmd.none )
     
     ChangeUIMode mode ->
       let

@@ -5,7 +5,7 @@ import View.Widgets exposing (..)
 import View.Events exposing (..)
 
 import Model.Formula as Formula exposing (..)
-import Model.Flower exposing (..)
+import Model.Scroll exposing (..)
 import Model.Mascarpone exposing (..)
 import Model.Goal exposing (..)
 import Model.App exposing (..)
@@ -59,12 +59,12 @@ cropAction location context flower =
     actionableStyle.inactive
 
 
-pullAction : Location -> Context -> Garden -> List (Attribute Msg)
-pullAction location context (Garden gardenData) =
+pullAction : Location -> Context -> Net -> List (Attribute Msg)
+pullAction location context (Net netData) =
   let actionableStyle = redActionable in
   if pullable context then
-    Utils.Events.onClick (Action Pull location context.zipper gardenData.flowers)
-    :: (htmlAttribute <| title "Remove Petal")
+    Utils.Events.onClick (Action Pull location context.zipper netData.flowers)
+    :: (htmlAttribute <| title "Remove Inloop")
     :: actionableStyle.active
   else
     actionableStyle.inactive
@@ -173,14 +173,14 @@ viewFormula dnd { mode, navigation, location } ({ metadata, statement } as data)
     ( viewStatement statement )
 
 
-viewPistil : FlowerDnD -> Goal -> PistilData -> Garden -> Element Msg
-viewPistil dnd ({ mode, navigation, location } as goal) { metadata, pistilMetadata, petals } pistil =
+viewOutloop : FlowerDnD -> Goal -> OutloopData -> Net -> Element Msg
+viewOutloop dnd ({ mode, navigation, location } as goal) { metadata, outloopMetadata, inloops } outloop =
   let
     context =
       current navigation
 
     newZipper =
-      mkPistil metadata pistilMetadata petals :: context.zipper
+      mkOutloop metadata outloopMetadata inloops :: context.zipper
 
     clickAction =
       case mode of
@@ -189,23 +189,23 @@ viewPistil dnd ({ mode, navigation, location } as goal) { metadata, pistilMetada
             actionableStyle = orangeActionable
 
             action rule name =
-              (Events.onClick (Action rule location newZipper (harvest pistil)))
+              (Events.onClick (Action rule location newZipper outloop))
               :: (htmlAttribute <| title name)
               :: actionableStyle.active
           in
-          if List.isEmpty (harvest pistil) then
+          if List.isEmpty outloop then
             case context.zipper of
-              _ :: Pistil _ :: _ ->
+              _ :: Outloop _ :: _ ->
                 let
                   (rule, name) =
-                    case List.length petals of
+                    case List.length inloops of
                       0 -> (Close, "Ex falso quodlibet")
                       1 -> (Unlock, "Unlock")
                       _ -> (Case, "Case")
                 in
                 action rule name
               _ ->
-                if List.length petals == 1 then
+                if List.length inloops == 1 then
                   action Unlock "Unlock"
                 else
                   actionableStyle.inactive
@@ -213,7 +213,7 @@ viewPistil dnd ({ mode, navigation, location } as goal) { metadata, pistilMetada
             actionableStyle.inactive
         
         EditMode Operating _ ->
-          cropAction location context (mkFlower metadata pistil petals)
+          cropAction location context (mkFlower metadata outloop inloops)
 
         _ ->
           (actionable Utils.Color.transparent).inactive
@@ -232,41 +232,41 @@ viewPistil dnd ({ mode, navigation, location } as goal) { metadata, pistilMetada
           , height fill
           , padding paddingSize ]
          ++ clickAction )
-        ( viewGarden dnd
+        ( viewNet dnd
             { goal | navigation = changeFocus
               { context
               | zipper = newZipper
               , polarity = invert context.polarity
               } goal.navigation
             }
-            pistil ) )
+            outloop ) )
 
 
-viewPetal : FlowerDnD -> Goal -> PetalData -> Garden -> Element Msg
-viewPetal dnd
+viewInloop : FlowerDnD -> Goal -> InloopData -> Net -> Element Msg
+viewInloop dnd
   ({ mode, navigation, location } as goal)
-  { metadata, petalMetadata, pistil, left, right }
-  (Garden petalData as petal) =
+  { metadata, inloopMetadata, outloop, left, right }
+  (Net inloopData as inloop) =
   let
     context =
       current navigation
     
     newZipper =
-      mkPetal metadata petalMetadata pistil left right :: context.zipper
+      mkInloop metadata inloopMetadata outloop left right :: context.zipper
 
     clickAction =
       let actionableStyle = greenActionable in
       case mode of
         ProofMode Justifying ->
-          if List.isEmpty petalData.flowers then
-            (Events.onClick (Action Close location newZipper petalData.flowers))
+          if List.isEmpty inloopData.flowers then
+            (Events.onClick (Action Close location newZipper inloopData.flowers))
             :: (htmlAttribute <| title "QED")
             :: actionableStyle.active
           else
             actionableStyle.inactive
         
         EditMode Operating _ ->
-          pullAction location { context | zipper = newZipper } petal
+          pullAction location { context | zipper = newZipper } inloop
 
         _ ->
           actionableStyle.inactive
@@ -286,9 +286,9 @@ viewPetal dnd
           , height fill
           , padding paddingSize ]
          ++ clickAction )
-        ( viewGarden dnd
+        ( viewNet dnd
             { goal | navigation = changeFocus { context | zipper = newZipper } goal.navigation }
-            petal ) )
+            inloop ) )
 
 
 addButton : ButtonParams msg -> Element msg
@@ -304,16 +304,16 @@ addButton params =
   button style params
 
 
-viewAddPetalZone : Location -> Context -> FlowerData -> Element Msg
-viewAddPetalZone location context { metadata, pistil, petals } =
+viewAddInloopZone : Location -> Context -> FlowerData -> Element Msg
+viewAddInloopZone location context { metadata, outloop, inloops } =
   let
     newFlower =
-      mkFlower metadata pistil (petals ++ [mkFakeGarden []])
+      mkFlower metadata outloop (inloops ++ [mkFakeNet []])
 
-    addPetalButton =
+    addInloopButton =
         ( addButton
             { action =  Msg (Action Grow location context.zipper [newFlower])
-            , title = "Add Petal"
+            , title = "Add Inloop"
             , icon = Icons.plus
             , enabled = True } )
   in
@@ -323,15 +323,15 @@ viewAddPetalZone location context { metadata, pistil, petals } =
     , padding 10
     , Border.rounded flowerBorderRound
     , Background.color (flowerBackgroundColor (invert context.polarity)) ]
-    [ addPetalButton ]
+    [ addInloopButton ]
 
 
-viewAddFlowerZone : Location -> Context -> String -> Bouquet -> Element Msg
+viewAddFlowerZone : Location -> Context -> String -> Net -> Element Msg
 viewAddFlowerZone location context newAtomName flowers =
   let
     newFlower =
       if String.isEmpty newAtomName then
-        mkFakeFlower (mkFakeGarden []) [mkFakeGarden []]
+        mkFakeFlower (mkFakeNet []) [mkFakeNet []]
       else
         case newAtomName of
           "sugar" ->
@@ -366,18 +366,18 @@ viewAddFlowerZone location context newAtomName flowers =
 
     newZipper newName =
       case context.zipper of
-        [] -> [mkBouquet flowers []]
+        [] -> [mkNet flowers []]
         zip :: zipper ->
           case zip of
-            Bouquet { left, right } ->
-              mkBouquet (left ++ flowers) right :: zipper
-            Pistil ({ pistilMetadata } as data) ->
-              mkBouquet flowers [] ::
-              Pistil { data | pistilMetadata = { pistilMetadata | newAtomName = newName } } ::
+            Net { left, right } ->
+              mkNet (left ++ flowers) right :: zipper
+            Outloop ({ outloopMetadata } as data) ->
+              mkNet flowers [] ::
+              Outloop { data | outloopMetadata = { outloopMetadata | newAtomName = newName } } ::
               zipper
-            Petal ({ petalMetadata } as data) ->
-              mkBouquet flowers [] ::
-              Petal { data | petalMetadata = { petalMetadata | newAtomName = newName } } ::
+            Inloop ({ inloopMetadata } as data) ->
+              mkNet flowers [] ::
+              InloopData { data | inloopMetadata = { inloopMetadata | newAtomName = newName } } ::
               zipper
     
     onChange newName =
@@ -419,36 +419,36 @@ viewFlower dnd ({ mode, navigation, location } as goal) flower =
     Formula formula ->
       viewFormula dnd goal formula
     
-    Flower ({ metadata, pistil, petals } as data) ->
+    Flower ({ metadata, outloop, inloops } as data) ->
       let
         context =
           current navigation
 
-        (Garden pistilData) = pistil
+        (Net outloopData) = outloop
 
-        pistilEl =
-          viewPistil dnd goal (PistilData metadata pistilData.metadata petals) pistil
+        outloopEl =
+          viewOutloop dnd goal (OutloopData metadata outloopData.metadata inloops) outloop
         
-        addPetalZone =
+        addInloopZone =
           case mode of 
             EditMode _ _ ->
               if glueable context || data.metadata.grown then
-                [viewAddPetalZone location context data]
+                [viewAddInloopZone location context data]
               else
                 []
             _ ->
               []
         
-        petalsEl =
+        inloopsEl =
           row
             [ width fill
             , height fill
             , spacing flowerBorderWidth ]
             ( Utils.List.zipperMap
-                (\(left, right) (Garden petalData as petal) ->
-                  viewPetal dnd goal (PetalData metadata petalData.metadata pistil left right) petal)
-                petals
-              ++ addPetalZone )
+                (\(left, right) (Net inloopData as inloop) ->
+                  viewInloop dnd goal (InloopData metadata inloopData.metadata outloop left right) inloop)
+                inloops
+              ++ addInloopZone )
 
         color =
           case mode of
@@ -491,11 +491,11 @@ viewFlower dnd ({ mode, navigation, location } as goal) flower =
                   Utils.Color.fromElement |>
                   Utils.Color.withAlpha shadowAlpha |>
                   Utils.Color.toElement } ] )
-        [ pistilEl, petalsEl ]
+        [ outloopEl, inloopsEl ]
 
 
-viewBouquet : FlowerDnD -> Goal -> String -> Bouquet -> Element Msg
-viewBouquet dnd ({ mode, navigation, location } as goal) newAtomName bouquet =
+viewNet : FlowerDnD -> Goal -> String -> Net -> Element Msg
+viewNet dnd ({ mode, navigation, location } as goal) newAtomName net =
   let
     context =
       current navigation
@@ -504,7 +504,7 @@ viewBouquet dnd ({ mode, navigation, location } as goal) newAtomName bouquet =
       viewFlower dnd
         { goal | navigation = changeFocus
           { context | zipper =
-            mkBouquet left right :: context.zipper
+            mkNet left right :: context.zipper
           } goal.navigation
         }
     
@@ -522,7 +522,7 @@ viewBouquet dnd ({ mode, navigation, location } as goal) newAtomName bouquet =
                   dropTargetStyle =
                     case DnD.getDropId dnd of
                       Just (Just { target }) ->
-                        if mkBouquet left right :: context.zipper == target
+                        if mkNet left right :: context.zipper == target
                         then dropStyle.active
                         else dropStyle.inactive
                     
@@ -532,7 +532,7 @@ viewBouquet dnd ({ mode, navigation, location } as goal) newAtomName bouquet =
                 dropTargetStyle ++
                 ( List.map htmlAttribute <|
                   DnD.droppable DragDropMsg
-                    (Just { target = mkBouquet left right :: context.zipper
+                    (Just { target = mkNet left right :: context.zipper
                           , content = [], location = location }) )
               else
                 []
@@ -543,11 +543,11 @@ viewBouquet dnd ({ mode, navigation, location } as goal) newAtomName bouquet =
           case DnD.getDragId dnd of
             Just { source, content } ->
               case source of
-                Bouquet sourceBouquet :: sourceParent ->
+                Net sourceNet :: sourceParent ->
                   if sourceParent == context.zipper then
                     let
                       (sourceIndex, index) =
-                        (List.length sourceBouquet.left, List.length left)
+                        (List.length sourceNet.left, List.length left)
                     in
                     if sourceIndex == index || index == sourceIndex + 1 then []
                     else
@@ -555,19 +555,19 @@ viewBouquet dnd ({ mode, navigation, location } as goal) newAtomName bouquet =
                         whole =
                           left ++ right
 
-                        newBouquet =
+                        newNet =
                           if sourceIndex < index then
                             let
                               middle =
                                 Utils.List.slice (sourceIndex + 1) (index - 1) whole
                             in
-                            sourceBouquet.left ++ middle ++ content :: right
+                            sourceNet.left ++ middle ++ content :: right
                           else
                             let
                               middle =
                                 Utils.List.slice index (sourceIndex - 1) whole
                             in
-                            left ++ content :: (middle ++ sourceBouquet.right)
+                            left ++ content :: (middle ++ sourceNet.right)
 
                         dropStyle =
                           droppable reorderColor
@@ -575,7 +575,7 @@ viewBouquet dnd ({ mode, navigation, location } as goal) newAtomName bouquet =
                         dropTargetStyle =
                           case DnD.getDropId dnd of
                             Just (Just { target }) ->
-                              if mkBouquet left right :: context.zipper == target
+                              if mkNet left right :: context.zipper == target
                               then dropStyle.active
                               else dropStyle.inactive
 
@@ -585,8 +585,8 @@ viewBouquet dnd ({ mode, navigation, location } as goal) newAtomName bouquet =
                       dropTargetStyle ++
                       ( List.map htmlAttribute <|
                         DnD.droppable DragDropMsg
-                          (Just { target = mkBouquet left right :: context.zipper
-                                , content = newBouquet, location = location }) )
+                          (Just { target = mkNet left right :: context.zipper
+                                , content = newNet, location = location }) )
                   else
                     []
                 _ ->
@@ -645,13 +645,13 @@ viewBouquet dnd ({ mode, navigation, location } as goal) newAtomName bouquet =
             ( flowerEl lr flower )
 
         els =
-          Utils.List.zipperMap sperse bouquet
+          Utils.List.zipperMap sperse net
         
         addFlowerZone =
           case mode of 
             EditMode _ _ ->
               if growable context then
-                [viewAddFlowerZone location context newAtomName bouquet]
+                [viewAddFlowerZone location context newAtomName net]
               else
                 []
             _ ->
@@ -664,7 +664,7 @@ viewBouquet dnd ({ mode, navigation, location } as goal) newAtomName bouquet =
         attrs =
           layoutAttrs ++
           borderAttrs ++
-          dropAction (bouquet, [])
+          dropAction (net, [])
         
         sperse lr flower =
           el
@@ -674,7 +674,7 @@ viewBouquet dnd ({ mode, navigation, location } as goal) newAtomName bouquet =
             ( flowerEl lr flower )
 
         els =
-          Utils.List.zipperMap sperse bouquet
+          Utils.List.zipperMap sperse net
       in
       wrappedRow attrs els
   in
@@ -686,12 +686,12 @@ viewBouquet dnd ({ mode, navigation, location } as goal) newAtomName bouquet =
       normal ()
 
 
-viewGarden : FlowerDnD -> Goal -> Garden -> Element Msg
-viewGarden dnd goal (Garden { metadata, flowers }) =
+viewNet : FlowerDnD -> Goal -> Net -> Element Msg
+viewNet dnd goal (Net { metadata, flowers }) =
   el
     ( fillXY ++
       drawGrownBorder metadata.grown )
-    ( viewBouquet dnd goal metadata.newAtomName flowers )
+    ( viewNet dnd goal metadata.newAtomName flowers )
 
 
 inEditMode : Goal -> Bool
@@ -730,7 +730,7 @@ viewGoal dnd goal =
           [ scrollbars
           , width fill
           , goalHeight ]
-          ( viewBouquet dnd goal "" goal.focus )
+          ( viewNet dnd goal "" goal.focus )
   in
   case goal.mode of
     ProofMode _ ->

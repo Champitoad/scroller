@@ -1,6 +1,6 @@
 module Model.Goal exposing (..)
 
-import Model.Flower as Flower exposing (..)
+import Model.Scroll as Flower exposing (..)
 
 import Dict exposing (Dict)
 
@@ -23,7 +23,7 @@ type ProofInteraction
 
 type alias Surgery =
   { cropped : Maybe Flower
-  , pulled : Maybe Garden }
+  , pulled : Maybe Net }
 
 
 initialSurgery : Surgery
@@ -102,7 +102,7 @@ backtrack navigation =
 
 {- A Goal is made of the following data:
 
-   [focus]: the bouquet that the user is currently working on
+   [focus]: the net that the user is currently working on
    [navigation]: the navigation history
    [location]: a unique, semantic identifier for the goal location
    [mode]: the current mode of interaction
@@ -115,23 +115,23 @@ type Location
   | Manual SandboxID
 
 type alias Goal
-  = { focus : Bouquet
+  = { focus : Net
     , navigation : Navigation
     , location : Location
     , mode : UIMode
     }
 
 
-fromBouquet : Bouquet -> Goal
-fromBouquet bouquet =
-  { focus = bouquet
+fromNet : Net -> Goal
+fromNet net =
+  { focus = net
   , navigation = initialNavigation
   , location = App
   , mode = ProofMode Justifying
   }
 
 
-map : (Bouquet -> Bouquet) -> Goal -> Goal
+map : (Net -> Net) -> Goal -> Goal
 map f goal =
   { goal | focus = f goal.focus }
 
@@ -161,7 +161,7 @@ getSandbox id sandboxes =
   case Dict.get id sandboxes of
     Nothing ->
       let _ = Debug.log "Warning" "trying to retrieve a non-existing sandbox; returning a dummy one." in
-      mkSandbox (fromBouquet [])
+      mkSandbox (fromNet [])
 
     Just sandbox ->
       sandbox
@@ -203,15 +203,15 @@ resetAllSandboxes sandboxes =
 manualExamples : Sandboxes
 manualExamples =
   let
-    makeSandbox id mode bouquet =
+    makeSandbox id mode net =
       mkSandbox
-        { focus = bouquet
+        { focus = net
         , navigation = initialNavigation
         , location = Manual id
         , mode = mode
         }
     
-    examples : List (SandboxID, UIMode, Bouquet)
+    examples : List (SandboxID, UIMode, Net)
     examples =
       [ ( "Flower", ProofMode Justifying, [fl[a"a",a"b"][[a"c"],[a"d"]]] )
       , ( "QED", ProofMode Justifying, [fl[a"a"][[]]] )
@@ -224,5 +224,5 @@ manualExamples =
       ]
   in
   examples |>
-  List.map (\(id, mode, bouquet) -> (id, makeSandbox id mode bouquet)) |>
+  List.map (\(id, mode, net) -> (id, makeSandbox id mode net)) |>
   Dict.fromList

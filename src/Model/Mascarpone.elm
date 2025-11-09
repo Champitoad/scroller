@@ -1,7 +1,7 @@
 module Model.Mascarpone exposing (..)
 
 import Model.Formula exposing (..)
-import Model.Flower exposing (..)
+import Model.Scroll exposing (..)
 
 mascarpone : Formula
 mascarpone =

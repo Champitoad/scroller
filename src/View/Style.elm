@@ -1,6 +1,6 @@
 module View.Style exposing (..)
 
-import Model.Flower exposing (..)
+import Model.Scroll exposing (..)
 import Model.App exposing (..)
 
 import Utils.Color as Color
