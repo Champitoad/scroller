@@ -4,23 +4,42 @@ import Model.Formula as Formula exposing (..)
 
 import Utils.List
 
-type alias Net
-  = List Judgment
 
-type alias Judgment
+-- Scroll structures
+
+
+type alias Struct
+  = List Node
+
+type Node
+  = NFormula Formula
+  | NScroll { outloop : Struct
+            , inloops : List Struct }
+
+
+-- Scroll nets
+
+
+type alias Net
+  = List Val
+
+type alias Val
   = { metadata : Metadata
-    , ident : Maybe VarIdent
-    , justif : Justification
+    , arg : Argument
     , shape : Shape }
 
-type alias VarIdent = String
+type alias Argument
+  = { name : Maybe Ident
+    , justif : Justification }
 
-type alias Justification
-  = { self : Bool
-    , from : Maybe VarIdent }
+type alias Ident = String
 
 type alias Metadata
   = { grown : Bool }
+
+type alias Justification
+  = { self : Bool
+    , from : Maybe Ident }
 
 type Shape
   = Formula Formula
@@ -29,78 +48,157 @@ type Shape
 type alias ScrollData
   = { interaction : Interaction
     , outloop : Net
-    , inloops : List InloopData }
+    , inloops : List Env }
 
 type alias Interaction
   = { opened : Maybe Int
     , closed : Maybe Int }
 
-type alias InloopData
-  = { ident : Maybe ConstrIdent
+type alias Env
+  = { metadata : Metadata
+    , arg : Argument
     , content : Net }
 
-type alias ConstrIdent = String
+
+-- Conversions between structures and nets
 
 
-isGrown : Judgment -> Bool
-isGrown judgment =
-  judgment.metadata.grown
+assumption : Justification
+assumption =
+  { self = False, from = Nothing }
+
+assume : Maybe Ident -> Argument
+assume name =
+  { name = name
+  , justif = assumption }
 
 
-commit : Judgment -> Judgment
-commit judgment =
+netFromStruct : Struct -> Net
+netFromStruct struct =
+  List.map valFromNode struct
+
+valFromNode : Node -> Val
+valFromNode node =
   let
-    oldMetadata = judgment.metadata
-    newMetadata = { oldMetadata | grown = False }
-  in
-  { judgment | metadata = newMetadata }
-  
+    envFromInloop : Struct -> Env
+    envFromInloop inloop =
+      { metadata = { grown = False}
+      , arg = assume Nothing
+      , content = netFromStruct inloop }
 
-assume : Metadata -> Shape -> Judgment
-assume metadata shape =
-  { metadata = metadata
-  , ident = Nothing
-  , justif = { self = False, from = Nothing }
+    shape =
+      case node of
+        NFormula formula ->
+          Formula formula
+        
+        NScroll { outloop, inloops } ->
+          Scroll { interaction = { opened = Nothing, closed = Nothing }
+                 , outloop = netFromStruct outloop
+                 , inloops = List.map envFromInloop inloops }
+  in
+  { metadata = { grown = False }
+  , arg = assume Nothing
   , shape = shape }
 
 
-mkFormula : Metadata -> Formula -> Judgment
+structFromNet : Net -> Struct
+structFromNet net =
+  List.map nodeFromVal net
+
+
+nodeFromVal : Val -> Node
+nodeFromVal { shape } =
+  let
+    inloopFromEnv : Env -> Struct
+    inloopFromEnv { content } =
+      structFromNet content
+  in
+  case shape of
+    Formula formula ->
+      NFormula formula
+    
+    Scroll { outloop, inloops } ->
+      NScroll { outloop = structFromNet outloop
+              , inloops = List.map inloopFromEnv inloops }
+
+
+-- Helper functions
+
+
+isGrownVal : Val -> Bool
+isGrownVal val =
+  val.metadata.grown
+
+isGrownEnv : Env -> Bool
+isGrownEnv env =
+  env.metadata.grown
+
+
+commitVal : Val -> Val
+commitVal val =
+  let
+    oldMetadata = val.metadata
+    newMetadata = { oldMetadata | grown = False }
+  in
+  { val | metadata = newMetadata }
+
+commitEnv : Env -> Env
+commitEnv env =
+  let
+    oldMetadata = env.metadata
+    newMetadata = { oldMetadata | grown = False }
+  in
+  { env | metadata = newMetadata }
+  
+
+mkShape : Metadata -> Shape -> Val
+mkShape metadata shape =
+  { metadata = metadata
+  , arg = assume Nothing
+  , shape = shape }
+
+
+mkFormula : Metadata -> Formula -> Val
 mkFormula metadata statement =
-  assume metadata (Formula statement)
+  mkShape metadata (Formula statement)
 
 
-mkRealFormula : Formula -> Judgment
+mkRealFormula : Formula -> Val
 mkRealFormula =
   mkFormula { grown = False }
 
-f : Formula -> Judgment
+f : Formula -> Val
 f = mkRealFormula
 
 
-mkFakeFormula : Formula -> Judgment
+mkFakeFormula : Formula -> Val
 mkFakeFormula =
   mkFormula { grown = True }
 
 
-mkInloop : Maybe ConstrIdent -> Net -> InloopData
-mkInloop ident content =
-  { ident = ident, content = content }
+mkInloop : Metadata -> Maybe Ident -> Net -> Env
+mkInloop metadata ident content =
+  { metadata = metadata
+  , arg = assume ident
+  , content = content }
 
-mkScroll : Metadata -> Net -> List Net -> Judgment
+mkScroll : Metadata -> Net -> List Net -> Val
 mkScroll metadata outloop inloops =
-  assume metadata
-    (Scroll
-      { interaction = { opened = Nothing, closed = Nothing }
-      , outloop = outloop
-      , inloops = List.map (mkInloop Nothing) inloops })
+  let
+    scroll =
+      Scroll { interaction = { opened = Nothing, closed = Nothing }
+             , outloop = outloop
+             , inloops = List.map (mkInloop metadata Nothing) inloops }
+  in
+  mkShape metadata scroll
 
 
-mkRealScroll : Net -> List Net -> Judgment
+mkRealScroll : Net -> List Net -> Val
 mkRealScroll =
   mkScroll { grown = False }
 
 
-mkFakeScroll : Net -> List Net -> Judgment
+mkFakeScroll : Net -> List Net -> Val
 mkFakeScroll =
   mkScroll  { grown = True }
 
@@ -109,14 +207,14 @@ mkFakeScroll =
     
     s [a"a", a"b"] [[a"c"], [a"d"]]
 -}
-s : Net -> List Net -> Judgment
+s : Net -> List Net -> Val
 s inloop outloops =
   mkRealScroll inloop outloops
 
 
 mkNet : Metadata -> List Shape -> Net
-mkNet metadata shapes =
-  List.map (assume metadata) shapes
+mkNet metadata =
+  List.map (mkShape metadata)
 
 
 mkRealNet : List Shape -> Net
@@ -129,7 +227,7 @@ mkFakeNet =
   mkNet { grown = True }
 
 
-decompose : Formula -> List Judgment
+decompose : Formula -> List Val
 decompose formula = 
   case formula of
     Atom _ ->
@@ -164,19 +262,19 @@ decompose formula =
 
 type alias ZScrollData
   = { metadata : Metadata
-    , ident : Maybe VarIdent
-    , justif : Justification
+    , arg : Argument
     , interaction : Interaction }
 
 
 type Zip
   = ZNet { left : Net, right : Net }
-  | ZOutloop { scroll : ZScrollData, inloops : List InloopData }
+  | ZOutloop { scroll : ZScrollData, inloops : List Env }
   | ZInloop { scroll : ZScrollData
-            , ident : Maybe ConstrIdent
+            , metadata : Metadata
+            , arg : Argument
             , outloop : Net
-            , left : List InloopData
-            , right : List InloopData }
+            , left : List Env
+            , right : List Env }
 
 
 type alias Zipper
@@ -207,18 +305,20 @@ mkZNet left right =
   ZNet { left = left, right = right }
 
 
-mkZOutloop : ZScrollData -> List InloopData -> Zip
+mkZOutloop : ZScrollData -> List Env -> Zip
 mkZOutloop scroll inloops =
   ZOutloop { scroll = scroll, inloops = inloops }
 
 
-mkZInloop : ZScrollData -> Maybe ConstrIdent -> Net -> List InloopData -> List InloopData -> Zip
-mkZInloop scroll ident outloop left right =
+mkZInloop : ZScrollData -> Metadata -> Argument -> 
+            Net -> List Env -> List Env -> Zip
+mkZInloop scroll metadata arg outloop left right =
   ZInloop { scroll = scroll
-         , ident = ident
-         , outloop = outloop
-         , left = left
-         , right = right }
+          , metadata = metadata
+          , arg = arg
+          , outloop = outloop
+          , left = left
+          , right = right }
 
 
 fillZip : Zip -> Net -> Net
@@ -229,19 +329,24 @@ fillZip zip net =
 
     ZOutloop { scroll, inloops } ->
       [{ metadata = scroll.metadata
-       , ident = scroll.ident
-       , justif = scroll.justif
+       , arg = scroll.arg
        , shape = Scroll { interaction = scroll.interaction
                         , outloop = net
                         , inloops = inloops } }]
 
-    ZInloop { scroll, ident, outloop, left, right } ->
+    ZInloop { scroll, metadata, arg, outloop, left, right } ->
       [{ metadata = scroll.metadata
-       , ident = scroll.ident
-       , justif = scroll.justif
-       , shape = Scroll { interaction = scroll.interaction
-                        , outloop = outloop
-                        , inloops = left ++ { ident = ident, content = net } :: right } }]
+       , arg = scroll.arg
+       , shape =
+           let
+             inloop =
+               { metadata = metadata
+               , arg = arg
+               , content = net }
+           in
+           Scroll { interaction = scroll.interaction
+                    , outloop = outloop
+                    , inloops = left ++ inloop :: right } }]
 
 
 fillZipper : Net -> Zipper -> Net
@@ -267,9 +372,9 @@ hypsZipper zipper =
   List.foldl (\zip acc -> hypsZip zip ++ acc) [] zipper
 
 
-isHypothesis : Judgment -> Zipper -> Bool
-isHypothesis judgment zipper =
-  List.member judgment (hypsZipper zipper)
+isHypothesis : Val -> Zipper -> Bool
+isHypothesis val zipper =
+  List.member val (hypsZipper zipper)
 
 
 type Polarity
@@ -337,18 +442,17 @@ type alias Path
 walk : Net -> Path -> Maybe (Zipper, Net)
 walk net path =
   let
-    walkJudgment acc judgment path_ =
+    walkVal acc val path_ =
       case path_ of
-        [] -> Just (List.reverse acc, [judgment])
+        [] -> Just (List.reverse acc, [val])
         n :: tail ->
-          case judgment.shape of
+          case val.shape of
             Formula _ -> Nothing
             Scroll { interaction, outloop, inloops } ->
               let
                 scroll =
-                  { metadata = judgment.metadata
-                  , ident = judgment.ident
-                  , justif = judgment.justif
+                  { metadata = val.metadata
+                  , arg = val.arg
                   , interaction = interaction }
               in
               if n == 0 then
@@ -356,9 +460,9 @@ walk net path =
                 walkNet (zOutloop :: acc) outloop tail
               else
                 case Utils.List.pivot (n - 1) inloops of
-                  (l, inloop :: r) ->
-                    let zInloop = mkZInloop scroll inloop.ident outloop l r in
-                    walkNet (zInloop :: acc) inloop.content tail
+                  (l, { metadata, arg, content } :: r) ->
+                    let zInloop = mkZInloop scroll metadata arg outloop l r in
+                    walkNet (zInloop :: acc) content tail
                   _ ->
                     Nothing
     
@@ -368,7 +472,7 @@ walk net path =
         n :: tail ->
           case Utils.List.pivot (n - 1) net_ of
             (l, judgment :: r) ->
-              walkJudgment (mkZNet l r :: acc) judgment tail
+              walkVal (mkZNet l r :: acc) judgment tail
             _ ->
               Nothing
   in
@@ -408,7 +512,7 @@ viewShapeText shape =
         outloopText =
           viewNetText outloop
         
-        inloopText index { ident, content } =
+        inloopText index { arg, content } =
           let
             (isOpened, isClosed) =
               case (interaction.opened, interaction.closed) of
@@ -422,7 +526,7 @@ viewShapeText shape =
 
             contentText = openBracket ++ viewNetText content ++ closeBracket
           in
-          case ident of
+          case arg.name of
             Just name ->
               name ++ " :: " ++ contentText
             Nothing ->
@@ -436,21 +540,21 @@ viewShapeText shape =
       "[" ++ outloopText ++ " " ++ inloopsText ++ "]"
 
 
-viewJudgmentText : Judgment -> String
-viewJudgmentText { ident, justif, shape } =
+viewValText : Val -> String
+viewValText { arg, shape } =
   let
     identText =
-      case ident of
+      case arg.name of
         Just name -> name
         Nothing -> ""
     
     selfText = 
-      if justif.self
+      if arg.justif.self
       then "•"
       else ""
         
     fromText =
-      case justif.from of
+      case arg.justif.from of
         Just name -> name ++ "/"
         Nothing -> ""
     
@@ -463,14 +567,14 @@ viewJudgmentText { ident, justif, shape } =
 viewNetText : Net -> String
 viewNetText net =
   net
-  |> List.map viewJudgmentText
+  |> List.map viewValText
   |> String.join ", "
 
 
 viewZipperText : Zipper -> String
 viewZipperText zipper =
   fillZipper [mkRealFormula (Formula.atom "□")] zipper
-  |> List.map viewJudgmentText
+  |> List.map viewValText
   |> String.join ", "
 
 logZipper : String -> Zipper -> String
@@ -482,7 +586,7 @@ logZipper msg zipper =
 logNet : String -> Net -> String
 logNet msg net =
   net
-  |> List.map viewJudgmentText
+  |> List.map viewValText
   |> String.join ", "
   |> Debug.log msg
 
@@ -490,7 +594,7 @@ logNet msg net =
 -- Examples
 
 
-atom : String -> Judgment
+atom : String -> Val
 atom name =
   mkRealFormula (Formula.atom name)
 
@@ -499,47 +603,47 @@ atom name =
     
     a "foo" == atom "foo"
 -}
-a : String -> Judgment
+a : String -> Val
 a = atom
 
 
-entails : Net -> Net -> Judgment
+entails : Net -> Net -> Val
 entails phi psi =
   mkRealScroll phi [psi]
 
 
-yinyang : Judgment
+yinyang : Val
 yinyang =
   s[][[]]
 
 
-identity : Judgment
+identity : Val
 identity =
   s[a"a"][[a"a"]]
 
 
-testFlower : Judgment
+testFlower : Val
 testFlower =
   s[s[a"b"][[a"c"]]][[a"a",s[a"b"][[a"c"]]]]
 
 {-| "[a, [a (b) ([b (c)], b)], [d (e)] (b, a) (c)]"
 -}
-bigFlower : Judgment
+bigFlower : Val
 bigFlower =
   s[a"a",s[a"a"][[a"b"],[s[a"b"][[a"c"]],a"b"]],s[a"d"][[a"e"]]][[a"b",a"a"],[a"c"]]
  
 
-modusPonensCurryfied : Judgment
+modusPonensCurryfied : Val
 modusPonensCurryfied =
   s[s[a"a"][[a"b"]]][[s[a"a"][[a"b"]]]]
 
 
-notFalse : Judgment
+notFalse : Val
 notFalse =
   s[s[][]][]
 
 
-criticalPair : Judgment
+criticalPair : Val
 criticalPair =
   s[s[][[a"a"],[a"b"]]
    ,s[a"a"][[a"c"]]
@@ -547,7 +651,7 @@ criticalPair =
    [[a"c"]]
 
 
-orElim : Judgment
+orElim : Val
 orElim =
   mkRealFormula
     ( Implies
@@ -559,7 +663,7 @@ orElim =
           ( Formula.atom "c" ) ) )
 
 
-orElimInvertible : Judgment
+orElimInvertible : Val
 orElimInvertible =
   mkRealFormula
     ( Implies
@@ -571,7 +675,7 @@ orElimInvertible =
           ( Implies (Formula.atom "b") (Formula.atom "c") ) ) )
 
 
-kreiselPutnam : Judgment
+kreiselPutnam : Val
 kreiselPutnam =
   mkRealFormula
     ( Implies

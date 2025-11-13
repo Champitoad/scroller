@@ -12,17 +12,17 @@ import Html5.DragDrop as DnD
 -- Drag-and-Drop
 
 
-type alias FlowerDragId
-  = { location : Location, source : Zipper, content : Flower }
+type alias JudgmentDragId
+  = { location : Location, source : Zipper, content : Computation }
 
-type alias FlowerDropId
+type alias JudgmentDropId
   = Maybe { location : Location, target : Zipper, content : Net }
 
-type alias FlowerDnD
-  = DnD.Model FlowerDragId FlowerDropId
+type alias JudgmentDnD
+  = DnD.Model JudgmentDragId JudgmentDropId
 
-type alias FlowerDnDMsg
-  = DnD.Msg FlowerDragId FlowerDropId
+type alias JudgmentDnDMsg
+  = DnD.Msg JudgmentDragId JudgmentDropId
 
 
 -- Full state of the application
@@ -32,7 +32,7 @@ type alias Model
   = { goal : Goal
     , history : History
     , manualExamples : Sandboxes
-    , dragDrop : FlowerDnD
+    , dragDrop : JudgmentDnD
     , url : Url.Url
     , key : Browser.Navigation.Key }
 

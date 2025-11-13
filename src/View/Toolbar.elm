@@ -119,7 +119,7 @@ viewModeSelector currentMode =
     , Border.rounded buttonBorderRadius
     , Border.color borderColor
     , Background.color borderColor ]
-    [ item (ProofMode Justifying) Start
+    [ item (ProofMode Justifyin) Start
     , item (EditMode Operating initialSurgery) Middle
     , item NavigationMode End ]
 

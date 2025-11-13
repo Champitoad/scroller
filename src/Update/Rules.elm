@@ -8,72 +8,53 @@ import Model.Goal exposing (..)
 
 
 type Rule
-  = Decompose -- introduction of connective
-  | Justify -- down pollination
-  | Import -- up pollination
-  | Unlock -- empty outloop with single inloop
-  | Case -- empty outloop with many inloops
-  | Close -- empty inloop / empty outloop with no inloop
-  | Fence -- fencing
-  | Reorder -- multiset
-  | Grow -- add flower/inloop
-  | Crop -- remove flower
-  | Pull -- remove inloop
+  = Open -- open scroll with empty outloop and single empty inloop
+  | Close -- close scroll with empty outloop and single (possibly non-empty) inloop
+  | Insert -- insert a judgment/inloop
+  | Delete -- delete a judgment/inloop
+  | Iterate -- iterate a judgment/inloop
+  | Deiterate -- deiterate a judgment/inloop
+  | Decompose -- decomposition of connective
+  | Reorder -- reorder judgments in a net
 
 
 decomposable : Zipper -> Net -> Bool
 decomposable _ net =
   case net of
-    [Formula { statement }] ->
-      case statement of
-        Atom _ -> False
-        _ -> True
-    _ -> False
+    [{ shape }] ->
+      case shape of
+        Formula formula ->
+          case formula of
+            Atom _ -> False
+            _ -> True
+        _ -> False
+    _ ->
+      False
 
 
 justifiable : Zipper -> Net -> Bool
 justifiable zipper net =
   let
-    justifiableFlower flower =
-      case flower of
-        Formula { statement } ->
-          case statement of
-            Atom _ -> isHypothesis flower zipper
+    justifiableJudgment judgment =
+      case judgment.shape of
+        Formula formula ->
+          case formula of
+            Atom _ -> isHypothesis judgment zipper
             _ -> False
         _ ->
           False
   in
   not (List.isEmpty net) &&
-  forall justifiableFlower net
-
-
-unlockable : Zipper -> Net -> Bool
-unlockable zipper net =
-  case (net, zipper) of
-    ([], Outloop { inloops } :: _) ->
-      List.length inloops == 1
-    _ ->
-      False
-
-
-caseable : Zipper -> Net -> Bool
-caseable zipper net =
-  case (net, zipper) of
-    ([], Outloop { inloops } :: ZNet _ :: Outloop _ :: _) ->
-      List.length inloops > 1
-    _ ->
-      False
+  forall justifiableJudgment net
 
 
 closeable : Zipper -> Net -> Bool
 closeable zipper net =
   case (net, zipper) of
-    ([], Outloop { inloops } :: ZNet _ :: Outloop _ :: _ ) ->
-      case inloops of
-        [] -> True
-        _ -> False
-    ([], Inloop _ :: _) -> True
-    _ -> False
+    ([], ZOutloop { inloops } :: _) ->
+      List.length inloops == 1
+    _ ->
+      False
 
 
 autoRules : Zipper -> Net -> List Rule
@@ -81,9 +62,7 @@ autoRules zipper net =
   let
     rulePreds =
       [ (Decompose, decomposable)
-      , (Justify, justifiable)
-      , (Unlock, unlockable)
-      , (Case, caseable)
+      , (Deiterate, justifiable)
       , (Close, closeable) ]
   in
   List.foldl
@@ -100,95 +79,71 @@ operable polarity context =
 
 growable : Context -> Bool
 growable =
-  operable Pos
+  operable Neg
 
 
 glueable : Context -> Bool
 glueable =
-  operable Neg
+  operable Pos
 
 
 pullable : Context -> Bool
 pullable =
-  operable Pos
+  operable Neg
 
 
 croppable : Context -> Bool
 croppable =
-  operable Neg
+  operable Pos
 
 
+{- `operate rule zipper net surgery` updates `surgery` with the deleted `net` if `rule` is a
+   `Deletion`, and does nothing otherwise.
+-}
 operate : Rule -> Zipper -> Net -> Surgery -> Surgery
 operate rule zipper net surgery =
   case (rule, net, zipper) of
-    (Crop, [flower], ZNet _ :: _) ->
-      { surgery | cropped = Just flower }
+    (Delete, [judgment], ZNet _ :: _) ->
+      { surgery | cropped = Just judgment }
 
-    (Pull, _, Inloop _ :: _) ->
-      { surgery | pulled = Just (mkRealNet net) }
+    (Delete, _, ZInloop inloop :: _) ->
+      { surgery | pulled = Just { ident = inloop.ident, content = net } }
     
     _ ->
       surgery
 
 
-apply : Rule -> Zipper -> Net -> Net
+apply : Rule -> Zipper -> Net -> Result String Net
 apply rule zipper net =
   case (rule, net, zipper) of
-    (Decompose, [Formula { statement }], _) ->
-      fillZipper (decompose statement) zipper
-
-    (Justify, _, _) ->
-      fillZipper [] zipper
-    
-    (Import, _, _) ->
-      fillZipper net zipper
-
-    (Unlock, [], Outloop { inloops } :: parent)  ->
-      case inloops of
-        [inloop] ->
-          fillZipper inloop parent
+    (Decompose, [{ shape }], _) ->
+      case shape of
+        Formula formula ->
+          Ok (fillZipper (decompose formula) zipper)
+        
         _ ->
-          Debug.todo "Unsupported action"
+          Err "Cannot decompose something else than a formula"
+
+    (Deiterate, _, _) ->
+      Ok (fillZipper net zipper)
     
-    (Case, [], Outloop branches
-            :: ZNet { left, right }
-            :: Outloop goal :: parent) ->
-      let
-        case_ : Net -> Flower
-        case_ branch =
-          mkFlower branches.metadata branch goal.inloops
-        
-        outloop =
-          mkNet goal.outloopMetadata (left ++ right)
-        
-        cases =
-          List.map case_ branches.inloops
-      in
-      fillZipper [mkFlower goal.metadata outloop [mkRealNet cases]] parent
-    
-    (Close, [], Outloop p :: ZNet _ :: Outloop _ :: parent ) ->
-      if List.isEmpty p.inloops then
-        fillZipper [] parent
-      else
-        Debug.todo "Unsupported action"
-    
-    (Close, [], Inloop _ :: parent) ->
-      fillZipper [] parent
+    (Iterate, _, _) ->
+      Ok (fillZipper net zipper)
+
+    (Close, [], ZOutloop _ :: _)  ->
+      Ok (fillZipper net zipper)
     
     (Reorder, _, _ :: parent) ->
-      fillZipper net parent
+      Ok (fillZipper net parent)
     
-    (Grow, _, _) ->
-      fillZipper net zipper
+    (Insert, _, _) ->
+      Ok (fillZipper net zipper)
     
-    (Crop, _, _) ->
-      fillZipper [] zipper
-
-    (Pull, _, Inloop { metadata, outloop, left, right } :: parent) ->
-      fillZipper [mkFlower metadata outloop (left ++ right)] parent
+    (Delete, _, _) ->
+      Ok (fillZipper [] zipper)
 
     _ ->
-      Debug.todo "Unsupported action"
+      Err "Unsupported action"
 
 
 tryRules : List Rule -> List Rule -> Zipper -> Net -> Maybe Net
@@ -200,37 +155,42 @@ tryRules candidates allowed zipper net =
       if not (List.member rule allowed) then
         tryRules rules allowed zipper net
       else
-        Just (apply rule zipper net)
+        case apply rule zipper net of
+          Ok res -> Just res
+          Err msg -> Debug.log msg Nothing
 
 
-autoFlower : List Rule -> Zipper -> Flower -> Maybe Net
-autoFlower allowed zipper flower =
-  case flower of
+autoJudgment : List Rule -> Zipper -> Argument -> Maybe Net
+autoJudgment allowed zipper judgment =
+  case judgment.shape of
     Formula _ ->
-      let candidates = autoRules zipper [flower] in
-      tryRules candidates allowed zipper [flower]
+      let candidates = autoRules zipper [judgment] in
+      tryRules candidates allowed zipper [judgment]
     
-    Flower { metadata, outloop, inloops } ->
+    Scroll { interaction, outloop, inloops } ->
       -- First try on outloop
-      let (ZNet outloopData) = outloop in
-      let resultOutloop = autoNet allowed (mkOutloop metadata outloopData.metadata inloops :: zipper) outloop in
+      let 
+        scrollData =
+          { metadata = judgment.metadata
+          , ident = judgment.name
+          , justif = judgment.justif
+          , interaction = interaction }
+
+        resultOutloop =
+          autoNet allowed (mkZOutloop scrollData inloops :: zipper) outloop
+      in
       case resultOutloop of
         Just _ -> resultOutloop
         Nothing ->
           -- Then try on inloops
           let
-            autoInloop (left, right) (ZNet inloopData as inloop) acc =
+            autoInloop (left, right) { ident, content } acc =
               case acc of
                 Just _ -> acc
                 Nothing ->
-                  autoNet allowed (mkInloop metadata inloopData.metadata outloop left right :: zipper) inloop
+                  autoNet allowed (mkZInloop scrollData ident outloop left right :: zipper) content
           in
           zipperFoldl autoInloop Nothing inloops
-
-
-autoNet : List Rule -> Zipper -> Net -> Maybe Net
-autoNet allowed zipper net =
-  autoNet allowed zipper net
 
 
 autoNet : List Rule -> Zipper -> Net -> Maybe Net
@@ -245,14 +205,13 @@ autoNet allowed zipper net =
     Nothing ->
       -- Then try on each flower of the net
       let
-        -- Let's assume flowers in a net are always tulips, shall we?
-        autoTulip (left, right) tulip acc =
+        aux (left, right) judgment acc =
           case acc of
             Just _ -> acc
             Nothing ->
-              autoFlower allowed (mkNet left right :: zipper) tulip
+              autoJudgment allowed (mkZNet left right :: zipper) judgment
       in
-      zipperFoldl autoTulip Nothing net
+      zipperFoldl aux Nothing net
 
 
 auto : List Rule -> Net -> Net

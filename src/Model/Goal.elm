@@ -1,6 +1,6 @@
 module Model.Goal exposing (..)
 
-import Model.Scroll as Flower exposing (..)
+import Model.Scroll as Scroll exposing (..)
 
 import Dict exposing (Dict)
 
@@ -16,14 +16,16 @@ type alias Selection
 
 
 type ProofInteraction
-  = Justifying
-  | Importing
-  | Fencing Selection
+  = Interacting
+  | Justifying
 
 
+{- A `Surgery` remembers the last deleted judgment or inloop in Edit mode,
+   so that it can be pasted elsewhere.
+-}
 type alias Surgery =
-  { cropped : Maybe Flower
-  , pulled : Maybe Net }
+  { cropped : Maybe Computation
+  , pulled : Maybe Inloop }
 
 
 initialSurgery : Surgery
@@ -44,7 +46,7 @@ type UIMode
   | NavigationMode
   
 
-{- A Navigation is a non-empty sequence of visited [Context]s.
+{- A `Navigation` is a non-empty sequence of visited [Context]s.
 
    It is used to keep track of the user's navigation history, i.e. the different
    locations in a goal that she has visited.
@@ -52,8 +54,6 @@ type UIMode
    The head of the list corresponds to the last visited location, and the last
    element to the initial location.
 -}
-
-
 type alias Navigation = List Context
 
 
@@ -100,20 +100,20 @@ backtrack navigation =
       initialNavigation -- should never happen
 
 
-{- A Goal is made of the following data:
-
-   [focus]: the net that the user is currently working on
-   [navigation]: the navigation history
-   [location]: a unique, semantic identifier for the goal location
-   [mode]: the current mode of interaction
-
--}
-
-
 type Location
   = App
   | Manual SandboxID
 
+{- A `Goal` is made of the following data:
+
+   `focus`: the net that the user is currently working on
+
+   `navigation`: the navigation history
+
+   `location`: a unique, semantic identifier for the `goal` location
+
+   `mode`: the current mode of interaction
+-}
 type alias Goal
   = { focus : Net
     , navigation : Navigation
@@ -127,7 +127,7 @@ fromNet net =
   { focus = net
   , navigation = initialNavigation
   , location = App
-  , mode = ProofMode Justifying
+  , mode = ProofMode Interacting
   }
 
 
@@ -213,14 +213,14 @@ manualExamples =
     
     examples : List (SandboxID, UIMode, Net)
     examples =
-      [ ( "Flower", ProofMode Justifying, [fl[a"a",a"b"][[a"c"],[a"d"]]] )
-      , ( "QED", ProofMode Justifying, [fl[a"a"][[]]] )
-      , ( "Justify", ProofMode Justifying, [Flower.identity] )
-      , ( "Unlock", ProofMode Justifying, [fl[fl[][[a"a"]]][[a"a"]]] )
-      , ( "Import", ProofMode Justifying, [Flower.modusPonensCurryfied] )
-      , ( "Case", ProofMode Justifying,
-          [fl[fl[][[a"a"],[a"b"]],fl[a"a"][[a"c"]],fl[a"b"][[a"c"]]][[a"c"]]] )
-      , ( "Decompose", ProofMode Justifying, [Flower.orElim] )
+      [ ( "Flower", ProofMode Interacting, [s[a"a",a"b"][[a"c"],[a"d"]]] )
+      , ( "QED", ProofMode Interacting, [s[a"a"][[]]] )
+      , ( "Justify", ProofMode Interacting, [Scroll.identity] )
+      , ( "Unlock", ProofMode Interacting, [s[s[][[a"a"]]][[a"a"]]] )
+      , ( "Import", ProofMode Interacting, [Scroll.modusPonensCurryfied] )
+      , ( "Case", ProofMode Interacting,
+          [s[s[][[a"a"],[a"b"]],s[a"a"][[a"c"]],s[a"b"][[a"c"]]][[a"c"]]] )
+      , ( "Decompose", ProofMode Interacting, [Scroll.orElim] )
       ]
   in
   examples |>

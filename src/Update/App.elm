@@ -28,7 +28,7 @@ type Msg
   | ChangeUIMode UIMode
   | Undo
   | Redo
-  | DragDropMsg FlowerDnDMsg
+  | DragDropMsg JudgmentDnDMsg
   | ResetSandbox SandboxID
   | HandleKeyboardEvent KeyboardEvent
   | ConsoleLog String String
@@ -37,7 +37,7 @@ type Msg
   | LinkClicked Browser.UrlRequest
 
 
-handleDragDropMsg : FlowerDnDMsg -> Model -> (Model, Cmd Msg)
+handleDragDropMsg : JudgmentDnDMsg -> Model -> (Model, Cmd Msg)
 handleDragDropMsg dndMsg model =
   let
     dragStart = 
@@ -59,8 +59,8 @@ handleDragDropMsg dndMsg model =
             
             newMode =
               case goal.mode of
-                ProofMode Justifying ->
-                  ProofMode Importing
+                ProofMode Interacting ->
+                  ProofMode Justifying
                 EditMode _ surgery ->
                   EditMode Reordering surgery
                 _ ->
@@ -83,7 +83,7 @@ handleDragDropMsg dndMsg model =
                 defaultMode =
                   case goal.mode of
                     ProofMode _ ->
-                      ProofMode Justifying
+                      ProofMode Interacting
 
                     EditMode _ surgery ->
                       EditMode Operating surgery
@@ -97,8 +97,8 @@ handleDragDropMsg dndMsg model =
                   let
                     action =
                       case goal.mode of
-                        ProofMode Importing ->
-                          Action Import goal.location
+                        ProofMode Justifying ->
+                          Action Justify goal.location
                             destination.target [drag.content]
                         
                         EditMode Reordering _ ->
@@ -175,7 +175,7 @@ update msg ({ goal, manualExamples } as model) =
     Auto ->
       ( { model | goal =
           { goal
-          | focus = auto [Unlock, Decompose, Close, Justify] goal.focus
+          | focus = auto [Close, Decompose, Close, Justify] goal.focus
           }
         , history = History { prev = Just model, next = Nothing } }
       , Cmd.none )
@@ -188,7 +188,7 @@ update msg ({ goal, manualExamples } as model) =
         newFocus =
           case mode of
             ProofMode _ ->
-              List.map naturalizeFlower goal.focus
+              List.map commit goal.focus
             _ ->
               goal.focus
       in
