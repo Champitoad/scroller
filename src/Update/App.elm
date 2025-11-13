@@ -1,7 +1,5 @@
 port module Update.App exposing (..)
 
-import Update.Rules exposing (..)
-
 import Model.Scroll exposing (..)
 import Model.Goal exposing (..)
 import Model.App exposing (..)
@@ -22,13 +20,15 @@ port dragstart : Value -> Cmd msg
 
 
 type Msg
-  = Action Rule Location Zipper Net
+  = ExecAction Action
   | Auto
   | SetGoal Net
-  | ChangeUIMode UIMode
+  | ChangeActionMode ActionMode
+  | ChangeExecMode ExecMode
+  | ToggleRecording
   | Undo
   | Redo
-  | DragDropMsg JudgmentDnDMsg
+  | DragDropMsg ValDnDMsg
   | ResetSandbox SandboxID
   | HandleKeyboardEvent KeyboardEvent
   | ConsoleLog String String
@@ -37,7 +37,7 @@ type Msg
   | LinkClicked Browser.UrlRequest
 
 
-handleDragDropMsg : JudgmentDnDMsg -> Model -> (Model, Cmd Msg)
+handleDragDropMsg : ValDnDMsg -> Model -> (Model, Cmd Msg)
 handleDragDropMsg dndMsg model =
   let
     dragStart = 
@@ -98,11 +98,11 @@ handleDragDropMsg dndMsg model =
                     action =
                       case goal.mode of
                         ProofMode Justifying ->
-                          Action Justify goal.location
+                          ExecAction Justify goal.location
                             destination.target [drag.content]
                         
                         EditMode Reordering _ ->
-                          Action Reorder goal.location
+                          ExecAction Reorder goal.location
                             destination.target destination.content
                         
                         _ ->
@@ -137,7 +137,7 @@ handleDragDropMsg dndMsg model =
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg ({ goal, manualExamples } as model) =
   case msg of
-    Action rule location zipper net ->
+    ExecAction rule location zipper net ->
       let
         newFocus =
           apply rule zipper net
@@ -183,7 +183,7 @@ update msg ({ goal, manualExamples } as model) =
     SetGoal net ->
       ( { model | goal = { goal | focus = net } }, Cmd.none )
     
-    ChangeUIMode mode ->
+    ChangeActionMode mode ->
       let
         newFocus =
           case mode of

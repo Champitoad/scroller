@@ -127,7 +127,7 @@ viewFormula dnd { mode, navigation, location } ({ metadata, statement } as data)
             _ -> pinkActionable
       in
       case mode of
-        ProofMode Justifying ->
+        ProofMode Argumenting ->
           case statement of
             Atom _ ->
               if isHypothesis form context.zipper then
@@ -184,7 +184,7 @@ viewOutloop dnd ({ mode, navigation, location } as goal) { metadata, outloopMeta
 
     clickAction =
       case mode of
-        ProofMode Justifying ->
+        ProofMode Argumenting ->
           let
             actionableStyle = orangeActionable
 
@@ -257,7 +257,7 @@ viewInloop dnd
     clickAction =
       let actionableStyle = greenActionable in
       case mode of
-        ProofMode Justifying ->
+        ProofMode Argumenting ->
           if List.isEmpty inloopData.flowers then
             (Events.onClick (Action Close location newZipper inloopData.flowers))
             :: (htmlAttribute <| title "QED")

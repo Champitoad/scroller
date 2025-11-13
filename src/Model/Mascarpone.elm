@@ -58,22 +58,22 @@ mascarponeCream =
   { src = "public/assets/img/mascarpone-cream.png"
   , description = "mascarpone cream" })
 
-crack : Computation
+crack : Val
 crack =
   entails [f egg] [f yolk, f white]
 
-whisk : Computation
+whisk : Val
 whisk =
   entails [f white] [f whiskedWhites]
 
-beat : Computation
+beat : Val
 beat =
   entails [f yolk, f sugar] [f yolkPaste]
 
-stir : Computation
+stir : Val
 stir =
   entails [f yolkPaste, f mascarpone] [f thickPaste]
 
-fold : Computation
+fold : Val
 fold =
   entails [f whiskedWhites, f thickPaste] [f mascarponeCream]

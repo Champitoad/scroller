@@ -439,12 +439,13 @@ type alias Path
     does not always denote a valid branch of the net, thus this operation is
     partial.
 -}
-walk : Net -> Path -> Maybe (Zipper, Net)
+walk : Net -> Path -> Maybe (Context, Net)
 walk net path =
   let
-    walkVal acc val path_ =
+    walkVal : List Zip -> Polarity -> Val -> Path -> Maybe (Context, Net)
+    walkVal acc pol val path_ =
       case path_ of
-        [] -> Just (List.reverse acc, [val])
+        [] -> Just ({ zipper = List.reverse acc, polarity = pol }, [val])
         n :: tail ->
           case val.shape of
             Formula _ -> Nothing
@@ -457,26 +458,26 @@ walk net path =
               in
               if n == 0 then
                 let zOutloop = mkZOutloop scroll inloops in
-                walkNet (zOutloop :: acc) outloop tail
+                walkNet (zOutloop :: acc) (invert pol) outloop tail
               else
                 case Utils.List.pivot (n - 1) inloops of
                   (l, { metadata, arg, content } :: r) ->
                     let zInloop = mkZInloop scroll metadata arg outloop l r in
-                    walkNet (zInloop :: acc) content tail
+                    walkNet (zInloop :: acc) pol content tail
                   _ ->
                     Nothing
     
-    walkNet acc net_ path_ =
+    walkNet acc pol net_ path_ =
       case path_ of
-        [] -> Just (List.reverse acc, net_)
+        [] -> Just ({ zipper = List.reverse acc, polarity = pol }, net_)
         n :: tail ->
           case Utils.List.pivot (n - 1) net_ of
-            (l, judgment :: r) ->
-              walkVal (mkZNet l r :: acc) judgment tail
+            (l, val :: r) ->
+              walkVal (mkZNet l r :: acc) pol val tail
             _ ->
               Nothing
   in
-  walkNet [] net path
+  walkNet [] Pos net path
 
 
 -- Also there is a forgetful functor from zippers to paths

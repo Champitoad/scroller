@@ -3,6 +3,7 @@ module Model.Goal exposing (..)
 import Model.Scroll as Scroll exposing (..)
 
 import Dict exposing (Dict)
+import Queue exposing (Queue)
 
 
 -- Selection
@@ -17,15 +18,15 @@ type alias Selection
 
 type ProofInteraction
   = Interacting
-  | Justifying
+  | Argumenting
 
 
-{- A `Surgery` remembers the last deleted judgment or inloop in Edit mode,
+{- A `Surgery` remembers the last deleted value or environment in Edit mode,
    so that it can be pasted elsewhere.
 -}
 type alias Surgery =
-  { cropped : Maybe Computation
-  , pulled : Maybe Inloop }
+  { cropped : Maybe Val
+  , pulled : Maybe Env }
 
 
 initialSurgery : Surgery
@@ -40,10 +41,18 @@ type EditInteraction
   | Reordering
 
 
-type UIMode
+type ActionMode
   = ProofMode ProofInteraction
   | EditMode EditInteraction Surgery
   | NavigationMode
+
+
+type ExecMode
+  = Forward
+  | Backward
+
+
+-- Navigation
   
 
 {- A `Navigation` is a non-empty sequence of visited [Context]s.
@@ -100,6 +109,9 @@ backtrack navigation =
       initialNavigation -- should never happen
 
 
+-- Goals
+
+
 type Location
   = App
   | Manual SandboxID
@@ -110,15 +122,24 @@ type Location
 
    `navigation`: the navigation history
 
-   `location`: a unique, semantic identifier for the `goal` location
+   `location`: a unique, semantic identifier for the goal's location
 
-   `mode`: the current mode of interaction
+   `actionMode`: the current mode determining which actions can be performed through direct manipulation
+
+   `execMode`: the current mode determining in which direction actions are executed
+
+   `recording`: a boolean determining whether actions are recorded
+
+   `actionsQueue`: queue of recorded actions pending for execution
 -}
 type alias Goal
   = { focus : Net
     , navigation : Navigation
     , location : Location
-    , mode : UIMode
+    , actionMode : ActionMode
+    , execMode : ExecMode
+    , recording : Bool
+    , actions : Queue Action
     }
 
 
@@ -127,7 +148,10 @@ fromNet net =
   { focus = net
   , navigation = initialNavigation
   , location = App
-  , mode = ProofMode Interacting
+  , actionMode = ProofMode Interacting
+  , execMode = Forward
+  , recording = True
+  , actions = Queue.empty
   }
 
 
@@ -136,13 +160,67 @@ map f goal =
   { goal | focus = f goal.focus }
 
 
+walkGoal : Goal -> Path -> (Context, Net)
+walkGoal { focus } path =
+  case Scroll.walk focus path of
+    Just (ctx, net) ->
+      (ctx, net)
+    Nothing ->
+      ({ zipper = [], polarity = Pos }, focus) -- should not happen
+
+-- Actions
+
+
+type Action
+  = Open Path -- open a scroll with an empty outloop and a single empty inloop at the end of a net
+  | Close Path -- close a scroll with an empty outloop
+  | Insert Path Net -- insert a value/inloop at the end of a net/scroll
+  | Delete Path -- delete a value/inloop from a net/scroll
+  | Iterate { src : Path, dst : Path } -- iterate a source value/inloop at the end of a target net/scroll
+  | Deiterate { src : Path, dst : Path } -- deiterate a target value/inloop inloop from an identical source
+
+
+{- `exec action goal` executes `action` in `goal` by updating `goal.focus` accordingly.
+
+   Note: for now we assume that `goal.focus` is always the top-level net, and thus the action's
+   paths are walked from the root of `goal.focus`.
+-}
+exec : Action -> Goal -> Goal
+exec action goal =
+  let
+    walk = walkGoal goal
+
+    newFocus : Net
+    newFocus =
+      case action of
+        Open path ->
+          Debug.todo ""
+
+        Close path ->
+          Debug.todo ""
+
+        Insert path net ->
+          Debug.todo ""
+
+        Delete path ->
+          Debug.todo ""
+
+        Iterate { src, dst } ->
+          Debug.todo ""
+
+        Deiterate { src, dst } ->
+          Debug.todo ""
+  in
+  { goal | focus = newFocus }
+
+
 -- A Sandbox is a Goal that can be reset
 
 
 type alias Sandbox =
-    { initialGoal : Goal
-    , currentGoal : Goal
-    }
+  { initialGoal : Goal
+  , currentGoal : Goal
+  }
 
 type alias SandboxID = String
 
@@ -203,15 +281,18 @@ resetAllSandboxes sandboxes =
 manualExamples : Sandboxes
 manualExamples =
   let
-    makeSandbox id mode net =
+    makeSandbox id actionMode execMode focus =
       mkSandbox
-        { focus = net
+        { focus = focus
         , navigation = initialNavigation
         , location = Manual id
-        , mode = mode
+        , actionMode = actionMode
+        , execMode = execMode
+        , recording = True
+        , actions = Queue.empty
         }
     
-    examples : List (SandboxID, UIMode, Net)
+    examples : List (SandboxID, ActionMode, Net)
     examples =
       [ ( "Flower", ProofMode Interacting, [s[a"a",a"b"][[a"c"],[a"d"]]] )
       , ( "QED", ProofMode Interacting, [s[a"a"][[]]] )
@@ -224,5 +305,5 @@ manualExamples =
       ]
   in
   examples |>
-  List.map (\(id, mode, net) -> (id, makeSandbox id mode net)) |>
+  List.map (\(id, mode, net) -> (id, makeSandbox id mode Forward net)) |>
   Dict.fromList
