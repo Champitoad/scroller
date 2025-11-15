@@ -63,16 +63,6 @@ type alias Env
 -- Conversions between structures and nets
 
 
-assumption : Justification
-assumption =
-  { self = False, from = Nothing }
-
-assume : Maybe Ident -> Argument
-assume name =
-  { name = name
-  , justif = assumption }
-
-
 netFromStruct : Struct -> Net
 netFromStruct struct =
   List.map valFromNode struct
@@ -122,7 +112,29 @@ nodeFromVal { shape } =
               , inloops = List.map inloopFromEnv inloops }
 
 
+-- Boundaries
+
+
+premiss : Net -> Struct
+premiss net =
+  Debug.todo "Premiss computation not implemented yet."
+
+conclusion : Net -> Struct
+conclusion net =
+  Debug.todo "Conclusion computation not implemented yet."
+
+
 -- Helper functions
+
+
+assumption : Justification
+assumption =
+  { self = False, from = Nothing }
+
+assume : Maybe Ident -> Argument
+assume name =
+  { name = name
+  , justif = assumption }
 
 
 isGrownVal : Val -> Bool

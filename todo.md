@@ -1,5 +1,33 @@
 # Features
 
+- Maintain uniqueness of same-scope bound variables in various operations
+  - Function `bvu` (bound vars upward) that computes the bound variables available at a given `Path`
+  - Function `bvd` (bound vars downward) that computes all the bound variables in scope of a given `Path`
+  - All actions that introduce a new node (`Open`/`Insert`/`Iterate`):
+    - can compute a fresh name automatically, or can ask the user for a name and deny it if it is already in `bvu ∪ bvd`
+  - All actions that change the scope of a binder (`Close`)
+    - can compute fresh names automatically for all bound vars in the inloop, or can ask the user to rename all those that are already in `bvd`
+  - Renaming
+    - check that the new name is not already in `bvu ∪ bvd`
+
+- Maintain well-scopedness of justifications in various operations:
+  - Function `jnd` (justified nodes downward) that computes the paths to all nodes that are justified from a given bound variable
+  - All actions that eliminate a node (`Close`/`Delete`/`Deiterate`)
+    - the action can only be executed if `jnd` is empty
+
+- Execution of actions
+  - "Step" and "Run" buttons that respectively dequeue/execute the next action and execute the whole queue
+  - Forward and Backward exec modes only differ in the polarity of the target path for argumentation actions, and in the swap between `opened` and `closed` in `ScrollData.interaction` for interaction actions
+  - The action at the head of the queue should always be highlighted at the location where it occurs in the goal
+  - **Free execution**:
+    - the user can execute actions in the order she wants by clicking directly on them in the goal. However, only actions which are *applicable* (and thus do not depend on other actions) can be executed:
+      - `Open`: the parent is neither introduced nor eliminated
+      - `Insert`: the parent is neither introduced nor eliminated
+      - `Iterate`: the target's parent is neither introduced nor eliminated, and the source is not introduced
+      - `Close`: the scroll has exactly one inloop and no values in its outloop, and it is neither introduced nor used in a (de)iteration
+      - `Delete`: the node is neither introduced nor used in a (de)iteration
+      - `Deiterate`: the target is neither introduced nor used in a (de)iteration, and the source is not introduced
+
 - Proof mode
   - For now, we still restrict deiteration to atoms (do we?). This limits us to first-order
     functions without ADTs however. Later we will need to support deiteration on scrolls by either:
@@ -23,8 +51,8 @@
   - Still just a means to perform the insertion and deletion rules
   <!-- - Localize commit mechanism for insertion:
     - Switching to Proof mode does not trigger a global commit anymore
-    - Only the root judgment is marked as "grown" (inserted)
-    - A `commit` button is added to grown judgments -->
+    - Only the root node is marked as "grown" (inserted)
+    - A `commit` button is added to grown nodes -->
   - Implement the `Renaming` `EditInteraction`:
     - When `goal.actionMode == EditMode (Renaming path) _`, the label of the value/inloop at `path`
       becomes an input field
@@ -46,8 +74,9 @@
     - Given a subnet in the goal, fold with the alias found by reverse lookup
       (assuming we enforce the global env to be bijective)
 
-
-- Vertical generalization of the scroll, where inloops can be iterated inside adjacent inloops
+- Vertical generalization of the scroll
+  - `ScrollData.inloops` becomes a tree instead of a list
+  - Inloops can be iterated inside adjacent inloops
 
 # Brainstorming
 

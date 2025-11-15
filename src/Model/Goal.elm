@@ -114,6 +114,9 @@ backtrack navigation =
 -- Goals
 
 
+type alias SandboxID = String
+
+
 type Location
   = App
   | Manual SandboxID
@@ -182,11 +185,16 @@ walkGoal { focus } path =
 
 type Action
   = Open Path -- open a scroll with an empty outloop and a single empty inloop at the end of a net
-  | Close Path -- close a scroll with an empty outloop
+  | Close Path -- close a scroll with an empty outloop and a single inloop
   | Insert Path Net -- insert a value/inloop at the end of a net/scroll
   | Delete Path -- delete a value/inloop from a net/scroll
   | Iterate { src : Path, tgt : Path } -- iterate a source value/inloop at the end of a target net/scroll
   | Deiterate { src : Path, tgt : Path } -- deiterate a target value/inloop from an identical source
+
+
+applicable : Goal -> Action -> Bool
+applicable goal action =
+  Debug.todo "Applicability predicate for actions not implemented yet."
 
 
 {- `record action goal` records `action` in `goal` by:
@@ -194,6 +202,8 @@ type Action
    - pushing `id` in `goal.actionsQueue`
    - decorating the scroll net `goal.focus` with the argumentation/interaction corresponding to `action`
    - returning `id` for later usage (typically with `Goal.execute`)
+   
+   This assumes that the action is indeed applicable in the goal.
 
    **Note:** for now we assume that `goal.focus` is always the top-level net, and thus the action's
    paths are walked from the root of `goal.focus`.
@@ -221,9 +231,16 @@ record action goal =
           case walk path of
             (zipper, net) ->
               let
+                interaction =
+                  case goal.execMode of
+                    Forward ->
+                      { opened = Just 0, closed = Nothing }
+                    Backward ->
+                      { opened = Nothing, closed = Just 0 }
+                  
                 emptyScroll =
                   mkShape { grown = False }
-                    (Scroll { interaction = { opened = Just 0, closed = Nothing }
+                    (Scroll { interaction = interaction
                             , outloop = []
                             , inloops = [mkInloop { grown = False } Nothing []] })
                 
@@ -238,8 +255,13 @@ record action goal =
               case val.shape of
                 Scroll ({ interaction } as scrollData) ->
                   let
+                    idx = List.length left
                     newInteraction =
-                      { interaction | closed = Just (List.length left) }
+                      case goal.execMode of
+                        Forward ->
+                          { interaction | closed = Just idx }
+                        Backward ->
+                          { interaction | opened = Just idx }
                     newScrollData =
                       { scrollData | interaction = newInteraction }
                   in
@@ -364,8 +386,6 @@ type alias Sandbox =
   { initialGoal : Goal
   , currentGoal : Goal
   }
-
-type alias SandboxID = String
 
 type alias Sandboxes = Dict SandboxID Sandbox
 
