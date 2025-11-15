@@ -4,13 +4,14 @@ import Model.Scroll as Scroll exposing (..)
 
 import Dict exposing (Dict)
 import Queue exposing (Queue)
+import Iddict exposing (Iddict)
 
 
 -- Selection
 
 
 type alias Selection
-  = List Zipper
+  = List Path
 
 
 -- Modal UI
@@ -37,7 +38,8 @@ initialSurgery =
 
 type EditInteraction
   = Operating
-  | Adding Zipper
+  | Adding Path
+  | Renaming Path
   | Reordering
 
 
@@ -122,15 +124,17 @@ type Location
 
    `navigation`: the navigation history
 
-   `location`: a unique, semantic identifier for the goal's location
+   `location`: a unique, semantic identifier for the goal's location in the app
 
    `actionMode`: the current mode determining which actions can be performed through direct manipulation
 
    `execMode`: the current mode determining in which direction actions are executed
 
    `recording`: a boolean determining whether actions are recorded
+   
+   `actions`: dictionary of all recorded actions pending for execution, accessed through unique IDs
 
-   `actionsQueue`: queue of recorded actions pending for execution
+   `actionsQueue`: queue of recorded actions IDs
 -}
 type alias Goal
   = { focus : Net
@@ -139,7 +143,8 @@ type alias Goal
     , actionMode : ActionMode
     , execMode : ExecMode
     , recording : Bool
-    , actions : Queue Action
+    , actions : Iddict Action
+    , actionsQueue : Queue Int
     }
 
 
@@ -151,7 +156,8 @@ fromNet net =
   , actionMode = ProofMode Interacting
   , execMode = Forward
   , recording = True
-  , actions = Queue.empty
+  , actions = Iddict.empty
+  , actionsQueue = Queue.empty
   }
 
 
@@ -166,7 +172,10 @@ walkGoal { focus } path =
     Just (ctx, net) ->
       (ctx, net)
     Nothing ->
-      ({ zipper = [], polarity = Pos }, focus) -- should not happen
+      Debug.log
+        "Invalid path in goal. Returning the empty context."
+        ({ zipper = [], polarity = Pos }, focus) -- should not happen
+
 
 -- Actions
 
@@ -176,42 +185,176 @@ type Action
   | Close Path -- close a scroll with an empty outloop
   | Insert Path Net -- insert a value/inloop at the end of a net/scroll
   | Delete Path -- delete a value/inloop from a net/scroll
-  | Iterate { src : Path, dst : Path } -- iterate a source value/inloop at the end of a target net/scroll
-  | Deiterate { src : Path, dst : Path } -- deiterate a target value/inloop inloop from an identical source
+  | Iterate { src : Path, tgt : Path } -- iterate a source value/inloop at the end of a target net/scroll
+  | Deiterate { src : Path, tgt : Path } -- deiterate a target value/inloop from an identical source
 
 
-{- `exec action goal` executes `action` in `goal` by updating `goal.focus` accordingly.
+{- `record action goal` records `action` in `goal` by:
+   - generating a new ID `id` and associating `action` to `id` in `goal.actions`
+   - pushing `id` in `goal.actionsQueue`
+   - decorating the scroll net `goal.focus` with the argumentation/interaction corresponding to `action`
+   - returning `id` for later usage (typically with `Goal.execute`)
 
-   Note: for now we assume that `goal.focus` is always the top-level net, and thus the action's
+   **Note:** for now we assume that `goal.focus` is always the top-level net, and thus the action's
    paths are walked from the root of `goal.focus`.
 -}
-exec : Action -> Goal -> Goal
-exec action goal =
+record : Action -> Goal -> (Int, Goal)
+record action goal =
   let
-    walk = walkGoal goal
+    (id, newActions) = Iddict.insert action goal.actions
+    newActionsQueue = Queue.enqueue id goal.actionsQueue
 
     newFocus : Net
     newFocus =
+      let
+        walk path =
+          let ({ zipper }, net) = walkGoal goal path in
+          (zipper, net)
+
+        skip () =
+          Debug.log
+            "Unexpected action path. Doing nothing."
+            goal.focus
+      in
       case action of
         Open path ->
-          Debug.todo ""
+          case walk path of
+            (zipper, net) ->
+              let
+                emptyScroll =
+                  mkShape { grown = False }
+                    (Scroll { interaction = { opened = Just 0, closed = Nothing }
+                            , outloop = []
+                            , inloops = [mkInloop { grown = False } Nothing []] })
+                
+                newNet =
+                  net ++ [emptyScroll]
+              in
+              fillZipper newNet zipper
 
         Close path ->
-          Debug.todo ""
+          case walk path of
+            (ZNet { left } :: _ as zipper, [val]) ->
+              case val.shape of
+                Scroll ({ interaction } as scrollData) ->
+                  let
+                    newInteraction =
+                      { interaction | closed = Just (List.length left) }
+                    newScrollData =
+                      { scrollData | interaction = newInteraction }
+                  in
+                  fillZipper [{ val | shape = Scroll newScrollData }] zipper
+                
+                _ -> skip ()
+            _ -> skip ()
 
-        Insert path net ->
-          Debug.todo ""
+        Insert path content ->
+          case (walk path, content) of
+            -- Insert new inloop
+            ((ZNet _ :: _ as zipper, [val]), inloopContent) ->
+              case val.shape of
+                Scroll scroll ->
+                  let
+                    selfJustified =
+                      not (isGrownZipper zipper || isGrownVal val)
+                    
+                    newInloop =
+                      { metadata = { grown = selfJustified }
+                      , arg = { name = Nothing
+                              , justif = { self = selfJustified, from = Nothing } }
+                      , content = inloopContent }
+
+                    newScroll =
+                      Scroll { interaction = scroll.interaction
+                             , outloop = scroll.outloop
+                             , inloops = scroll.inloops ++ [newInloop] }
+                    
+                    newVal =
+                      { val | shape = newScroll }
+                  in
+                  fillZipper [newVal] zipper
+                
+                _ -> skip ()
+
+            -- Insert new value
+            ((zipper, net), [val]) ->
+              let
+                selfJustified =
+                  not (isGrownZipper zipper || isGrownVal val)
+                
+                newVal =
+                  { val | metadata = { grown = selfJustified }
+                        , arg = { name = Nothing
+                                , justif = { self = selfJustified, from = Nothing } } }
+              in
+              fillZipper (net ++ [newVal]) zipper
+            
+            _ -> skip ()
 
         Delete path ->
-          Debug.todo ""
+          Debug.todo "Delete action recording not implemented yet."
 
-        Iterate { src, dst } ->
-          Debug.todo ""
+        Iterate { src, tgt } ->
+          Debug.todo "Iterate action recording not implemented yet."
 
-        Deiterate { src, dst } ->
-          Debug.todo ""
+        Deiterate { src, tgt } ->
+          Debug.todo "Deiterate action recording not implemented yet."
   in
-  { goal | focus = newFocus }
+  (id, { goal | actions = newActions
+              , actionsQueue = newActionsQueue
+              , focus = newFocus })
+
+
+{- `execute actionId goal` executes the action with ID `actionId` in `goal` by:
+   - deleting the associated entry in `goal.actions`
+   - deleting `actionId` from `goal.actionsQueue` if not already done
+   - applying the semantics of the action in `goal.focus`
+
+   **Note:** for now we assume that `goal.focus` is always the top-level net, and thus the action's
+   paths are walked from the root of `goal.focus`.
+-}
+execute : Int -> Goal -> Goal
+execute actionId goal =
+  case Iddict.get actionId goal.actions of
+    Just action ->
+      let
+        newActions =
+          Iddict.remove actionId goal.actions
+
+        newActionsQueue =
+          Queue.filter (\id -> id /= actionId) goal.actionsQueue
+
+        walk = walkGoal goal
+
+        newFocus : Net
+        newFocus =
+          case action of
+            Open path ->
+              Debug.todo "Open action execution not implemented yet."
+
+            Close path ->
+              Debug.todo "Close action execution not implemented yet."
+
+            Insert path content ->
+              Debug.todo "Insert action execution not implemented yet."
+
+            Delete path ->
+              Debug.todo "Delete action execution not implemented yet."
+
+            Iterate { src, tgt } ->
+              Debug.todo "Iterate action execution not implemented yet."
+
+            Deiterate { src, tgt } ->
+              Debug.todo "Deiterate action execution not implemented yet."
+      in
+      { goal | actions = newActions
+             , actionsQueue = newActionsQueue
+             , focus = newFocus }
+
+    Nothing ->
+      Debug.log
+        "Error: trying to execute action with non-existing ID. Returning the goal unchanged."
+        goal
 
 
 -- A Sandbox is a Goal that can be reset
@@ -289,7 +432,8 @@ manualExamples =
         , actionMode = actionMode
         , execMode = execMode
         , recording = True
-        , actions = Queue.empty
+        , actions = Iddict.empty
+        , actionsQueue = Queue.empty
         }
     
     examples : List (SandboxID, ActionMode, Net)

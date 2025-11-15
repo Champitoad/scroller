@@ -136,19 +136,29 @@ isGrownEnv env =
 
 commitVal : Val -> Val
 commitVal val =
-  let
-    oldMetadata = val.metadata
-    newMetadata = { oldMetadata | grown = False }
-  in
-  { val | metadata = newMetadata }
+  case (val.shape, val.metadata.grown) of
+    (Scroll { interaction, outloop, inloops }, False) ->
+      { val | shape = Scroll { interaction = interaction
+                             , outloop = List.map commitVal outloop
+                             , inloops = List.map commitEnv inloops } }
+ 
+    _ ->
+      let
+        oldMetadata = val.metadata
+        newMetadata = { oldMetadata | grown = False }
+      in
+      { val | metadata = newMetadata }
 
 commitEnv : Env -> Env
 commitEnv env =
-  let
-    oldMetadata = env.metadata
-    newMetadata = { oldMetadata | grown = False }
-  in
-  { env | metadata = newMetadata }
+  if env.metadata.grown then
+    let
+      oldMetadata = env.metadata
+      newMetadata = { oldMetadata | grown = False }
+    in
+    { env | metadata = newMetadata }
+  else
+    { env | content = List.map commitVal env.content }
   
 
 mkShape : Metadata -> Shape -> Val

@@ -25,9 +25,27 @@
     - Switching to Proof mode does not trigger a global commit anymore
     - Only the root judgment is marked as "grown" (inserted)
     - A `commit` button is added to grown judgments -->
+  - Implement the `Renaming` `EditInteraction`:
+    - When `goal.actionMode == EditMode (Renaming path) _`, the label of the value/inloop at `path`
+      becomes an input field
+    - Pressing the `Enter` (resp. `Esc`) key validates (resp. cancels) the renaming
+    - Pressing a +atom/scroll/inloop button immediately inserts the corresponding node and starts a `Renaming` interaction
+    - For +atom buttons, we can keep the input field for specifying the type name
 
 - Navigation mode
   - Each context in the navigation stack has its own actions queue
+
+- Type/Program aliases
+  - Use the double-box notation in folded form
+  - Clicking on the name unfolds
+  - Usual type aliases are just aliases for programs of type $\vdash \mathbf{Type}$ built with the broken cut
+  - Global environment of aliases, essentially a dictionary from names to scroll nets
+  - Unfolding is implemented by lookup in the global env
+  - Two types of folding:
+    - Given an alias name, fold every occurrence of the alias body in the goal
+    - Given a subnet in the goal, fold with the alias found by reverse lookup
+      (assuming we enforce the global env to be bijective)
+
 
 - Vertical generalization of the scroll, where inloops can be iterated inside adjacent inloops
 
