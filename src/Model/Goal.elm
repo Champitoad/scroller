@@ -213,6 +213,7 @@ record action goal =
   let
     (id, newActions) = Iddict.insert action goal.actions
     newActionsQueue = Queue.enqueue id goal.actionsQueue
+    freshName = "x" ++ String.fromInt id
 
     newFocus : Net
     newFocus =
@@ -239,10 +240,11 @@ record action goal =
                       { opened = Nothing, closed = Just 0 }
                   
                 emptyScroll =
-                  mkShape { grown = False }
-                    (Scroll { interaction = interaction
-                            , outloop = []
-                            , inloops = [mkInloop { grown = False } Nothing []] })
+                  { metadata = { grown = False }
+                  , arg = { name = Just freshName, justif = assumption }
+                  , shape = Scroll { interaction = interaction
+                                    , outloop = []
+                                    , inloops = [mkInloop { grown = False } Nothing []] } }
                 
                 newNet =
                   net ++ [emptyScroll]
@@ -282,14 +284,12 @@ record action goal =
                     
                     newInloop =
                       { metadata = { grown = selfJustified }
-                      , arg = { name = Nothing
+                      , arg = { name = Just freshName
                               , justif = { self = selfJustified, from = Nothing } }
                       , content = inloopContent }
 
                     newScroll =
-                      Scroll { interaction = scroll.interaction
-                             , outloop = scroll.outloop
-                             , inloops = scroll.inloops ++ [newInloop] }
+                      Scroll { scroll | inloops = scroll.inloops ++ [newInloop] }
                     
                     newVal =
                       { val | shape = newScroll }
@@ -306,7 +306,7 @@ record action goal =
                 
                 newVal =
                   { val | metadata = { grown = selfJustified }
-                        , arg = { name = Nothing
+                        , arg = { name = Just freshName
                                 , justif = { self = selfJustified, from = Nothing } } }
               in
               fillZipper (net ++ [newVal]) zipper
@@ -314,13 +314,98 @@ record action goal =
             _ -> skip ()
 
         Delete path ->
-          Debug.todo "Delete action recording not implemented yet."
+          case walk path of
+            -- Delete inloop
+            (ZInloop { scroll, metadata, arg, outloop, left, right } :: zipper, inloopContent) ->
+              let
+                oldJustif = arg.justif
+
+                newInloop =
+                  { metadata = metadata
+                  , arg = { arg | justif = { oldJustif | self = True } }
+                  , content = inloopContent }
+
+                newVal =
+                  { metadata = scroll.metadata
+                  , arg = scroll.arg
+                  , shape = Scroll { interaction = scroll.interaction
+                                   , outloop = outloop
+                                   , inloops = left ++ newInloop :: right } }
+              in
+              fillZipper [newVal] zipper
+            
+            -- Delete value
+            (zipper, [val]) ->
+              let
+                oldJustif = val.arg.justif
+                oldArg = val.arg
+                newVal = { val | arg = { oldArg | justif = { oldJustif | self = True } } }
+              in
+              fillZipper [newVal] zipper
+            
+            _ -> skip ()
 
         Iterate { src, tgt } ->
-          Debug.todo "Iterate action recording not implemented yet."
+          case (walk src, walk tgt) of
+            -- Iterate an inloop
+            ((ZInloop zinloop :: _, inloopContent), (ZNet _ :: _ as zipper, [val])) ->
+              case val.shape of
+                Scroll tgtScroll ->
+                  let
+                    copyInloop =
+                      { metadata = { grown = False }
+                      , arg = { name = Just freshName
+                              , justif = { self = False, from = zinloop.arg.name } }
+                      , content = inloopContent }
+                      
+                    newScroll =
+                      Scroll { tgtScroll | inloops = tgtScroll.inloops ++ [copyInloop] }
+
+                    newVal =
+                      { val | shape = newScroll }
+                  in
+                  fillZipper [newVal] zipper
+              
+                _ -> skip ()
+
+            -- Iterate a value
+            ((_, [val]), (zipper, net)) ->
+              let
+                copyVal =
+                  { metadata = { grown = False }
+                  , arg = { name = Just freshName
+                          , justif = { self = False, from = val.arg.name } }
+                  , shape = val.shape }
+              in
+              fillZipper (net ++ [copyVal]) zipper
+            
+            _ -> skip ()
 
         Deiterate { src, tgt } ->
-          Debug.todo "Deiterate action recording not implemented yet."
+          case (walk src, walk tgt) of
+            -- Deiterate an inloop
+            ((ZInloop srcZInloop :: _, _), (ZInloop tgtZInloop :: zipper, tgtInloopContent)) ->
+              let
+                oldArg = tgtZInloop.arg
+                oldJustif = oldArg.justif
+                newJustif = { oldJustif | from = srcZInloop.arg.name }
+                newZInloop =
+                  ZInloop { tgtZInloop | arg = { oldArg | justif = newJustif } }
+              in
+              fillZipper tgtInloopContent (newZInloop :: zipper)
+
+            -- Deiterate a value
+            ((_, [srcVal]), (zipper, [tgtVal])) ->
+              let
+                oldArg = tgtVal.arg
+                oldJustif = oldArg.justif
+                newJustif = { oldJustif | from = srcVal.arg.name }
+                newVal =
+                  { tgtVal | arg = { oldArg | justif = newJustif } }
+              in
+              fillZipper [newVal] zipper
+
+            _ -> skip ()
   in
   (id, { goal | actions = newActions
               , actionsQueue = newActionsQueue
@@ -346,10 +431,13 @@ execute actionId goal =
         newActionsQueue =
           Queue.filter (\id -> id /= actionId) goal.actionsQueue
 
-        walk = walkGoal goal
-
         newFocus : Net
         newFocus =
+          let
+            walk path =
+              let ({ zipper }, net) = walkGoal goal path in
+              (zipper, net)
+          in
           case action of
             Open path ->
               Debug.todo "Open action execution not implemented yet."
@@ -361,7 +449,22 @@ execute actionId goal =
               Debug.todo "Insert action execution not implemented yet."
 
             Delete path ->
-              Debug.todo "Delete action execution not implemented yet."
+              case walk path of
+                -- Delete inloop
+                (ZInloop zinloop :: zipper, _) ->
+                  let
+                    newScroll =
+                      { metadata = zinloop.scroll.metadata
+                      , arg = zinloop.scroll.arg
+                      , shape = Scroll { interaction = zinloop.scroll.interaction
+                                       , outloop = zinloop.outloop
+                                       , inloops = zinloop.left ++ zinloop.right } }
+                  in
+                  fillZipper [newScroll] zipper
+                
+                -- Delete value
+                (zipper, _) ->
+                  fillZipper [] zipper
 
             Iterate { src, tgt } ->
               Debug.todo "Iterate action execution not implemented yet."

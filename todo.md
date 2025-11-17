@@ -78,6 +78,10 @@
   - `ScrollData.inloops` becomes a tree instead of a list
   - Inloops can be iterated inside adjacent inloops
 
+- Linear mode
+  - When enabled, auto-performs self-justification of source after (de)iteration, and
+    insertion/deletion only works when followed by (de)iteration through DnD.
+
 # Brainstorming
 
 - It seems we don't need to distinguish between judgment and constructor identifiers for inloops in the (bi-)intuitionistic case, since they will always be (de)iterated in the same scroll. Classical logic might require this distinction though, because inloops can become outloops (and vice versa); or we could just drop constructor identifiers altogether since there is no purpose in distinguishing between inloops and outloops, in the same way that one can go one-sided in classical sequent calculus (and thus drop the distinction between *term* and *continuation* variables).
