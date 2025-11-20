@@ -514,7 +514,7 @@ viewNet dnd ({ mode, navigation, location } as goal) newAtomName net =
           case DnD.getDragId dnd of
             Just { source } ->
               -- if isHypothesis content context.zipper then
-              if justifies source context.zipper then
+              if spans source context.zipper then
                 let
                   dropStyle =
                     droppable importColor

@@ -6,12 +6,16 @@ import Dict exposing (Dict)
 import Queue exposing (Queue)
 import Iddict exposing (Iddict)
 
+import Utils.Maybe
+import Browser exposing (application)
+import Css exposing (invalid)
+
 
 -- Selection
 
 
 type alias Selection
-  = List Path
+  = List Context
 
 
 -- Modal UI
@@ -38,8 +42,8 @@ initialSurgery =
 
 type EditInteraction
   = Operating
-  | Adding Path
-  | Renaming Path
+  | Adding Context
+  | Renaming Context
   | Reordering
 
 
@@ -169,32 +173,237 @@ map f goal =
   { goal | focus = f goal.focus }
 
 
-walkGoal : Goal -> Path -> (Context, Net)
-walkGoal { focus } path =
-  case Scroll.walk focus path of
-    Just (ctx, net) ->
-      (ctx, net)
-    Nothing ->
-      Debug.log
-        "Invalid path in goal. Returning the empty context."
-        ({ zipper = [], polarity = Pos }, focus) -- should not happen
-
-
 -- Actions
 
 
 type Action
-  = Open Path -- open a scroll with an empty outloop and a single empty inloop at the end of a net
-  | Close Path -- close a scroll with an empty outloop and a single inloop
-  | Insert Path Net -- insert a value/inloop at the end of a net/scroll
-  | Delete Path -- delete a value/inloop from a net/scroll
-  | Iterate { src : Path, tgt : Path } -- iterate a source value/inloop at the end of a target net/scroll
-  | Deiterate { src : Path, tgt : Path } -- deiterate a target value/inloop from an identical source
+  -- Open a scroll with an empty outloop and a single empty inloop
+  = Open { ctx : Context } 
+  -- Close a scroll with an empty outloop and a single inloop
+  | Close { ctx : Context, scroll : ScrollVal } 
+  -- Insert a value in a net
+  | InsertVal { ctx : Context, val : Val }
+  -- Insert an inloop in a scroll
+  | InsertEnv { ctx : Context, scroll : ScrollVal, id : Ident, env : Env }
+  -- Delete a value from a net
+  | DeleteVal { ctx : Context, val : Val }
+  -- Delete an inloop from a scroll
+  | DeleteEnv { ctx : Context, scroll : ScrollVal, id : Ident } 
+  -- Iterate a source value into a net
+  | IterateVal { srcCtx : Context, srcVal : Val, tgtCtx : Context, tgtName : Maybe Ident } 
+  -- Iterate a source inloop in the same scroll
+  | IterateEnv { ctx : Context, scroll : ScrollVal, id : Ident, copyId : Ident } 
+  -- Deiterate a target value from an identical source
+  | DeiterateVal { srcCtx : Context, srcVal : Val, tgtCtx : Context, tgtVal : Val } 
+  -- Deiterate a target inloop from an identical source in the same scroll
+  | DeiterateEnv { ctx : Context, scroll : ScrollVal, srcId : Ident, tgtId : Ident } 
 
 
-applicable : Goal -> Action -> Bool
+type ActionError
+  = InvalidPolarity Polarity
+  | InvalidBranchId Zipper Ident
+  | Erased Zipper
+  | NonEmptyOutloop Zipper
+  | OutOfScope Zipper Zipper
+  | IncompatibleBoundaries Zipper Zipper
+
+
+boundary : ExecMode -> Polarity -> Net -> Struct
+boundary execMode =
+  let
+    forwardBoundary pol =
+      case pol of
+        Pos -> conclusion
+        Neg -> premiss
+  in
+  case execMode of
+    Forward -> forwardBoundary
+    Backward -> invert >> forwardBoundary
+
+
+applicable : Goal -> Action -> Result ActionError ()
 applicable goal action =
-  Debug.todo "Applicability predicate for actions not implemented yet."
+  let
+    (erasedVal, erasedScrollVal, erasedEnv, erasedArea) =
+      
+      case goal.execMode of
+        Forward ->
+          ( eliminatedVal
+          , eliminatedScrollVal
+          , eliminatedEnv
+          , eliminatedArea )
+        Backward ->
+          ( introducedVal
+          , introducedScrollVal
+          , introducedEnv
+          , introducedArea )
+
+    isPositive : Context -> Bool
+    isPositive ctx =
+      let
+        pol =
+          case goal.execMode of
+            Forward -> Pos
+            Backward -> Neg
+      in
+      ctx.polarity == pol
+  
+    isNegative =
+      not << isPositive
+  in
+  case action of
+    Open { ctx } ->
+      if erasedArea ctx then
+        Err (Erased ctx.zipper)
+      else
+        Ok ()
+
+    Close { ctx, scroll } ->
+      if erasedScrollVal ctx scroll then
+        Err (Erased ctx.zipper)
+      else if boundary goal.execMode (invert ctx.polarity) scroll.data.outloop /= [] then
+        Err (NonEmptyOutloop ctx.zipper)
+      else
+        Ok ()
+
+    InsertVal { ctx } ->
+      if isPositive ctx then
+        Err (InvalidPolarity Pos)
+      else if erasedArea ctx then
+        Err (Erased ctx.zipper)
+      else
+        Ok ()
+
+    InsertEnv { ctx, scroll, id } ->
+      if isNegative ctx then
+        Err (InvalidPolarity Pos)
+      else if erasedScrollVal ctx scroll then
+        Err (Erased ctx.zipper)
+      else if Dict.member id scroll.data.inloops then
+        Err (InvalidBranchId ctx.zipper id)
+      else
+        Ok ()
+
+    DeleteVal { ctx, val } ->
+     if isNegative ctx then
+       Err (InvalidPolarity Neg)
+     else if erasedVal ctx val then
+       Err (Erased ctx.zipper)
+     else
+       Ok ()
+    
+    DeleteEnv { ctx, scroll, id } ->
+      case Dict.get id scroll.data.inloops of
+        Nothing ->
+          Err (InvalidBranchId ctx.zipper id)
+        Just env ->
+          if isPositive ctx then
+            Err (InvalidPolarity Neg)
+          else if erasedEnv ctx scroll id env then
+            Err (Erased ctx.zipper)
+          else
+            Ok ()
+
+    IterateVal { srcCtx, srcVal, tgtCtx } ->
+      if isNegative tgtCtx then
+        Err (InvalidPolarity Neg)
+      else if not (spans srcCtx.zipper tgtCtx.zipper) then
+        Err (OutOfScope srcCtx.zipper tgtCtx.zipper)
+      else if erasedVal srcCtx srcVal then
+        Err (Erased srcCtx.zipper)
+      else if erasedArea tgtCtx then
+        Err (Erased tgtCtx.zipper)
+      else
+        Ok ()
+    
+    IterateEnv { ctx, scroll, id, copyId } ->
+      case Dict.get id scroll.data.inloops of
+        Nothing ->
+          Err (InvalidBranchId ctx.zipper id)
+        Just env ->
+          if isPositive ctx then
+            Err (InvalidPolarity Pos)
+          else if id == copyId then
+            Err (InvalidBranchId ctx.zipper copyId)
+          else if erasedEnv ctx scroll id env then
+            let
+              zScrollData =
+                { metadata = scroll.metadata
+                , name = scroll.name
+                , justif = scroll.justif
+                , interaction = scroll.data.interaction }
+              zInloop =
+                ZInloop { scroll = zScrollData
+                        , outloop = scroll.data.outloop
+                        , neighbors = Dict.remove id scroll.data.inloops
+                        , metadata = env.metadata
+                        , justif = env.justif
+                        , id = id }
+            in
+            Err (Erased (zInloop :: ctx.zipper))
+          else
+            Ok ()
+
+    DeiterateVal { srcCtx, srcVal, tgtCtx, tgtVal } ->
+      if isPositive tgtCtx then
+        Err (InvalidPolarity Pos)
+      else if not (spans srcCtx.zipper tgtCtx.zipper) then
+        Err (OutOfScope srcCtx.zipper tgtCtx.zipper)
+      else if erasedVal srcCtx srcVal then
+        Err (Erased srcCtx.zipper)
+      else if erasedVal tgtCtx tgtVal then
+        Err (Erased tgtCtx.zipper)
+      else if boundary goal.execMode srcCtx.polarity [srcVal] /=
+              boundary goal.execMode tgtCtx.polarity [tgtVal] then
+        Err (IncompatibleBoundaries srcCtx.zipper tgtCtx.zipper)
+      else
+        Ok ()
+    
+    DeiterateEnv { ctx, scroll, srcId, tgtId } ->
+      case Dict.get srcId scroll.data.inloops of
+        Nothing ->
+          Err (InvalidBranchId ctx.zipper srcId)
+        Just srcEnv ->
+          case Dict.get tgtId scroll.data.inloops of
+            Nothing ->
+              Err (InvalidBranchId ctx.zipper tgtId)
+            Just tgtEnv ->
+              let
+                zScrollData =
+                  { metadata = scroll.metadata
+                  , name = scroll.name
+                  , justif = scroll.justif
+                  , interaction = scroll.data.interaction }
+                srcZInloop =
+                  ZInloop { scroll = zScrollData
+                          , outloop = scroll.data.outloop
+                          , neighbors = Dict.remove srcId scroll.data.inloops
+                          , metadata = srcEnv.metadata
+                          , justif = srcEnv.justif
+                          , id = srcId }
+                tgtZInloop =
+                  ZInloop { scroll = zScrollData
+                          , outloop = scroll.data.outloop
+                          , neighbors = Dict.remove tgtId scroll.data.inloops
+                          , metadata = tgtEnv.metadata
+                          , justif = tgtEnv.justif
+                          , id = tgtId }
+                srcZipper =
+                  srcZInloop :: ctx.zipper
+                tgtZipper =
+                  tgtZInloop :: ctx.zipper
+              in
+              if isNegative ctx then
+                Err (InvalidPolarity Pos)
+              else if erasedEnv ctx scroll srcId srcEnv then
+                Err (Erased srcZipper)
+              else if erasedEnv ctx scroll tgtId tgtEnv then
+                Err (Erased tgtZipper)
+              else if boundary goal.execMode ctx.polarity srcEnv.content /=
+                      boundary goal.execMode ctx.polarity srcEnv.content then
+                Err (IncompatibleBoundaries srcZipper tgtZipper)
+              else
+                Ok ()
 
 
 {- `record action goal` records `action` in `goal` by:
@@ -244,7 +453,7 @@ record action goal =
                   , arg = { name = Just freshName, justif = assumption }
                   , shape = Scroll { interaction = interaction
                                     , outloop = []
-                                    , inloops = [mkInloop { grown = False } Nothing []] } }
+                                    , inloops = [mkEnv { grown = False } Nothing []] } }
                 
                 newNet =
                   net ++ [emptyScroll]

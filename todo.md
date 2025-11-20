@@ -20,7 +20,7 @@
   - Forward and Backward exec modes only differ in the polarity of the target path for argumentation actions, and in the swap between `opened` and `closed` in `ScrollData.interaction` for interaction actions
   - The action at the head of the queue should always be highlighted at the location where it occurs in the goal
   - **Free execution**:
-    - the user can execute actions in the order she wants by clicking directly on them in the goal. However, only actions which are *applicable* (and thus do not depend on other actions) can be executed:
+    - the user can execute actions in the order she wants by clicking directly on them in the goal. However, only actions which are *executable* (and thus do not depend on other actions) can be executed:
       - `Open`: the parent is neither introduced nor eliminated
       - `Insert`: the parent is neither introduced nor eliminated
       - `Iterate`: the target's parent is neither introduced nor eliminated, and the source is not introduced
@@ -73,6 +73,11 @@
     - Given an alias name, fold every occurrence of the alias body in the goal
     - Given a subnet in the goal, fold with the alias found by reverse lookup
       (assuming we enforce the global env to be bijective)
+  - Manipulating the global env
+    - Search bar
+    - Import (copy) a definition by dragging from the search results
+        - If premiss non-empty, need to match it with some conclusion in the goal (should work similarly to deiteration)
+        - Actually, import may be implemented by iteration once we implement evaluation
 
 - Vertical generalization of the scroll
   - `ScrollData.inloops` becomes a tree instead of a list
@@ -85,3 +90,30 @@
 # Brainstorming
 
 - It seems we don't need to distinguish between judgment and constructor identifiers for inloops in the (bi-)intuitionistic case, since they will always be (de)iterated in the same scroll. Classical logic might require this distinction though, because inloops can become outloops (and vice versa); or we could just drop constructor identifiers altogether since there is no purpose in distinguishing between inloops and outloops, in the same way that one can go one-sided in classical sequent calculus (and thus drop the distinction between *term* and *continuation* variables).
+
+- Maybe things would be simpler if there was only the cut construct, and inloops are just special cuts that are marked as "attached" or "continuations", i.e.:
+  ```elm
+  type alias Struct
+    = List ONode
+  
+  type ONode
+    = OForm Formula
+    | OCut (List INode)
+  
+  type INode
+    = IVal ONode
+    | ICont Struct
+  ```
+  This gives $n$-scroll structures. To get generalized scroll structures:
+  ```elm
+  type alias Struct
+    = List ONode
+  
+  type ONode
+    = OForm Formula
+    | OCut (List INode)
+  
+  type INode
+    = IVal ONode
+    | ICont (List INode)
+  ```

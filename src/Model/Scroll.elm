@@ -3,6 +3,8 @@ module Model.Scroll exposing (..)
 import Model.Formula as Formula exposing (..)
 
 import Utils.List
+import Utils.Maybe
+import Dict exposing (Dict)
 
 
 -- Scroll structures
@@ -14,7 +16,11 @@ type alias Struct
 type Node
   = NFormula Formula
   | NScroll { outloop : Struct
-            , inloops : List Struct }
+            , inloops : SCorolla }
+
+type alias SCorolla = Dict Ident Struct
+
+type alias Ident = String
 
 
 -- Scroll nets
@@ -25,14 +31,9 @@ type alias Net
 
 type alias Val
   = { metadata : Metadata
-    , arg : Argument
+    , name : Maybe Ident
+    , justif : Justification
     , shape : Shape }
-
-type alias Argument
-  = { name : Maybe Ident
-    , justif : Justification }
-
-type alias Ident = String
 
 type alias Metadata
   = { grown : Bool }
@@ -48,32 +49,49 @@ type Shape
 type alias ScrollData
   = { interaction : Interaction
     , outloop : Net
-    , inloops : List Env }
+    , inloops : Corolla }
 
 type alias Interaction
-  = { opened : Maybe Int
-    , closed : Maybe Int }
+  = { opened : Maybe Ident
+    , closed : Maybe Ident }
+
+type alias Corolla
+  = Dict Ident Env
 
 type alias Env
   = { metadata : Metadata
-    , arg : Argument
+    , justif : Justification
     , content : Net }
+
+
+type alias ScrollVal
+  = { metadata : Metadata
+    , name : Maybe Ident
+    , justif : Justification
+    , data : ScrollData }
+
+valOfScroll : ScrollVal -> Val
+valOfScroll { metadata, name, justif, data } =
+  { metadata = metadata
+  , name = name
+  , justif = justif
+  , shape = Scroll data }
 
 
 -- Conversions between structures and nets
 
 
 netFromStruct : Struct -> Net
-netFromStruct struct =
-  List.map valFromNode struct
+netFromStruct =
+  List.map valFromNode
 
 valFromNode : Node -> Val
 valFromNode node =
   let
     envFromInloop : Struct -> Env
     envFromInloop inloop =
-      { metadata = { grown = False}
-      , arg = assume Nothing
+      { metadata = { grown = False }
+      , justif = assumption
       , content = netFromStruct inloop }
 
     shape =
@@ -84,10 +102,11 @@ valFromNode node =
         NScroll { outloop, inloops } ->
           Scroll { interaction = { opened = Nothing, closed = Nothing }
                  , outloop = netFromStruct outloop
-                 , inloops = List.map envFromInloop inloops }
+                 , inloops = Dict.map (\_ -> envFromInloop) inloops }
   in
   { metadata = { grown = False }
-  , arg = assume Nothing
+  , name = Nothing
+  , justif = assumption
   , shape = shape }
 
 
@@ -109,7 +128,7 @@ nodeFromVal { shape } =
     
     Scroll { outloop, inloops } ->
       NScroll { outloop = structFromNet outloop
-              , inloops = List.map inloopFromEnv inloops }
+              , inloops = Dict.map (\_ -> inloopFromEnv) inloops }
 
 
 -- Boundaries
@@ -131,11 +150,6 @@ assumption : Justification
 assumption =
   { self = False, from = Nothing }
 
-assume : Maybe Ident -> Argument
-assume name =
-  { name = name
-  , justif = assumption }
-
 
 isGrownVal : Val -> Bool
 isGrownVal val =
@@ -152,7 +166,7 @@ commitVal val =
     (Scroll { interaction, outloop, inloops }, False) ->
       { val | shape = Scroll { interaction = interaction
                              , outloop = List.map commitVal outloop
-                             , inloops = List.map commitEnv inloops } }
+                             , inloops = Dict.map (\_ -> commitEnv) inloops } }
  
     _ ->
       let
@@ -176,7 +190,8 @@ commitEnv env =
 mkShape : Metadata -> Shape -> Val
 mkShape metadata shape =
   { metadata = metadata
-  , arg = assume Nothing
+  , name = Nothing
+  , justif = assumption
   , shape = shape }
 
 
@@ -198,29 +213,34 @@ mkFakeFormula =
   mkFormula { grown = True }
 
 
-mkInloop : Metadata -> Maybe Ident -> Net -> Env
-mkInloop metadata ident content =
+mkEnv : Metadata -> Net -> Env
+mkEnv metadata content =
   { metadata = metadata
-  , arg = assume ident
+  , justif = assumption
   , content = content }
 
-mkScroll : Metadata -> Net -> List Net -> Val
-mkScroll metadata outloop inloops =
+mkScroll : Metadata -> Net -> List (Ident, Net) -> Val
+mkScroll metadata outloop inloopsAssoc =
   let
+    inloops =
+      inloopsAssoc |>
+      List.map (\(k, content) -> (k, mkEnv { grown = False } content)) |>
+      Dict.fromList
+
     scroll =
       Scroll { interaction = { opened = Nothing, closed = Nothing }
              , outloop = outloop
-             , inloops = List.map (mkInloop metadata Nothing) inloops }
+             , inloops = inloops }
   in
   mkShape metadata scroll
 
 
-mkRealScroll : Net -> List Net -> Val
+mkRealScroll : Net -> List (Ident, Net) -> Val
 mkRealScroll =
   mkScroll { grown = False }
 
 
-mkFakeScroll : Net -> List Net -> Val
+mkFakeScroll : Net -> List (Ident, Net) -> Val
 mkFakeScroll =
   mkScroll  { grown = True }
 
@@ -230,7 +250,13 @@ mkFakeScroll =
     s [a"a", a"b"] [[a"c"], [a"d"]]
 -}
 s : Net -> List Net -> Val
-s inloop outloops =
+s inloop outloopsContents =
+  let
+    outloops =
+      outloopsContents |>
+      List.indexedMap
+        (\i content -> ("Branch " ++ String.fromInt i, content))
+  in
   mkRealScroll inloop outloops
 
 
@@ -267,13 +293,13 @@ decompose formula =
     Or f1 f2 ->
       [ mkRealScroll
           ( mkRealNet [] )
-          [ mkRealNet [Formula f1]
-          , mkRealNet [Formula f2] ] ]
+          [ ("Left", mkRealNet [Formula f1])
+          , ("Right", mkRealNet [Formula f2]) ] ]
     
     Implies f1 f2 ->
       [ mkRealScroll
           ( mkRealNet [Formula f1] )
-          [ mkRealNet [Formula f2] ] ]
+          [ ("Return", mkRealNet [Formula f2]) ] ]
     
     Not f1 ->
       [ mkRealScroll (mkRealNet [Formula f1]) [] ]
@@ -284,26 +310,26 @@ decompose formula =
 
 type alias ZScrollData
   = { metadata : Metadata
-    , arg : Argument
+    , name : Maybe Ident
+    , justif : Justification
     , interaction : Interaction }
 
 
 type Zip
   = ZNet { left : Net, right : Net }
-  | ZOutloop { scroll : ZScrollData, inloops : List Env }
+  | ZOutloop { scroll : ZScrollData, inloops : Corolla }
   | ZInloop { scroll : ZScrollData
-            , metadata : Metadata
-            , arg : Argument
             , outloop : Net
-            , left : List Env
-            , right : List Env }
+            , neighbors : Corolla
+            , metadata : Metadata
+            , justif : Justification
+            , id : Ident }
 
 
+{- We encode zippers as lists, where the head is the innermost context.
+-}
 type alias Zipper
   = List Zip
-
-
--- We encode zippers as lists, where the head is the innermost context
 
 
 isGrownZip : Zip -> Bool
@@ -327,20 +353,20 @@ mkZNet left right =
   ZNet { left = left, right = right }
 
 
-mkZOutloop : ZScrollData -> List Env -> Zip
+mkZOutloop : ZScrollData -> Corolla -> Zip
 mkZOutloop scroll inloops =
   ZOutloop { scroll = scroll, inloops = inloops }
 
 
-mkZInloop : ZScrollData -> Metadata -> Argument -> 
-            Net -> List Env -> List Env -> Zip
-mkZInloop scroll metadata arg outloop left right =
+mkZInloop : ZScrollData -> Net -> Corolla ->
+            Metadata -> Justification -> Ident -> Zip
+mkZInloop scroll outloop neighbors metadata justif id =
   ZInloop { scroll = scroll
-          , metadata = metadata
-          , arg = arg
           , outloop = outloop
-          , left = left
-          , right = right }
+          , neighbors = neighbors
+          , metadata = metadata
+          , justif = justif
+          , id = id }
 
 
 fillZip : Zip -> Net -> Net
@@ -351,24 +377,26 @@ fillZip zip net =
 
     ZOutloop { scroll, inloops } ->
       [{ metadata = scroll.metadata
-       , arg = scroll.arg
+       , name = scroll.name
+       , justif = scroll.justif
        , shape = Scroll { interaction = scroll.interaction
                         , outloop = net
                         , inloops = inloops } }]
 
-    ZInloop { scroll, metadata, arg, outloop, left, right } ->
+    ZInloop { scroll, outloop, neighbors, metadata, justif, id } ->
       [{ metadata = scroll.metadata
-       , arg = scroll.arg
+       , name = scroll.name
+       , justif = scroll.justif
        , shape =
            let
-             inloop =
+             env =
                { metadata = metadata
-               , arg = arg
+               , justif = justif
                , content = net }
            in
            Scroll { interaction = scroll.interaction
-                    , outloop = outloop
-                    , inloops = left ++ inloop :: right } }]
+                  , outloop = outloop
+                  , inloops = Dict.insert id env neighbors } }]
 
 
 fillZipper : Net -> Zipper -> Net
@@ -427,22 +455,34 @@ polarityOf zipper =
       polarityOf parent
 
 
-justifies : Zipper -> Zipper -> Bool
-justifies source destination =
-  let lca = Utils.List.longestCommonSuffix source destination in
-  polarityOf source == polarityOf destination &&
-  case source of
-    -- Self pollination
-    ZNet _ :: (ZOutloop _ :: grandParent as parent) ->
-      lca == grandParent ||
-      lca == parent
-
-    -- Wind pollination
+{- `spans src tgt` is true when location `tgt` is in scope of location `src`, in the sense of
+   Peirce's endoporeutic. 
+-}
+spans : Zipper -> Zipper -> Bool
+spans src tgt =
+  let lca = Utils.List.longestCommonSuffix src tgt in
+  case src of
+    -- Value location
     ZNet _ :: parent ->
-      lca == parent
+      lca == parent ||       -- Cross-pollination
+      case parent of
+        ZOutloop _ :: grandParent ->
+          lca == grandParent -- Self-pollination
+        _ ->
+          False
+          
+    -- Env location 
+    ZInloop _ :: parent ->
+      lca == parent &&
+      -- We enforce the two inloops to be attached to the same outloop (might be relaxed in a later
+      -- implementation, e.g. with vertically generalized scrolls or classical logic version)
+      List.length src == List.length tgt
     
     _ ->
       False
+
+
+-- Intro/elim
 
 
 type alias Context
@@ -450,78 +490,250 @@ type alias Context
       polarity : Polarity }
 
 
-{-| Paths are a more abstract version of zippers where we only remember the
-    position as an integer, instead of the full surrounding context.
--}
-type alias Path
-  = List Int
+introducedJustif : Polarity -> Justification -> Bool
+introducedJustif pol justif =
+  case pol of
+    Pos ->
+      case justif.from of
+        Just _ -> True
+        Nothing -> False
+
+    Neg ->
+      justif.self
+
+eliminatedJustif : Polarity -> Justification -> Bool
+eliminatedJustif pol justif =
+  introducedJustif (invert pol) justif
 
 
-{-| A zipper can be reconstructed by "walking down" a path in a net. The path
-    does not always denote a valid branch of the net, thus this operation is
-    partial.
--}
-walk : Net -> Path -> Maybe (Context, Net)
-walk net path =
-  let
-    walkVal : List Zip -> Polarity -> Val -> Path -> Maybe (Context, Net)
-    walkVal acc pol val path_ =
-      case path_ of
-        [] -> Just ({ zipper = List.reverse acc, polarity = pol }, [val])
-        n :: tail ->
-          case val.shape of
-            Formula _ -> Nothing
-            Scroll { interaction, outloop, inloops } ->
-              let
-                scroll =
-                  { metadata = val.metadata
-                  , arg = val.arg
-                  , interaction = interaction }
-              in
-              if n == 0 then
-                let zOutloop = mkZOutloop scroll inloops in
-                walkNet (zOutloop :: acc) (invert pol) outloop tail
-              else
-                case Utils.List.pivot (n - 1) inloops of
-                  (l, { metadata, arg, content } :: r) ->
-                    let zInloop = mkZInloop scroll metadata arg outloop l r in
-                    walkNet (zInloop :: acc) pol content tail
-                  _ ->
-                    Nothing
-    
-    walkNet acc pol net_ path_ =
-      case path_ of
-        [] -> Just ({ zipper = List.reverse acc, polarity = pol }, net_)
-        n :: tail ->
-          case Utils.List.pivot (n - 1) net_ of
-            (l, val :: r) ->
-              walkVal (mkZNet l r :: acc) pol val tail
-            _ ->
-              Nothing
-  in
-  walkNet [] Pos net path
-
-
--- Also there is a forgetful functor from zippers to paths
-
-
-zipToInt : Zip -> Int
-zipToInt zip =
+introducedZip : Polarity -> Zip -> Bool
+introducedZip pol zip =
   case zip of
-    ZNet { left } ->
-      List.length left
-    ZOutloop _ ->
-      0
-    ZInloop { left } ->
-      1 + List.length left
+    ZNet _ ->
+      False
+
+    ZOutloop { scroll } ->
+      introducedJustif pol scroll.justif
+
+    ZInloop { scroll, justif } ->
+      introducedJustif pol scroll.justif ||
+      introducedJustif (invert pol) justif
+
+eliminatedZip : Polarity -> Zip -> Bool
+eliminatedZip pol zip =
+  introducedZip (invert pol) zip
 
 
-zipperToPath : Zipper -> Path
-zipperToPath =
-  List.map zipToInt
+introducedContext : Context -> Bool
+introducedContext { zipper, polarity } =
+  let
+    aux pol zipper_ =
+      case zipper_ of
+        [] ->
+          False
+
+        zip :: parent ->
+          introducedZip pol zip ||
+          let
+            newPol =
+              case zip of
+                ZOutloop _ -> invert pol
+                _ -> pol
+          in
+          aux newPol parent
+  in
+  aux polarity zipper
+
+eliminatedContext : Context -> Bool
+eliminatedContext { zipper, polarity } =
+  introducedContext { zipper = zipper, polarity = invert polarity }
+
+
+introducedVal : Context -> Val -> Bool
+introducedVal ctx val =
+  let
+    isOpened =
+      case val.shape of
+        Scroll { interaction } ->
+          Utils.Maybe.isSomething interaction.opened
+        _ ->
+          False
+  in
+  introducedJustif ctx.polarity val.justif ||
+  isOpened ||
+  introducedContext ctx
+
+eliminatedVal : Context -> Val -> Bool
+eliminatedVal ctx val =
+  let
+    isClosed =
+      case val.shape of
+        Scroll { interaction } ->
+          Utils.Maybe.isSomething interaction.closed
+        _ ->
+          False
+  in
+  eliminatedJustif ctx.polarity val.justif ||
+  isClosed ||
+  eliminatedContext ctx
+
+
+introducedScrollVal : Context -> ScrollVal -> Bool
+introducedScrollVal ctx scroll =
+  introducedVal ctx (valOfScroll scroll)
+
+eliminatedScrollVal : Context -> ScrollVal -> Bool
+eliminatedScrollVal ctx scroll =
+  eliminatedVal ctx (valOfScroll scroll)
+
+
+introducedEnv : Context -> ScrollVal -> Ident -> Env -> Bool
+introducedEnv ctx scroll id { justif } =
+  introducedJustif (invert ctx.polarity) justif ||
+  scroll.data.interaction.opened == Just id ||
+  introducedJustif ctx.polarity scroll.justif ||
+  introducedContext ctx
+
+eliminatedEnv : Context -> ScrollVal -> Ident -> Env -> Bool
+eliminatedEnv ctx scroll id { justif } =
+  eliminatedJustif (invert ctx.polarity) justif ||
+  scroll.data.interaction.closed == Just id ||
+  eliminatedJustif ctx.polarity scroll.justif ||
+  eliminatedContext ctx
+
+
+introducedArea : Context -> Bool
+introducedArea ctx =
+  case ctx.zipper of
+    [] ->
+      False
+    
+    zip :: parent ->
+      case zip of
+        ZOutloop { scroll } ->
+          Utils.Maybe.isSomething scroll.interaction.opened ||
+          introducedJustif (invert ctx.polarity) scroll.justif ||
+          introducedArea { zipper = parent, polarity = invert ctx.polarity }
+
+        ZInloop { scroll } ->
+          introducedJustif ctx.polarity scroll.justif ||
+          introducedArea { zipper = parent, polarity = ctx.polarity }
+        
+        ZNet _ ->
+          introducedArea { zipper = parent, polarity = ctx.polarity }
+
+
+eliminatedArea : Context -> Bool
+eliminatedArea ctx =
+  case ctx.zipper of
+    [] ->
+      False
+    
+    zip :: parent ->
+      case zip of
+        ZOutloop { scroll } ->
+          Utils.Maybe.isSomething scroll.interaction.closed ||
+          eliminatedJustif (invert ctx.polarity) scroll.justif ||
+          eliminatedArea { zipper = parent, polarity = invert ctx.polarity }
+
+        ZInloop { scroll } ->
+          eliminatedJustif ctx.polarity scroll.justif ||
+          eliminatedArea { zipper = parent, polarity = ctx.polarity }
+        
+        ZNet _ ->
+          eliminatedArea { zipper = parent, polarity = ctx.polarity }
+
+
+-- Paths
+
+
+-- {-| Paths are a more abstract version of zippers where we only remember the
+--     position as an integer, instead of the full surrounding context.
+-- -}
+-- type alias Path
+--   = List Int
+
+
+-- {-| A zipper can be reconstructed by "walking down" a path in a net. The path
+--     does not always denote a valid branch of the net, thus this operation is
+--     partial.
+-- -}
+-- walk : Net -> Path -> Maybe (Context, Net)
+-- walk net path =
+--   let
+--     walkVal : List Zip -> Polarity -> Val -> Path -> Maybe (Context, Net)
+--     walkVal acc pol val path_ =
+--       case path_ of
+--         [] -> Just ({ zipper = List.reverse acc, polarity = pol }, [val])
+--         n :: tail ->
+--           case val.shape of
+--             Formula _ -> Nothing
+--             Scroll { interaction, outloop, inloops } ->
+--               let
+--                 scroll =
+--                   { metadata = val.metadata
+--                   , name = val.name
+--                   , justif = val.justif
+--                   , interaction = interaction }
+--               in
+--               if n == 0 then
+--                 let zOutloop = mkZOutloop scroll inloops in
+--                 walkNet (zOutloop :: acc) (invert pol) outloop tail
+--               else
+--                 case Utils.List.pivot (n - 1) inloops of
+--                   (l, { metadata, arg, content } :: r) ->
+--                     let zInloop = mkZInloop scroll metadata arg outloop l r in
+--                     walkNet (zInloop :: acc) pol content tail
+--                   _ ->
+--                     Nothing
+    
+--     walkNet acc pol net_ path_ =
+--       case path_ of
+--         [] -> Just ({ zipper = List.reverse acc, polarity = pol }, net_)
+--         n :: tail ->
+--           case Utils.List.pivot (n - 1) net_ of
+--             (l, val :: r) ->
+--               walkVal (mkZNet l r :: acc) pol val tail
+--             _ ->
+--               Nothing
+--   in
+--   walkNet [] Pos net path
+
+
+-- -- Also there is a forgetful functor from zippers to paths
+
+
+-- zipToInt : Zip -> Int
+-- zipToInt zip =
+--   case zip of
+--     ZNet { left } ->
+--       List.length left
+--     ZOutloop _ ->
+--       0
+--     ZInloop { left } ->
+--       1 + List.length left
+
+
+-- zipperToPath : Zipper -> Path
+-- zipperToPath =
+--   List.map zipToInt
 
 
 -- String representation
+
+
+viewJustifText : Justification -> Ident -> String
+viewJustifText { self, from } id =
+  let
+    selfText = 
+      if self then "•" else ""
+        
+    fromText =
+      case from of
+        Just name -> name ++ "/"
+        Nothing -> ""
+  in
+  fromText ++ selfText ++ id
 
 
 viewShapeText : Shape -> String
@@ -535,13 +747,13 @@ viewShapeText shape =
         outloopText =
           viewNetText outloop
         
-        inloopText index { arg, content } =
+        inloopText (id, { justif, content }) =
           let
             (isOpened, isClosed) =
               case (interaction.opened, interaction.closed) of
-                (Just o, Just c) -> (index == o, index == c)
-                (Just o, Nothing) -> (index == o, False)
-                (Nothing, Just c) -> (False, index == c)
+                (Just o, Just c) -> (id == o, id == c)
+                (Just o, Nothing) -> (id == o, False)
+                (Nothing, Just c) -> (False, id == c)
                 (Nothing, Nothing) -> (False, False)
 
             openBracket = if isOpened then "<(" else "("
@@ -549,42 +761,29 @@ viewShapeText shape =
 
             contentText = openBracket ++ viewNetText content ++ closeBracket
           in
-          case arg.name of
-            Just name ->
-              name ++ " :: " ++ contentText
-            Nothing ->
-              contentText
+          viewJustifText justif id ++ " :: " ++ contentText
 
         inloopsText =
           inloops
-          |> List.indexedMap inloopText
+          |> Dict.toList
+          |> List.map inloopText
           |> String.join "; "
       in
       "[" ++ outloopText ++ " " ++ inloopsText ++ "]"
 
 
 viewValText : Val -> String
-viewValText { arg, shape } =
+viewValText { name, justif, shape } =
   let
-    identText =
-      case arg.name of
-        Just name -> name
+    nameText =
+      case name of
+        Just id -> id
         Nothing -> ""
-    
-    selfText = 
-      if arg.justif.self
-      then "•"
-      else ""
-        
-    fromText =
-      case arg.justif.from of
-        Just name -> name ++ "/"
-        Nothing -> ""
-    
+      
     shapeText =
       viewShapeText shape
   in
-  fromText ++ selfText ++ identText ++ " : " ++ shapeText
+  viewJustifText justif nameText ++ " : " ++ shapeText
 
 
 viewNetText : Net -> String
@@ -632,7 +831,7 @@ a = atom
 
 entails : Net -> Net -> Val
 entails phi psi =
-  mkRealScroll phi [psi]
+  mkRealScroll phi [("Return", psi)]
 
 
 yinyang : Val
