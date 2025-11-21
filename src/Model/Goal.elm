@@ -7,8 +7,6 @@ import Queue exposing (Queue)
 import Iddict exposing (Iddict)
 
 import Utils.Maybe
-import Browser exposing (application)
-import Css exposing (invalid)
 
 
 -- Selection
@@ -178,25 +176,25 @@ map f goal =
 
 type Action
   -- Open a scroll with an empty outloop and a single empty inloop
-  = Open { ctx : Context } 
+  = Open { ctx : Context, name : Maybe Ident } 
   -- Close a scroll with an empty outloop and a single inloop
-  | Close { ctx : Context, scroll : ScrollVal } 
+  | Close { ctx : Context, scroll : ScrollVal, id : Ident } 
   -- Insert a value in a net
   | InsertVal { ctx : Context, val : Val }
   -- Insert an inloop in a scroll
-  | InsertEnv { ctx : Context, scroll : ScrollVal, id : Ident, env : Env }
+  | InsertEnv { ctx : Context, scroll : ScrollVal, id : Ident, content : Net }
   -- Delete a value from a net
   | DeleteVal { ctx : Context, val : Val }
   -- Delete an inloop from a scroll
-  | DeleteEnv { ctx : Context, scroll : ScrollVal, id : Ident } 
+  | DeleteEnv { ctx : Context, scroll : ScrollVal, id : Ident, env : Env } 
   -- Iterate a source value into a net
   | IterateVal { srcCtx : Context, srcVal : Val, tgtCtx : Context, tgtName : Maybe Ident } 
   -- Iterate a source inloop in the same scroll
-  | IterateEnv { ctx : Context, scroll : ScrollVal, id : Ident, copyId : Ident } 
+  | IterateEnv { ctx : Context, scroll : ScrollVal, srcId : Ident, srcEnv : Env, tgtId : Ident } 
   -- Deiterate a target value from an identical source
   | DeiterateVal { srcCtx : Context, srcVal : Val, tgtCtx : Context, tgtVal : Val } 
   -- Deiterate a target inloop from an identical source in the same scroll
-  | DeiterateEnv { ctx : Context, scroll : ScrollVal, srcId : Ident, tgtId : Ident } 
+  | DeiterateEnv { ctx : Context, scroll : ScrollVal, srcId : Ident, srcEnv : Env, tgtId : Ident, tgtEnv : Env } 
 
 
 type ActionError
@@ -204,9 +202,23 @@ type ActionError
   | InvalidBranchId Zipper Ident
   | Erased Zipper
   | NonEmptyOutloop Zipper
+  | NonSingleInloop Zipper
   | OutOfScope Zipper Zipper
+  | UnnamedSource Zipper
   | IncompatibleBoundaries Zipper Zipper
 
+
+boundaryVal : ExecMode -> Polarity -> Val -> Node
+boundaryVal execMode =
+  let
+    forwardBoundary pol =
+      case pol of
+        Pos -> conclusionVal
+        Neg -> premissVal
+  in
+  case execMode of
+    Forward -> forwardBoundary
+    Backward -> invert >> forwardBoundary
 
 boundary : ExecMode -> Polarity -> Net -> Struct
 boundary execMode =
@@ -224,19 +236,18 @@ boundary execMode =
 applicable : Goal -> Action -> Result ActionError ()
 applicable goal action =
   let
-    (erasedVal, erasedScrollVal, erasedEnv, erasedArea) =
-      
+    { erasedVal, erasedScrollVal, erasedEnv, erasedArea } =
       case goal.execMode of
         Forward ->
-          ( eliminatedVal
-          , eliminatedScrollVal
-          , eliminatedEnv
-          , eliminatedArea )
+          { erasedVal = eliminatedVal
+          , erasedScrollVal = eliminatedScrollVal
+          , erasedEnv = eliminatedEnv
+          , erasedArea = eliminatedArea }
         Backward ->
-          ( introducedVal
-          , introducedScrollVal
-          , introducedEnv
-          , introducedArea )
+          { erasedVal = introducedVal
+          , erasedScrollVal = introducedScrollVal
+          , erasedEnv = introducedEnv
+          , erasedArea = introducedArea }
 
     isPositive : Context -> Bool
     isPositive ctx =
@@ -258,13 +269,26 @@ applicable goal action =
       else
         Ok ()
 
-    Close { ctx, scroll } ->
+    Close { ctx, scroll, id } ->
       if erasedScrollVal ctx scroll then
         Err (Erased ctx.zipper)
       else if boundary goal.execMode (invert ctx.polarity) scroll.data.outloop /= [] then
         Err (NonEmptyOutloop ctx.zipper)
       else
-        Ok ()
+        let
+          nonErasedInloops =
+            scroll.data.inloops |>
+            Dict.filter (\id_ env -> not (erasedEnv ctx scroll id_ env)) |>
+            Dict.toList
+        in
+        case nonErasedInloops of
+          [(id_, _)] ->
+            if id_ /= id then
+              Err (InvalidBranchId ctx.zipper id)
+            else
+              Ok ()
+          _ ->
+            Err (NonSingleInloop ctx.zipper)
 
     InsertVal { ctx } ->
       if isPositive ctx then
@@ -313,19 +337,21 @@ applicable goal action =
         Err (Erased srcCtx.zipper)
       else if erasedArea tgtCtx then
         Err (Erased tgtCtx.zipper)
+      else if Utils.Maybe.isNothing srcVal.name then
+        Err (UnnamedSource srcCtx.zipper)
       else
         Ok ()
     
-    IterateEnv { ctx, scroll, id, copyId } ->
-      case Dict.get id scroll.data.inloops of
+    IterateEnv { ctx, scroll, srcId, tgtId } ->
+      case Dict.get srcId scroll.data.inloops of
         Nothing ->
-          Err (InvalidBranchId ctx.zipper id)
-        Just env ->
+          Err (InvalidBranchId ctx.zipper srcId)
+        Just srcEnv ->
           if isPositive ctx then
             Err (InvalidPolarity Pos)
-          else if id == copyId then
-            Err (InvalidBranchId ctx.zipper copyId)
-          else if erasedEnv ctx scroll id env then
+          else if srcId == tgtId then
+            Err (InvalidBranchId ctx.zipper tgtId)
+          else if erasedEnv ctx scroll srcId srcEnv then
             let
               zScrollData =
                 { metadata = scroll.metadata
@@ -335,10 +361,10 @@ applicable goal action =
               zInloop =
                 ZInloop { scroll = zScrollData
                         , outloop = scroll.data.outloop
-                        , neighbors = Dict.remove id scroll.data.inloops
-                        , metadata = env.metadata
-                        , justif = env.justif
-                        , id = id }
+                        , neighbors = Dict.remove srcId scroll.data.inloops
+                        , metadata = srcEnv.metadata
+                        , justif = srcEnv.justif
+                        , id = srcId }
             in
             Err (Erased (zInloop :: ctx.zipper))
           else
@@ -400,7 +426,7 @@ applicable goal action =
               else if erasedEnv ctx scroll tgtId tgtEnv then
                 Err (Erased tgtZipper)
               else if boundary goal.execMode ctx.polarity srcEnv.content /=
-                      boundary goal.execMode ctx.polarity srcEnv.content then
+                      boundary goal.execMode ctx.polarity tgtEnv.content then
                 Err (IncompatibleBoundaries srcZipper tgtZipper)
               else
                 Ok ()
@@ -420,205 +446,150 @@ applicable goal action =
 record : Action -> Goal -> (Int, Goal)
 record action goal =
   let
-    (id, newActions) = Iddict.insert action goal.actions
-    newActionsQueue = Queue.enqueue id goal.actionsQueue
-    freshName = "x" ++ String.fromInt id
+    (actionId, newActions) = Iddict.insert action goal.actions
+    newActionsQueue = Queue.enqueue actionId goal.actionsQueue
 
     newFocus : Net
     newFocus =
       let
-        walk path =
-          let ({ zipper }, net) = walkGoal goal path in
-          (zipper, net)
-
         skip () =
           Debug.log
             "Unexpected action path. Doing nothing."
             goal.focus
       in
       case action of
-        Open path ->
-          case walk path of
-            (zipper, net) ->
-              let
-                interaction =
-                  case goal.execMode of
-                    Forward ->
-                      { opened = Just 0, closed = Nothing }
-                    Backward ->
-                      { opened = Nothing, closed = Just 0 }
-                  
-                emptyScroll =
-                  { metadata = { grown = False }
-                  , arg = { name = Just freshName, justif = assumption }
-                  , shape = Scroll { interaction = interaction
-                                    , outloop = []
-                                    , inloops = [mkEnv { grown = False } Nothing []] } }
-                
-                newNet =
-                  net ++ [emptyScroll]
-              in
-              fillZipper newNet zipper
+        Open { ctx, name } ->
+          let
+            inloopId =
+              "Return"
 
-        Close path ->
-          case walk path of
-            (ZNet { left } :: _ as zipper, [val]) ->
-              case val.shape of
-                Scroll ({ interaction } as scrollData) ->
-                  let
-                    idx = List.length left
-                    newInteraction =
-                      case goal.execMode of
-                        Forward ->
-                          { interaction | closed = Just idx }
-                        Backward ->
-                          { interaction | opened = Just idx }
-                    newScrollData =
-                      { scrollData | interaction = newInteraction }
-                  in
-                  fillZipper [{ val | shape = Scroll newScrollData }] zipper
-                
-                _ -> skip ()
-            _ -> skip ()
-
-        Insert path content ->
-          case (walk path, content) of
-            -- Insert new inloop
-            ((ZNet _ :: _ as zipper, [val]), inloopContent) ->
-              case val.shape of
-                Scroll scroll ->
-                  let
-                    selfJustified =
-                      not (isGrownZipper zipper || isGrownVal val)
-                    
-                    newInloop =
-                      { metadata = { grown = selfJustified }
-                      , arg = { name = Just freshName
-                              , justif = { self = selfJustified, from = Nothing } }
-                      , content = inloopContent }
-
-                    newScroll =
-                      Scroll { scroll | inloops = scroll.inloops ++ [newInloop] }
-                    
-                    newVal =
-                      { val | shape = newScroll }
-                  in
-                  fillZipper [newVal] zipper
-                
-                _ -> skip ()
-
-            -- Insert new value
-            ((zipper, net), [val]) ->
-              let
-                selfJustified =
-                  not (isGrownZipper zipper || isGrownVal val)
-                
-                newVal =
-                  { val | metadata = { grown = selfJustified }
-                        , arg = { name = Just freshName
-                                , justif = { self = selfJustified, from = Nothing } } }
-              in
-              fillZipper (net ++ [newVal]) zipper
-            
-            _ -> skip ()
-
-        Delete path ->
-          case walk path of
-            -- Delete inloop
-            (ZInloop { scroll, metadata, arg, outloop, left, right } :: zipper, inloopContent) ->
-              let
-                oldJustif = arg.justif
-
-                newInloop =
-                  { metadata = metadata
-                  , arg = { arg | justif = { oldJustif | self = True } }
-                  , content = inloopContent }
-
-                newVal =
-                  { metadata = scroll.metadata
-                  , arg = scroll.arg
-                  , shape = Scroll { interaction = scroll.interaction
-                                   , outloop = outloop
-                                   , inloops = left ++ newInloop :: right } }
-              in
-              fillZipper [newVal] zipper
-            
-            -- Delete value
-            (zipper, [val]) ->
-              let
-                oldJustif = val.arg.justif
-                oldArg = val.arg
-                newVal = { val | arg = { oldArg | justif = { oldJustif | self = True } } }
-              in
-              fillZipper [newVal] zipper
-            
-            _ -> skip ()
-
-        Iterate { src, tgt } ->
-          case (walk src, walk tgt) of
-            -- Iterate an inloop
-            ((ZInloop zinloop :: _, inloopContent), (ZNet _ :: _ as zipper, [val])) ->
-              case val.shape of
-                Scroll tgtScroll ->
-                  let
-                    copyInloop =
-                      { metadata = { grown = False }
-                      , arg = { name = Just freshName
-                              , justif = { self = False, from = zinloop.arg.name } }
-                      , content = inloopContent }
-                      
-                    newScroll =
-                      Scroll { tgtScroll | inloops = tgtScroll.inloops ++ [copyInloop] }
-
-                    newVal =
-                      { val | shape = newScroll }
-                  in
-                  fillZipper [newVal] zipper
+            interaction =
+              case goal.execMode of
+                Forward ->
+                  { opened = Just inloopId, closed = Nothing }
+                Backward ->
+                  { opened = Nothing, closed = Just inloopId }
               
-                _ -> skip ()
+            emptyEnv =
+              { metadata = { grown = False }
+              , justif = assumption
+              , content = [] }
 
-            -- Iterate a value
-            ((_, [val]), (zipper, net)) ->
-              let
-                copyVal =
-                  { metadata = { grown = False }
-                  , arg = { name = Just freshName
-                          , justif = { self = False, from = val.arg.name } }
-                  , shape = val.shape }
-              in
-              fillZipper (net ++ [copyVal]) zipper
+            emptyScroll : Val
+            emptyScroll =
+              { metadata = { grown = False }
+              , name = name
+              , justif = assumption
+              , shape = Scroll { interaction = interaction
+                               , outloop = []
+                               , inloops = Dict.fromList [(inloopId, emptyEnv)] } }
+          in
+          fillZipper [emptyScroll] ctx.zipper
+
+        Close { ctx, scroll, id } ->
+          let
+            scrollData = scroll.data
+            interaction = scrollData.interaction
+            newInteraction =
+              case goal.execMode of
+                Forward ->
+                  { interaction | closed = Just id }
+                Backward ->
+                  { interaction | opened = Just id }
+            newScrollData = { scrollData | interaction = newInteraction }
+            newVal = valFromScroll { scroll | data = newScrollData }
+          in
+          fillZipper [newVal] ctx.zipper
+
+        InsertVal { ctx, val } ->
+          let
+            grown =
+              isGrownZipper ctx.zipper ||
+              isGrownVal val
             
-            _ -> skip ()
+            newVal =
+              { val | metadata = { grown = grown }
+                    , justif = { self = not grown, from = Nothing } }
+          in
+          fillZipper [newVal] ctx.zipper
 
-        Deiterate { src, tgt } ->
-          case (walk src, walk tgt) of
-            -- Deiterate an inloop
-            ((ZInloop srcZInloop :: _, _), (ZInloop tgtZInloop :: zipper, tgtInloopContent)) ->
-              let
-                oldArg = tgtZInloop.arg
-                oldJustif = oldArg.justif
-                newJustif = { oldJustif | from = srcZInloop.arg.name }
-                newZInloop =
-                  ZInloop { tgtZInloop | arg = { oldArg | justif = newJustif } }
-              in
-              fillZipper tgtInloopContent (newZInloop :: zipper)
+        InsertEnv { ctx, scroll, id, content } ->
+          let
+            grown =
+              isGrownZipper ctx.zipper ||
+              scroll.metadata.grown
+            
+            newInloop =
+              { metadata = { grown = grown }
+              , justif = { self = not grown, from = Nothing }
+              , content = content }
 
-            -- Deiterate a value
-            ((_, [srcVal]), (zipper, [tgtVal])) ->
-              let
-                oldArg = tgtVal.arg
-                oldJustif = oldArg.justif
-                newJustif = { oldJustif | from = srcVal.arg.name }
-                newVal =
-                  { tgtVal | arg = { oldArg | justif = newJustif } }
-              in
-              fillZipper [newVal] zipper
+            scrollData = scroll.data
+            newInloops = Dict.insert id newInloop scrollData.inloops
+            newVal = valFromScroll { scroll | data = { scrollData | inloops = newInloops } }
+          in
+          fillZipper [newVal] ctx.zipper
 
-            _ -> skip ()
+        DeleteVal { ctx, val } ->
+          let
+            oldJustif = val.justif
+            newVal = { val | justif = { oldJustif | self = True } }
+          in
+          fillZipper [newVal] ctx.zipper
+        
+        DeleteEnv { ctx, scroll, id, env } ->
+          let
+            oldJustif = env.justif
+            newInloop = { env | justif = { oldJustif | self = True } }
+            newInloops = Dict.insert id newInloop scroll.data.inloops
+            oldScrollData = scroll.data
+            newVal = valFromScroll { scroll | data = { oldScrollData | inloops = newInloops } }
+          in
+          fillZipper [newVal] ctx.zipper
+
+        IterateVal { srcCtx, srcVal, tgtCtx, tgtName } ->
+          let
+            srcBoundary = boundaryVal goal.execMode srcCtx.polarity srcVal
+            copy = valFromNode srcBoundary
+            tgtVal = { copy | name = tgtName
+                            , justif = { self = False, from = srcVal.name } }
+          in
+          fillZipper [tgtVal] tgtCtx.zipper
+        
+        IterateEnv { ctx, scroll, srcId, srcEnv, tgtId } ->
+          let
+            srcBoundary = boundary goal.execMode ctx.polarity srcEnv.content
+            copy = netFromStruct srcBoundary
+            tgtEnv = { srcEnv | justif = { self = False, from = Just srcId }
+                              , content = copy }
+            newInloops = Dict.insert tgtId tgtEnv scroll.data.inloops
+            oldScrollData = scroll.data
+            newScroll = { scroll | data = { oldScrollData | inloops = newInloops } }
+            newVal = valFromScroll newScroll
+          in
+          fillZipper [newVal] ctx.zipper
+
+        DeiterateVal { srcVal, tgtCtx, tgtVal } ->
+          let
+            oldJustif = tgtVal.justif
+            newVal = { tgtVal | justif = { oldJustif | from = srcVal.name } }
+          in
+          fillZipper [newVal] tgtCtx.zipper
+
+        DeiterateEnv { ctx, scroll, srcId, tgtId, tgtEnv } ->
+          let
+            oldJustif = tgtEnv.justif
+            newTgtEnv = { tgtEnv | justif = { oldJustif | from = Just srcId } }
+            newInloops = Dict.insert tgtId newTgtEnv scroll.data.inloops
+            oldScrollData = scroll.data
+            newScroll = { scroll | data = { oldScrollData | inloops = newInloops } }
+            newVal = valFromScroll newScroll
+          in
+          fillZipper [newVal] ctx.zipper
   in
-  (id, { goal | actions = newActions
-              , actionsQueue = newActionsQueue
-              , focus = newFocus })
+  (actionId, { goal | actions = newActions
+             , actionsQueue = newActionsQueue
+             , focus = newFocus })
 
 
 {- `execute actionId goal` executes the action with ID `actionId` in `goal` by:
@@ -642,44 +613,36 @@ execute actionId goal =
 
         newFocus : Net
         newFocus =
-          let
-            walk path =
-              let ({ zipper }, net) = walkGoal goal path in
-              (zipper, net)
-          in
           case action of
-            Open path ->
+            Open { ctx, name } ->
               Debug.todo "Open action execution not implemented yet."
 
-            Close path ->
+            Close { ctx, scroll, id } ->
               Debug.todo "Close action execution not implemented yet."
 
-            Insert path content ->
-              Debug.todo "Insert action execution not implemented yet."
+            InsertVal { ctx, val } ->
+              Debug.todo "InsertVal action execution not implemented yet."
 
-            Delete path ->
-              case walk path of
-                -- Delete inloop
-                (ZInloop zinloop :: zipper, _) ->
-                  let
-                    newScroll =
-                      { metadata = zinloop.scroll.metadata
-                      , arg = zinloop.scroll.arg
-                      , shape = Scroll { interaction = zinloop.scroll.interaction
-                                       , outloop = zinloop.outloop
-                                       , inloops = zinloop.left ++ zinloop.right } }
-                  in
-                  fillZipper [newScroll] zipper
-                
-                -- Delete value
-                (zipper, _) ->
-                  fillZipper [] zipper
+            InsertEnv { ctx, scroll, id, content } ->
+              Debug.todo "InsertEnv action execution not implemented yet."
 
-            Iterate { src, tgt } ->
-              Debug.todo "Iterate action execution not implemented yet."
+            DeleteVal { ctx, val } ->
+              Debug.todo "DeleteVal action execution not implemented yet."
 
-            Deiterate { src, tgt } ->
-              Debug.todo "Deiterate action execution not implemented yet."
+            DeleteEnv { ctx, scroll, id } ->
+              Debug.todo "DeleteEnv action execution not implemented yet."
+
+            IterateVal { srcCtx, srcVal, tgtCtx, tgtName } ->
+              Debug.todo "IterateVal action execution not implemented yet."
+
+            IterateEnv { ctx, scroll, srcId, tgtId } ->
+              Debug.todo "IterateEnv action execution not implemented yet."
+
+            DeiterateVal { srcCtx, srcVal, tgtCtx, tgtVal } ->
+              Debug.todo "DeiterateVal action execution not implemented yet."
+
+            DeiterateEnv { ctx, scroll, srcId, tgtId } ->
+              Debug.todo "DeiterateEnv action execution not implemented yet."
       in
       { goal | actions = newActions
              , actionsQueue = newActionsQueue

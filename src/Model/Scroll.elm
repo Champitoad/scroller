@@ -70,8 +70,8 @@ type alias ScrollVal
     , justif : Justification
     , data : ScrollData }
 
-valOfScroll : ScrollVal -> Val
-valOfScroll { metadata, name, justif, data } =
+valFromScroll : ScrollVal -> Val
+valFromScroll { metadata, name, justif, data } =
   { metadata = metadata
   , name = name
   , justif = justif
@@ -134,13 +134,21 @@ nodeFromVal { shape } =
 -- Boundaries
 
 
+premissVal : Val -> Node
+premissVal val =
+  Debug.todo "Not implemented yet"
+
+conclusionVal : Val -> Node
+conclusionVal val =
+  Debug.todo "Not implemented yet"
+
 premiss : Net -> Struct
-premiss net =
-  Debug.todo "Premiss computation not implemented yet."
+premiss =
+  List.map premissVal
 
 conclusion : Net -> Struct
-conclusion net =
-  Debug.todo "Conclusion computation not implemented yet."
+conclusion =
+  List.map conclusionVal
 
 
 -- Helper functions
@@ -337,8 +345,10 @@ isGrownZip zip =
   case zip of
     ZOutloop { scroll } ->
       scroll.metadata.grown
-    ZInloop { scroll } ->
+    ZInloop { metadata, scroll } ->
+      metadata.grown ||
       scroll.metadata.grown
+
     _ ->
       False
 
@@ -580,11 +590,11 @@ eliminatedVal ctx val =
 
 introducedScrollVal : Context -> ScrollVal -> Bool
 introducedScrollVal ctx scroll =
-  introducedVal ctx (valOfScroll scroll)
+  introducedVal ctx (valFromScroll scroll)
 
 eliminatedScrollVal : Context -> ScrollVal -> Bool
 eliminatedScrollVal ctx scroll =
-  eliminatedVal ctx (valOfScroll scroll)
+  eliminatedVal ctx (valFromScroll scroll)
 
 
 introducedEnv : Context -> ScrollVal -> Ident -> Env -> Bool
