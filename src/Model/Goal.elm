@@ -451,12 +451,6 @@ record action goal =
 
     newFocus : Net
     newFocus =
-      let
-        skip () =
-          Debug.log
-            "Unexpected action path. Doing nothing."
-            goal.focus
-      in
       case action of
         Open { ctx, name } ->
           let
