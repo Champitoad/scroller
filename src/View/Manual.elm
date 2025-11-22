@@ -58,19 +58,16 @@ resetButton id =
   Input.button
     [ ]
     { onPress = Just (ResetSandbox id)
-    , label = resetIcon
-    }
+    , label = resetIcon }
 
-viewSandbox : FlowerDnD -> Sandbox -> String -> Element Msg
+viewSandbox : ValDnD -> Sandbox -> String -> Element Msg
 viewSandbox dnd { currentGoal } id =
   row
     [ width fill
     , spacing 20
-    , padding 5
-    ]
+    , padding 5 ]
     [ viewGoal dnd currentGoal
-    , resetButton id
-    ]
+    , resetButton id ]
     
 
 backButtonStyle : List (Attribute msg)
@@ -111,14 +108,12 @@ body { manualExamples, dragDrop } =
     h1 icon txt =
       row [spacing 20, paddingEach { top = 20, bottom = 10, left = 0, right = 0 }]
         [ icon
-        , el [Font.size 40] (text txt)
-        ]
+        , el [Font.size 40] (text txt) ]
 
     h2 txt =
       row [spacing 15, paddingEach { top = 10, bottom = 0, left = 0, right = 0 } ]
         [ el [Font.size 35] (text "•")
-        , el [Font.size 25] (bold txt)
-        ]
+        , el [Font.size 25] (bold txt) ]
   in
   row
     ( scrollbarY ::
@@ -168,8 +163,8 @@ body { manualExamples, dragDrop } =
       , par [ t"Note that flowers can be ", b"nested", t" inside each other." ]
       
       , h2 "Import"
-      , par [ t"Drag a ", el (draggable importColor).active (text "flower")
-            , t" to copy it, and drop it in an ", el (droppable importColor).active (text "area")
+      , par [ t"Drag a ", el (draggable useColor).active (text "flower")
+            , t" to copy it, and drop it in an ", el (droppable useColor).active (text "area")
             , t" to paste it." ]
       , sandbox "Import"
 
@@ -185,8 +180,7 @@ body { manualExamples, dragDrop } =
       , par [ t"Coming soon!" ]
 
       , h1 navigateIcon "Navigation Mode"
-      , par [ t"Coming soon!" ]
-      ]
+      , par [ t"Coming soon!" ] ]
     , padder
     ]
 

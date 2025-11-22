@@ -3,6 +3,7 @@ module View.Toolbar exposing (..)
 import View.Style exposing (..)
 import View.Widgets exposing (..)
 
+import Model.Formula as Formula
 import Model.Goal exposing (..)
 import Model.App exposing (..)
 
@@ -10,11 +11,13 @@ import Update.App exposing (..)
 
 import Utils.Color
 import Utils.Maybe exposing (..)
+import Utils.Events exposing (..)
 
 import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
 import Element.Events as Events
+import Element.Input as Input
 
 import Html.Attributes
 
@@ -25,7 +28,7 @@ type ModeSelectorPosition
   = Start | Middle | End
 
 
-viewAutoButton : UIMode -> Element Msg
+viewAutoButton : ActionMode -> Element Msg
 viewAutoButton mode =
   let
     enabled =
@@ -49,7 +52,19 @@ viewHelpButton =
     , enabled = True }
 
 
-viewModeSelector : UIMode -> Element Msg
+viewNewAtomNameTextEdit : String -> Element Msg
+viewNewAtomNameTextEdit newAtomName =
+  Input.text
+    [ width (105 |> px)
+    , Border.rounded scrollBorderRound
+    , onClick DoNothing ]
+    { onChange = UpdateNewAtomName
+    , text = newAtomName
+    , placeholder = Just (Input.placeholder [] (text "new atom name"))
+    , label = Input.labelHidden "New atom name" }
+
+
+viewModeSelector : ActionMode -> Element Msg
 viewModeSelector currentMode =
   let
     item mode position =
@@ -57,7 +72,7 @@ viewModeSelector currentMode =
         isSelected =
           case (mode, currentMode) of          
             (ProofMode _, ProofMode _) -> True
-            (EditMode _ _, EditMode _ _) -> True
+            (EditMode _, EditMode _) -> True
             _ -> mode == currentMode
 
         (bgColor, fgColor) =
@@ -70,7 +85,7 @@ viewModeSelector currentMode =
             (title, icon) =
               case mode of
                 ProofMode _ -> ("Prove", Icons.checkSquare)
-                EditMode _ _ -> ("Edit", Icons.edit2)
+                EditMode _ -> ("Edit", Icons.edit2)
                 NavigationMode -> ("Navigate", Icons.navigation)
             elem =
               el
@@ -97,7 +112,7 @@ viewModeSelector currentMode =
               , topRight = buttonBorderRadius, bottomRight = buttonBorderRadius }
 
         changeAction =
-          [ Events.onClick (ChangeUIMode mode)
+          [ Events.onClick (ChangeActionMode mode)
           , pointer ]
       in
       el
@@ -120,7 +135,9 @@ viewModeSelector currentMode =
     , Border.color borderColor
     , Background.color borderColor ]
     [ item (ProofMode Argumenting) Start
-    , item (EditMode Operating initialSurgery) Middle
+    , item (EditMode { interaction = Operating
+                     , surgery = initialSurgery
+                     , newAtomName = "a" }) Middle
     , item NavigationMode End ]
 
 
@@ -146,8 +163,15 @@ viewUndoRedo (History history) =
 viewToolbar : Model -> Element Msg
 viewToolbar model =
   let
-    autoButton = viewAutoButton model.goal.mode
-    modeSelector = viewModeSelector model.goal.mode
+    -- autoButton = viewAutoButton model.goal.actionMode
+    newAtomNameTextEdit =
+      case model.goal.actionMode of
+        EditMode { newAtomName } ->
+          [viewNewAtomNameTextEdit newAtomName]
+        _ ->
+          []
+      
+    modeSelector = viewModeSelector model.goal.actionMode
     undoRedo = viewUndoRedo model.history
   in
   row
@@ -167,12 +191,13 @@ viewToolbar model =
     [ row
         [ width fill
         , spacing 5 ]
-        [ el
+        ( el
             [ alignLeft ]
-            ( viewHelpButton ) 
-        , el
-            [ alignLeft ]
-            ( autoButton ) ]
+            ( viewHelpButton ) ::
+          newAtomNameTextEdit )
+        -- , el
+        --     [ alignLeft ]
+        --     ( autoButton ) ]
     , modeSelector
     , el
         [ width fill ]

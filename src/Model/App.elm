@@ -13,10 +13,10 @@ import Html5.DragDrop as DnD
 
 
 type alias ValDragId
-  = { location : Location, source : Zipper, content : Val }
+  = { location : Location, source : Context, content : Val }
 
 type alias ValDropId
-  = Maybe { location : Location, target : Zipper, content : Net }
+  = Maybe { location : Location, target : Context, content : Net }
 
 type alias ValDnD
   = DnD.Model ValDragId ValDropId

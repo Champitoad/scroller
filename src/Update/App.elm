@@ -1,5 +1,6 @@
 port module Update.App exposing (..)
 
+import Model.Formula exposing (..)
 import Model.Scroll exposing (..)
 import Model.Goal exposing (..)
 import Model.App exposing (..)
@@ -20,14 +21,17 @@ port dragstart : Value -> Cmd msg
 
 
 type Msg
-  = ExecAction Action
-  | Auto
-  | SetGoal Net
+  = Record Action
+  | Exec Action
+  | Step
+  | ExecAll
   | ChangeActionMode ActionMode
   | ChangeExecMode ExecMode
   | ToggleRecording
   | Undo
   | Redo
+  | Auto
+  | UpdateNewAtomName String
   | DragDropMsg ValDnDMsg
   | ResetSandbox SandboxID
   | HandleKeyboardEvent KeyboardEvent
@@ -180,15 +184,12 @@ update msg ({ goal, manualExamples } as model) =
         , history = History { prev = Just model, next = Nothing } }
       , Cmd.none )
     
-    SetGoal net ->
-      ( { model | goal = { goal | focus = net } }, Cmd.none )
-    
     ChangeActionMode mode ->
       let
         newFocus =
           case mode of
             ProofMode _ ->
-              List.map commit goal.focus
+              List.map commitVal goal.focus
             _ ->
               goal.focus
       in

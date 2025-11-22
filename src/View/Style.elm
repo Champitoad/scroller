@@ -68,16 +68,16 @@ positiveColor : Color
 positiveColor =
   rgb 1 1 1
 
-flowerForegroundColor : Polarity -> Color
-flowerForegroundColor polarity =
+scrollForegroundColor : Polarity -> Color
+scrollForegroundColor polarity =
   case polarity of
     Pos ->
       negativeColor
     Neg ->
       positiveColor
 
-flowerBackgroundColor : Polarity -> Color
-flowerBackgroundColor polarity =
+scrollBackgroundColor : Polarity -> Color
+scrollBackgroundColor polarity =
   case polarity of
     Pos ->
       positiveColor
@@ -90,12 +90,12 @@ grownColor =
   rgb 0.227 0.525 1
 
 
-flowerBorderWidth : Int
-flowerBorderWidth =
+scrollBorderWidth : Int
+scrollBorderWidth =
   3
 
-flowerBorderRound : Int
-flowerBorderRound =
+scrollBorderRound : Int
+scrollBorderRound =
   10
 
 
@@ -114,7 +114,7 @@ actionable color =
     border =
       [ Border.width width
       , Border.dotted
-      , Border.rounded flowerBorderRound ]
+      , Border.rounded scrollBorderRound ]
     
     bgColor =
       Color.withAlpha 0.5 color |> Color.toElement
@@ -156,7 +156,7 @@ draggable color =
     border =
       [ Border.width width
       , Border.solid
-      , Border.rounded flowerBorderRound ]
+      , Border.rounded scrollBorderRound ]
     
     borderColor =
       color |> Color.toElement
@@ -175,7 +175,7 @@ droppable color =
     border =
       [ Border.width width
       , Border.dashed
-      , Border.rounded flowerBorderRound
+      , Border.rounded scrollBorderRound
       , Border.color (Color.toElement color) ]
     
     bgColor =
@@ -193,7 +193,7 @@ grownBorder =
       3
 
     border =
-      [ Border.rounded flowerBorderRound ]
+      [ Border.rounded scrollBorderRound ]
   in
   { borderWidth = width
   , active =

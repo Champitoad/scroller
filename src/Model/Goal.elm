@@ -1,5 +1,6 @@
 module Model.Goal exposing (..)
 
+import Model.Formula exposing (Formula)
 import Model.Scroll as Scroll exposing (..)
 
 import Dict exposing (Dict)
@@ -40,14 +41,14 @@ initialSurgery =
 
 type EditInteraction
   = Operating
-  | Adding Context
-  | Renaming Context
   | Reordering
 
 
 type ActionMode
   = ProofMode ProofInteraction
-  | EditMode EditInteraction Surgery
+  | EditMode { interaction : EditInteraction
+             , surgery : Surgery
+             , newAtomName : String }
   | NavigationMode
 
 
@@ -195,6 +196,8 @@ type Action
   | DeiterateVal { srcCtx : Context, srcVal : Val, tgtCtx : Context, tgtVal : Val } 
   -- Deiterate a target inloop from an identical source in the same scroll
   | DeiterateEnv { ctx : Context, scroll : ScrollVal, srcId : Ident, srcEnv : Env, tgtId : Ident, tgtEnv : Env } 
+  -- Decompose a symbolic formula into the corresponding scroll structure
+  | Decompose { ctx : Context, formula : Formula }
 
 
 type ActionError
@@ -233,6 +236,25 @@ boundary execMode =
     Backward -> invert >> forwardBoundary
 
 
+getSingleInloop : ExecMode -> Context -> ScrollVal -> Maybe (Ident, Env)
+getSingleInloop execMode ctx scroll =
+  let
+    erasedEnv =
+      case execMode of
+        Forward -> eliminatedEnv
+        Backward -> introducedEnv
+
+    nonErasedInloops =
+      scroll.data.inloops |>
+      Dict.filter (\id env -> not (erasedEnv ctx scroll id env)) |>
+      Dict.toList
+  in
+  case nonErasedInloops of
+    [inloop] ->
+      Just inloop
+    _ ->
+      Nothing
+
 applicable : Goal -> Action -> Result ActionError ()
 applicable goal action =
   let
@@ -269,27 +291,16 @@ applicable goal action =
       else
         Ok ()
 
-    Close { ctx, scroll, id } ->
+    Close { ctx, scroll } ->
       if erasedScrollVal ctx scroll then
         Err (Erased ctx.zipper)
       else if boundary goal.execMode (invert ctx.polarity) scroll.data.outloop /= [] then
         Err (NonEmptyOutloop ctx.zipper)
       else
-        let
-          nonErasedInloops =
-            scroll.data.inloops |>
-            Dict.filter (\id_ env -> not (erasedEnv ctx scroll id_ env)) |>
-            Dict.toList
-        in
-        case nonErasedInloops of
-          [(id_, _)] ->
-            if id_ /= id then
-              Err (InvalidBranchId ctx.zipper id)
-            else
-              Ok ()
-          _ ->
-            Err (NonSingleInloop ctx.zipper)
-
+        case getSingleInloop goal.execMode ctx scroll of
+          Just _ -> Ok ()
+          Nothing -> Err (NonSingleInloop ctx.zipper)
+  
     InsertVal { ctx } ->
       if isPositive ctx then
         Err (InvalidPolarity Pos)
@@ -309,12 +320,12 @@ applicable goal action =
         Ok ()
 
     DeleteVal { ctx, val } ->
-     if isNegative ctx then
-       Err (InvalidPolarity Neg)
-     else if erasedVal ctx val then
-       Err (Erased ctx.zipper)
-     else
-       Ok ()
+      if isNegative ctx then
+        Err (InvalidPolarity Neg)
+      else if erasedVal ctx val then
+        Err (Erased ctx.zipper)
+      else
+        Ok ()
     
     DeleteEnv { ctx, scroll, id } ->
       case Dict.get id scroll.data.inloops of
@@ -430,6 +441,9 @@ applicable goal action =
                 Err (IncompatibleBoundaries srcZipper tgtZipper)
               else
                 Ok ()
+    
+    Decompose _ ->
+      Ok ()
 
 
 {- `record action goal` records `action` in `goal` by:
@@ -580,6 +594,9 @@ record action goal =
             newVal = valFromScroll newScroll
           in
           fillZipper [newVal] ctx.zipper
+
+        Decompose { ctx, formula } ->
+          fillZipper (decompose formula) ctx.zipper
   in
   (actionId, { goal | actions = newActions
              , actionsQueue = newActionsQueue
@@ -637,6 +654,9 @@ execute actionId goal =
 
             DeiterateEnv { ctx, scroll, srcId, tgtId } ->
               Debug.todo "DeiterateEnv action execution not implemented yet."
+
+            Decompose { ctx, formula } ->
+              Debug.todo "Decompose action execution not implemented yet."
       in
       { goal | actions = newActions
              , actionsQueue = newActionsQueue

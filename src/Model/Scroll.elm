@@ -500,6 +500,11 @@ type alias Context
       polarity : Polarity }
 
 
+emptyCtx : Context
+emptyCtx =
+  { zipper = [], polarity = Pos }
+
+
 introducedJustif : Polarity -> Justification -> Bool
 introducedJustif pol justif =
   case pol of

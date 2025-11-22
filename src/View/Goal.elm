@@ -1,16 +1,15 @@
 module View.Goal exposing (..)
 
 import View.Style as Style exposing (..)
-import View.Widgets exposing (..)
-import View.Events exposing (..)
+import View.Widgets as Widgets exposing (..)
+import View.Events
 
 import Model.Formula as Formula exposing (..)
-import Model.Scroll exposing (..)
+import Model.Scroll as Scroll exposing (..)
 import Model.Mascarpone exposing (..)
 import Model.Goal exposing (..)
 import Model.App exposing (..)
 
-import Update.Rules exposing (..)
 import Update.App exposing (..)
 
 import Utils.List
@@ -35,7 +34,8 @@ import FeatherIcons as Icons
 import Color
 import Utils.Color
 import Utils.Events exposing (onClick)
-import View.Widgets as Widgets
+
+import Dict exposing (Dict)
 
 
 reorderColor : Color.Color
@@ -43,31 +43,34 @@ reorderColor =
   Utils.Color.fromRgb { red = 0.7, green = 0.7, blue = 0.7 }
 
 
-importColor : Color.Color
-importColor =
+useColor : Color.Color
+useColor =
   Utils.Color.fromRgb { red = 1, green = 0.8, blue = 0 }
 
 
-cropAction : Location -> Context -> Flower -> List (Attribute Msg)
-cropAction location context flower =
-  let actionableStyle = redActionable in
-  if croppable context || isGrownFlower flower then
-    Utils.Events.onClick (Action Crop location context.zipper [flower])
-    :: (htmlAttribute <| title "Remove Flower")
-    :: actionableStyle.active
-  else
-    actionableStyle.inactive
+viewAction : Goal -> Action -> ZoneStyle Msg -> String -> List (Attribute Msg)
+viewAction goal action actionableStyle titleText =
+  case applicable goal action of
+    Err _ ->
+      actionableStyle.inactive
+    Ok _ ->
+      Utils.Events.onClick (Record action) ::
+      (htmlAttribute <| title titleText) ::
+      actionableStyle.active
 
 
-pullAction : Location -> Context -> Net -> List (Attribute Msg)
-pullAction location context (Net netData) =
-  let actionableStyle = redActionable in
-  if pullable context then
-    Utils.Events.onClick (Action Pull location context.zipper netData.flowers)
-    :: (htmlAttribute <| title "Remove Inloop")
-    :: actionableStyle.active
-  else
-    actionableStyle.inactive
+deleteValAction : Goal -> Context -> Val -> List (Attribute Msg)
+deleteValAction goal ctx val =
+  viewAction goal
+    (DeleteVal { ctx = ctx, val = val })
+    redActionable "Remove value"
+
+
+deleteEnvAction : Goal -> Context -> ScrollVal -> Scroll.Ident -> Env -> List (Attribute Msg)
+deleteEnvAction goal ctx scroll id env =
+  viewAction goal
+    (DeleteEnv { ctx = ctx, scroll = scroll, id = id, env = env })
+    redActionable "Remove branch"
 
 
 drawGrownBorder : Bool -> List (Attribute msg)
@@ -75,7 +78,7 @@ drawGrownBorder doit =
   if doit then grownBorder.active else grownBorder.inactive
 
 
-viewAtom : Ident -> Element Msg
+viewAtom : Formula.Ident -> Element Msg
 viewAtom ident =
   case ident of
     Name name ->
@@ -110,185 +113,157 @@ viewStatement formula =
       row [] [text "¬ (", viewStatement f1, text ")"]
 
 
-viewFormula : FlowerDnD -> Goal -> FormulaData -> Element Msg
-viewFormula dnd { mode, navigation, location } ({ metadata, statement } as data) =
+viewFormula : ValDnD -> Goal -> Context -> Metadata -> Maybe Scroll.Ident -> Justification -> Formula -> Element Msg
+viewFormula dnd goal ctx metadata name justif formula =
   let
-    form =
-      Formula data
-    
-    context =
-      current navigation
+    val =
+      { metadata = metadata
+      , name = name
+      , justif = justif
+      , shape = Formula formula }
 
     clickAction =
-      let
-        actionableStyle =
-          case statement of
-            Atom _ -> greenActionable
-            _ -> pinkActionable
-      in
-      case mode of
-        ProofMode Argumenting ->
-          case statement of
-            Atom _ ->
-              if isHypothesis form context.zipper then
-                (Events.onClick (Action Justify location context.zipper [form]))
-                :: (htmlAttribute <| title "Justify")
-                :: actionableStyle.active
-              else
-                actionableStyle.inactive
-            
+      case goal.actionMode of
+        ProofMode Interacting ->
+          case formula of
+            Atom _ -> []
             _ ->
-              (Events.onClick (Action Decompose location context.zipper [form]))
-              :: (htmlAttribute <| title "Decompose")
-              :: actionableStyle.active
+              viewAction goal
+                (Decompose { ctx = ctx, formula = formula })
+                pinkActionable "Decompose"
         
-        EditMode Operating _ ->
-          cropAction location context (Formula data)
+        EditMode { interaction } ->
+          case interaction of
+            Operating -> deleteValAction goal ctx val
+            _ -> []
 
-        _ ->
-          actionableStyle.inactive
+        _ -> []
     
-    reorderDragAction =
-      case mode of
-        EditMode _ _ ->
-          dragAction reorderColor dnd location context.zipper form
-        
-        _ ->
-          []
+    dragAction =
+      case goal.actionMode of
+        ProofMode Interacting ->
+          View.Events.dragAction useColor dnd goal.location ctx.zipper val
+
+        EditMode _ ->
+          View.Events.dragAction reorderColor dnd goal.location ctx.zipper val
+
+        _ -> []
     
     (fontSize, paddingSize) =
-      case location of
+      case goal.location of
         App -> (45, 10)
         Manual _ -> (30, 5)
   in
   el
     ( [ centerX, centerY
       , padding paddingSize
-      , Font.color (flowerForegroundColor context.polarity)
+      , Font.color (scrollForegroundColor ctx.polarity)
       , Font.size fontSize
       , nonSelectable ]
-      ++ reorderDragAction
+      ++ dragAction
       ++ clickAction
       ++ drawGrownBorder metadata.grown )
-    ( viewStatement statement )
+    ( viewStatement formula )
 
 
-viewOutloop : FlowerDnD -> Goal -> OutloopData -> Net -> Element Msg
-viewOutloop dnd ({ mode, navigation, location } as goal) { metadata, outloopMetadata, inloops } outloop =
+viewOutloop : ValDnD -> Goal -> Context -> ScrollVal -> Element Msg
+viewOutloop dnd goal ctx scroll =
   let
-    context =
-      current navigation
-
-    newZipper =
-      mkOutloop metadata outloopMetadata inloops :: context.zipper
+    newCtx =
+      let
+        zOutloop =
+          mkZOutloop
+            { metadata = scroll.metadata
+            , name = scroll.name
+            , justif = scroll.justif
+            , interaction = scroll.data.interaction }
+            scroll.data.inloops
+      in
+      { zipper = zOutloop :: ctx.zipper
+      , polarity = invert ctx.polarity }
 
     clickAction =
-      case mode of
-        ProofMode Argumenting ->
-          let
-            actionableStyle = orangeActionable
-
-            action rule name =
-              (Events.onClick (Action rule location newZipper outloop))
-              :: (htmlAttribute <| title name)
-              :: actionableStyle.active
-          in
-          if List.isEmpty outloop then
-            case context.zipper of
-              _ :: Outloop _ :: _ ->
-                let
-                  (rule, name) =
-                    case List.length inloops of
-                      0 -> (Close, "Ex falso quodlibet")
-                      1 -> (Unlock, "Unlock")
-                      _ -> (Case, "Case")
-                in
-                action rule name
-              _ ->
-                if List.length inloops == 1 then
-                  action Unlock "Unlock"
-                else
-                  actionableStyle.inactive
-          else
-            actionableStyle.inactive
+      case goal.actionMode of
+        ProofMode Interacting ->
+          case getSingleInloop goal.execMode ctx scroll of
+            Nothing -> []
+            Just (id, _) ->
+              viewAction goal
+                (Close { ctx = ctx, scroll = scroll, id = id })
+                orangeActionable "Close"
         
-        EditMode Operating _ ->
-          cropAction location context (mkFlower metadata outloop inloops)
+        EditMode { interaction } ->
+          case interaction of
+            Operating -> deleteValAction goal ctx (valFromScroll scroll) 
+            _ -> []
 
         _ ->
           (actionable Utils.Color.transparent).inactive
     
     paddingSize =
-      case location of
+      case goal.location of
         App -> 10
         Manual _ -> 5
   in
   el
     ( [ width fill
       , height fill
-      , Border.rounded flowerBorderRound ] )
+      , Border.rounded scrollBorderRound ] )
     ( el
         ( [ width fill
           , height fill
           , padding paddingSize ]
          ++ clickAction )
-        ( viewNet dnd
-            { goal | navigation = changeFocus
-              { context
-              | zipper = newZipper
-              , polarity = invert context.polarity
-              } goal.navigation
-            }
-            outloop ) )
+        ( viewNet dnd goal newCtx scroll.data.outloop ) )
 
 
-viewInloop : FlowerDnD -> Goal -> InloopData -> Net -> Element Msg
-viewInloop dnd
-  ({ mode, navigation, location } as goal)
-  { metadata, inloopMetadata, outloop, left, right }
-  (Net inloopData as inloop) =
+viewInloop : ValDnD -> Goal -> Context -> ScrollVal -> (Scroll.Ident, Env) -> Element Msg
+viewInloop dnd goal ctx scroll (id, env) =
   let
-    context =
-      current navigation
-    
-    newZipper =
-      mkInloop metadata inloopMetadata outloop left right :: context.zipper
+    newCtx =
+      let
+        zScrollData =
+          { metadata = scroll.metadata
+          , name = scroll.name
+          , justif = scroll.justif
+          , interaction = scroll.data.interaction }
+        zInloop =
+          { scroll = zScrollData
+          , outloop = scroll.data.outloop
+          , neighbors = Dict.remove id scroll.data.inloops
+          , metadata = env.metadata
+          , justif = env.justif
+          , id = id }
+      in
+      { ctx | zipper = ZInloop zInloop :: ctx.zipper }
 
     clickAction =
-      let actionableStyle = greenActionable in
-      case mode of
-        ProofMode Argumenting ->
-          if List.isEmpty inloopData.flowers then
-            (Events.onClick (Action Close location newZipper inloopData.flowers))
-            :: (htmlAttribute <| title "QED")
-            :: actionableStyle.active
-          else
-            actionableStyle.inactive
-        
-        EditMode Operating _ ->
-          pullAction location { context | zipper = newZipper } inloop
-
+      case goal.actionMode of
+        EditMode { interaction } ->
+          case interaction of
+            Operating ->
+              deleteEnvAction goal ctx scroll id env
+            _ ->
+              []
         _ ->
-          actionableStyle.inactive
+          []
 
     paddingSize =
-      case location of
+      case goal.location of
         App -> 10
         Manual _ -> 10
   in
   el
     [ width fill
     , height fill
-    , Border.rounded flowerBorderRound
-    , Background.color (flowerBackgroundColor context.polarity) ]
+    , Border.rounded scrollBorderRound
+    , Background.color (scrollBackgroundColor ctx.polarity) ]
     ( el
         ( [ width fill
           , height fill
           , padding paddingSize ]
          ++ clickAction )
-        ( viewNet dnd
-            { goal | navigation = changeFocus { context | zipper = newZipper } goal.navigation }
-            inloop ) )
+        ( viewNet dnd goal newCtx env.content ) )
 
 
 addButton : ButtonParams msg -> Element msg
@@ -304,34 +279,45 @@ addButton params =
   button style params
 
 
-viewAddInloopZone : Location -> Context -> FlowerData -> Element Msg
-viewAddInloopZone location context { metadata, outloop, inloops } =
+viewAddInloopZone : Goal -> Context -> ScrollVal -> List (Element Msg)
+viewAddInloopZone goal ctx scroll =
   let
-    newFlower =
-      mkFlower metadata outloop (inloops ++ [mkFakeNet []])
+    id =
+      "Branch" ++ String.fromInt (Dict.size scroll.data.inloops + 1)
+
+    insertEnvAction =
+      InsertEnv { ctx = ctx, scroll = scroll, id = id, content = [] }
 
     addInloopButton =
         ( addButton
-            { action =  Msg (Action Grow location context.zipper [newFlower])
-            , title = "Add Inloop"
-            , icon = Icons.plus
+            { action =  Msg (Record insertEnvAction)
+            , title = "Insert new branch"
+            , icon = Icons.plusSquare
             , enabled = True } )
   in
-  column
-    [ width shrink
-    , height fill
-    , padding 10
-    , Border.rounded flowerBorderRound
-    , Background.color (flowerBackgroundColor (invert context.polarity)) ]
-    [ addInloopButton ]
+  case goal.actionMode of
+    EditMode _ ->
+      case applicable goal insertEnvAction of
+        Ok _ ->
+          [ el
+              [ width shrink
+              , height fill
+              , padding 10
+              , Border.rounded scrollBorderRound
+              , Background.color (scrollBackgroundColor (invert ctx.polarity)) ]
+              ( addInloopButton ) ]
+        Err _ ->
+          []
+    _ ->
+      []
 
 
-viewAddFlowerZone : Location -> Context -> String -> Net -> Element Msg
-viewAddFlowerZone location context newAtomName flowers =
+viewAddValZone : Location -> Context -> String -> Element Msg
+viewAddValZone location ctx newAtomName =
   let
-    newFlower =
+    newVal =
       if String.isEmpty newAtomName then
-        mkFakeFlower (mkFakeNet []) [mkFakeNet []]
+        mkFakeScroll [][("Return", [])]
       else
         case newAtomName of
           "sugar" ->
@@ -364,42 +350,17 @@ viewAddFlowerZone location context newAtomName flowers =
           _ ->
             mkFakeFormula (Formula.atom newAtomName)
 
-    newZipper newName =
-      case context.zipper of
-        [] -> [mkNet flowers []]
-        zip :: zipper ->
-          case zip of
-            Net { left, right } ->
-              mkNet (left ++ flowers) right :: zipper
-            Outloop ({ outloopMetadata } as data) ->
-              mkNet flowers [] ::
-              Outloop { data | outloopMetadata = { outloopMetadata | newAtomName = newName } } ::
-              zipper
-            Inloop ({ inloopMetadata } as data) ->
-              mkNet flowers [] ::
-              InloopData { data | inloopMetadata = { inloopMetadata | newAtomName = newName } } ::
-              zipper
+    insertValAction =
+      InsertVal { ctx = ctx
+                , val = newVal }
     
-    onChange newName =
-      SetGoal (fillZipper [] (newZipper newName))
-    
-    addAtomTextEdit =
-      Input.text
-        [ width (105 |> px)
-        , Border.rounded flowerBorderRound
-        , onClick DoNothing ]
-        { onChange = onChange
-        , text = newAtomName
-        , placeholder = Just (Input.placeholder [] (text "flower"))
-        , label = Input.labelHidden "Atom name" }
-
-    addFlowerButton =
+    addValButton =
       el
         [ width fill
         , height fill ]
         ( addButton
-            { action = Msg (Action Grow location (newZipper newAtomName) [newFlower])
-            , title = "Add Flower"
+            { action = Msg (Record insertValAction)
+            , title = "Insert new value"
             , icon = Icons.plus
             , enabled = True } )
   in
@@ -407,57 +368,49 @@ viewAddFlowerZone location context newAtomName flowers =
     [ width shrink
     , height fill
     , centerX
-    , Border.rounded flowerBorderRound
+    , Border.rounded scrollBorderRound
     , Background.color Style.transparent ]
-    [ addAtomTextEdit
-    , addFlowerButton ]
+    [ addValButton ]
 
 
-viewFlower : FlowerDnD -> Goal -> Flower -> Element Msg
-viewFlower dnd ({ mode, navigation, location } as goal) flower =
-  case flower of
+viewVal : ValDnD -> Goal -> Context -> Val -> Element Msg
+viewVal dnd goal ctx val =
+  case val.shape of
     Formula formula ->
-      viewFormula dnd goal formula
+      viewFormula dnd goal ctx val.metadata val.name val.justif formula
     
-    Flower ({ metadata, outloop, inloops } as data) ->
+    Scroll ({ inloops } as scrollData) ->
       let
-        context =
-          current navigation
-
-        (Net outloopData) = outloop
+        scroll =
+          { metadata = val.metadata
+          , name = val.name
+          , justif = val.justif
+          , data = scrollData }
 
         outloopEl =
-          viewOutloop dnd goal (OutloopData metadata outloopData.metadata inloops) outloop
-        
+          viewOutloop dnd goal ctx scroll
+
         addInloopZone =
-          case mode of 
-            EditMode _ _ ->
-              if glueable context || data.metadata.grown then
-                [viewAddInloopZone location context data]
-              else
-                []
-            _ ->
-              []
+          viewAddInloopZone goal ctx scroll
         
         inloopsEl =
           row
             [ width fill
             , height fill
-            , spacing flowerBorderWidth ]
-            ( Utils.List.zipperMap
-                (\(left, right) (Net inloopData as inloop) ->
-                  viewInloop dnd goal (InloopData metadata inloopData.metadata outloop left right) inloop)
-                inloops
+            , spacing scrollBorderWidth ]
+            ( ( inloops |>
+                Dict.toList |>
+                List.map (viewInloop dnd goal ctx scroll) )
               ++ addInloopZone )
 
         color =
-          case mode of
-            ProofMode _ -> importColor
-            EditMode _ _ -> reorderColor
+          case goal.actionMode of
+            ProofMode _ -> useColor
+            EditMode _ -> reorderColor
             _ -> Utils.Color.transparent
         
         { shadowOffset, shadowSize, shadowBlur, shadowAlpha } =
-          case location of
+          case goal.location of
             App ->
               { shadowOffset = (0, 5)
               , shadowSize = 0.25
@@ -474,121 +427,121 @@ viewFlower dnd ({ mode, navigation, location } as goal) flower =
       column
         ( [ width fill
           , height fill
-          , Background.color (flowerForegroundColor context.polarity) ]
+          , Background.color (scrollForegroundColor ctx.polarity) ]
          ++ (List.map htmlAttribute <| DnD.droppable DragDropMsg Nothing)
-         ++ dragAction color dnd location context.zipper flower
+         ++ View.Events.dragAction color dnd goal.location ctx.zipper val
          ++ onClick DoNothing
          :: Border.solid
          :: Border.width grownBorder.borderWidth
-         :: drawGrownBorder metadata.grown
+         :: drawGrownBorder val.metadata.grown
          ++
           [ Border.shadow
               { offset = shadowOffset
               , size = shadowSize
               , blur = shadowBlur
               , color =
-                  flowerForegroundColor context.polarity |>
+                  scrollForegroundColor ctx.polarity |>
                   Utils.Color.fromElement |>
                   Utils.Color.withAlpha shadowAlpha |>
                   Utils.Color.toElement } ] )
         [ outloopEl, inloopsEl ]
 
 
-viewNet : FlowerDnD -> Goal -> String -> Net -> Element Msg
-viewNet dnd ({ mode, navigation, location } as goal) newAtomName net =
+viewNet : ValDnD -> Goal -> Context -> Net -> Element Msg
+viewNet dnd goal ctx net =
   let
-    context =
-      current navigation
+    newCtx (left, right) =
+      { ctx | zipper = mkZNet left right :: ctx.zipper }
 
-    flowerEl (left, right) =
-      viewFlower dnd
-        { goal | navigation = changeFocus
-          { context | zipper =
-            mkNet left right :: context.zipper
-          } goal.navigation
-        }
+    valEl (left, right) =
+      viewVal dnd goal (newCtx (left, right))
+
+    dropAttrs (left, right) content =
+      List.map htmlAttribute <|
+      DnD.droppable DragDropMsg
+        ( Just { target = { zipper = (newCtx (left, right)).zipper
+                          , polarity = ctx.polarity }
+               , content = content, location = goal.location } )
     
     dropAction (left, right) =
-      case mode of
-        ProofMode Importing ->
+      case goal.actionMode of
+        ProofMode Argumenting ->
           case DnD.getDragId dnd of
-            Just { source } ->
-              -- if isHypothesis content context.zipper then
-              if spans source context.zipper then
-                let
-                  dropStyle =
-                    droppable importColor
-
-                  dropTargetStyle =
-                    case DnD.getDropId dnd of
-                      Just (Just { target }) ->
-                        if mkNet left right :: context.zipper == target
-                        then dropStyle.active
-                        else dropStyle.inactive
-                    
-                      _ ->
-                        dropStyle.inactive
-                in
-                dropTargetStyle ++
-                ( List.map htmlAttribute <|
-                  DnD.droppable DragDropMsg
-                    (Just { target = mkNet left right :: context.zipper
-                          , content = [], location = location }) )
-              else
-                []
-            _ ->
-              []
-
-        EditMode Reordering _ ->
-          case DnD.getDragId dnd of
+            Nothing -> []
             Just { source, content } ->
-              case source of
-                Net sourceNet :: sourceParent ->
-                  if sourceParent == context.zipper then
-                    let
-                      (sourceIndex, index) =
-                        (List.length sourceNet.left, List.length left)
-                    in
-                    if sourceIndex == index || index == sourceIndex + 1 then []
-                    else
-                      let
-                        whole =
-                          left ++ right
+              let
+                iterateValAction =
+                  IterateVal { srcCtx = source, srcVal = content
+                             , tgtCtx = ctx, tgtName = Nothing }
+              in
+              case applicable goal iterateValAction of
+                Err _ -> []
+                Ok _ ->
+                  let
+                    dropStyle =
+                      droppable useColor
 
-                        newNet =
-                          if sourceIndex < index then
-                            let
-                              middle =
-                                Utils.List.slice (sourceIndex + 1) (index - 1) whole
-                            in
-                            sourceNet.left ++ middle ++ content :: right
-                          else
-                            let
-                              middle =
-                                Utils.List.slice index (sourceIndex - 1) whole
-                            in
-                            left ++ content :: (middle ++ sourceNet.right)
+                    dropTargetStyle =
+                      case DnD.getDropId dnd of
+                        Just (Just { target }) ->
+                          if (newCtx (left, right)).zipper == target.zipper
+                          then dropStyle.active
+                          else dropStyle.inactive
+                        _ ->
+                          dropStyle.inactive
+                  in
+                  dropTargetStyle ++ dropAttrs (left, right) []
 
-                        dropStyle =
-                          droppable reorderColor
+        EditMode { interaction } ->
+          case interaction of
+            Reordering ->
+              case DnD.getDragId dnd of
+                Just { source, content } ->
+                  case source.zipper of
+                    ZNet sourceNet :: sourceParent ->
+                      if sourceParent == ctx.zipper then
+                        let
+                          (sourceIndex, index) =
+                            (List.length sourceNet.left, List.length left)
+                        in
+                        if sourceIndex == index || index == sourceIndex + 1 then []
+                        else
+                          let
+                            whole =
+                              left ++ right
 
-                        dropTargetStyle =
-                          case DnD.getDropId dnd of
-                            Just (Just { target }) ->
-                              if mkNet left right :: context.zipper == target
-                              then dropStyle.active
-                              else dropStyle.inactive
+                            newNet =
+                              if sourceIndex < index then
+                                let
+                                  middle =
+                                    Utils.List.slice (sourceIndex + 1) (index - 1) whole
+                                in
+                                sourceNet.left ++ middle ++ content :: right
+                              else
+                                let
+                                  middle =
+                                    Utils.List.slice index (sourceIndex - 1) whole
+                                in
+                                left ++ content :: (middle ++ sourceNet.right)
 
-                            _ ->
-                              dropStyle.inactive
-                      in
-                      dropTargetStyle ++
-                      ( List.map htmlAttribute <|
-                        DnD.droppable DragDropMsg
-                          (Just { target = mkNet left right :: context.zipper
-                                , content = newNet, location = location }) )
-                  else
-                    []
+                            dropStyle =
+                              droppable reorderColor
+
+                            dropTargetStyle =
+                              case DnD.getDropId dnd of
+                                Just (Just { target }) ->
+                                  if mkZNet left right :: ctx.zipper == target.zipper
+                                  then dropStyle.active
+                                  else dropStyle.inactive
+
+                                _ ->
+                                  dropStyle.inactive
+                          in
+                          dropTargetStyle ++ dropAttrs (left, right) newNet
+                      else
+                        []
+                    _ ->
+                      []
                 _ ->
                   []
             _ ->
@@ -597,7 +550,7 @@ viewNet dnd ({ mode, navigation, location } as goal) newAtomName net =
           []
 
     spaceSize =
-      case location of
+      case goal.location of
         App -> 30
         Manual _ -> 10
     
@@ -611,10 +564,10 @@ viewNet dnd ({ mode, navigation, location } as goal) newAtomName net =
       [ Border.width (droppable Utils.Color.transparent).borderWidth
       , Border.color Style.transparent ]
 
-    length flower =
-      case flower of
+    length val =
+      case val.shape of
         Formula _ -> shrink
-        Flower _ -> fill
+        Scroll _ -> fill
 
     intersticial () =
       let
@@ -629,35 +582,40 @@ viewNet dnd ({ mode, navigation, location } as goal) newAtomName net =
             ++ dropAction lr )
             none
 
-        sperse ((left, right) as lr) flower =
+        sperse ((left, right) as lr) val =
           let
             lastDropzone =
               if List.isEmpty right
-              then [onRight (dropZone (left ++ [flower], right))]
+              then [onRight (dropZone (left ++ [val], right))]
               else []
           in
           el
-            ( [ width (length flower)
+            ( [ width (length val)
               , height fill
               , centerX, centerY
-              , onLeft (dropZone (left, flower :: right)) ]
+              , onLeft (dropZone (left, val :: right)) ]
               ++ lastDropzone )
-            ( flowerEl lr flower )
+            ( valEl lr val )
 
         els =
           Utils.List.zipperMap sperse net
         
-        addFlowerZone =
-          case mode of 
-            EditMode _ _ ->
-              if growable context then
-                [viewAddFlowerZone location context newAtomName net]
-              else
-                []
+        addValZone =
+          case goal.actionMode of 
+            EditMode { newAtomName } ->
+              let
+                insertValAction =
+                  InsertVal { ctx = ctx, val = a"dummy" }
+              in
+              case applicable goal insertValAction of
+                Ok _ ->
+                  [viewAddValZone goal.location ctx newAtomName]
+                Err _ ->
+                  []
             _ ->
               []
       in
-      wrappedRow attrs (els ++ addFlowerZone)
+      wrappedRow attrs (els ++ addValZone)
         
     normal () =
       let
@@ -671,37 +629,29 @@ viewNet dnd ({ mode, navigation, location } as goal) newAtomName net =
             [ width (length flower)
             , height fill
             , centerX, centerY ]
-            ( flowerEl lr flower )
+            ( valEl lr flower )
 
         els =
           Utils.List.zipperMap sperse net
       in
       wrappedRow attrs els
   in
-  case mode of
-    EditMode _ _ ->
+  case goal.actionMode of
+    EditMode _ ->
       intersticial ()
 
     _ ->
       normal ()
 
 
-viewNet : FlowerDnD -> Goal -> Net -> Element Msg
-viewNet dnd goal (Net { metadata, flowers }) =
-  el
-    ( fillXY ++
-      drawGrownBorder metadata.grown )
-    ( viewNet dnd goal metadata.newAtomName flowers )
-
-
 inEditMode : Goal -> Bool
-inEditMode { mode } =
-  case mode of
-    EditMode _ _ -> True
+inEditMode { actionMode } =
+  case actionMode of
+    EditMode _ -> True
     _ -> False
 
 
-viewGoal : FlowerDnD -> Goal -> Element Msg
+viewGoal : ValDnD -> Goal -> Element Msg
 viewGoal dnd goal =
   let
     congratsFontSize =
@@ -730,13 +680,13 @@ viewGoal dnd goal =
           [ scrollbars
           , width fill
           , goalHeight ]
-          ( viewNet dnd goal "" goal.focus )
+          ( viewNet dnd goal emptyCtx goal.focus )
   in
-  case goal.mode of
+  case goal.actionMode of
     ProofMode _ ->
       goalEl ()
     
-    EditMode _ _ ->
+    EditMode _ ->
       goalEl ()
 
     _ ->
