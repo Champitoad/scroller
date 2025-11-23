@@ -66,6 +66,16 @@ setGoal location goal model =
       { model | manualExamples = Goal.updateSandbox sandboxID goal model.manualExamples }
 
 
+setGoalWithHistory : Location -> Goal -> Model -> Model
+setGoalWithHistory location goal model =
+  case location of
+    Goal.App ->
+      { model | goal = goal
+              , history = History { prev = Just model, next = Nothing } }
+    Goal.Manual sandboxID ->
+      { model | manualExamples = Goal.updateSandbox sandboxID goal model.manualExamples }
+
+
 -- History of the full state mutually defined
 
 

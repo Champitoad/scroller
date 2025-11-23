@@ -25,16 +25,16 @@ stopPropagation =
   , onMouseMove DoNothing ]
 
 
-dragAction : Color.Color -> ValDnD -> Location -> Zipper -> Val -> List (Attribute Msg)
-dragAction color dnd location zipper val =
-  if List.length zipper <= 1 then []
+dragAction : Color.Color -> ValDnD -> Location -> Context -> Val -> List (Attribute Msg)
+dragAction color dnd location ctx val =
+  if List.length ctx.zipper <= 1 then []
   else
     let
       draggableStyle = View.Style.draggable color
       style =
         case DnD.getDragId dnd of
           Just { source, content } ->
-            if source == zipper && content == val then
+            if source.zipper == ctx.zipper && content == val then
               draggableStyle.active
             else
               draggableStyle.inactive
@@ -44,4 +44,4 @@ dragAction color dnd location zipper val =
     style ++
     (List.map htmlAttribute <|
       DnD.draggable DragDropMsg
-        { location = location, source = zipper, content = val })
+        { location = location, source = ctx, content = val })

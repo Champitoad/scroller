@@ -15,16 +15,16 @@ import Url
 import Browser
 import Browser.Navigation
 import View.Route as Route
+import Css exposing (default)
 
 
 port dragstart : Value -> Cmd msg
 
 
 type Msg
-  = Record Action
-  | Exec Action
-  | Step
+  = Apply Location Action
   | ExecAll
+  | Step
   | ChangeActionMode ActionMode
   | ChangeExecMode ExecMode
   | ToggleRecording
@@ -62,16 +62,16 @@ handleDragDropMsg dndMsg model =
             goal = getGoal dragId.location model
             
             newMode =
-              case goal.mode of
+              case goal.actionMode of
                 ProofMode Interacting ->
                   ProofMode Justifying
-                EditMode _ surgery ->
-                  EditMode Reordering surgery
+                EditMode modeData ->
+                  EditMode { modeData | interaction = Reordering }
                 _ ->
-                  goal.mode
+                  goal.actionMode
             
             newGoal =
-              { goal | mode = newMode }
+              { goal | actionMode = newMode }
             
             newModel =
               { model | dragDrop = newDragDrop }
@@ -85,50 +85,49 @@ handleDragDropMsg dndMsg model =
                 goal = getGoal drag.location model
                 
                 defaultMode =
-                  case goal.mode of
+                  case goal.actionMode of
                     ProofMode _ ->
                       ProofMode Interacting
 
-                    EditMode _ surgery ->
-                      EditMode Operating surgery
+                    EditMode modeData ->
+                      EditMode { modeData | interaction = Operating }
 
                     _ ->
-                      goal.mode
+                      goal.actionMode
               in
               case drop of
                 -- Dropping on target
-                Just destination ->
+                Just dest ->
                   let
-                    action =
-                      case goal.mode of
+                    newGoal =
+                      case goal.actionMode of
                         ProofMode Justifying ->
-                          ExecAction Justify goal.location
-                            destination.target [drag.content]
+                          let
+                            iterateVal =
+                              IterateVal { srcCtx = drag.source, srcVal = drag.content
+                                         , tgtCtx = dest.target, tgtName = Nothing }
+                          in
+                          apply iterateVal goal
                         
-                        EditMode Reordering _ ->
-                          ExecAction Reorder goal.location
-                            destination.target destination.content
+                        EditMode { interaction } ->
+                          case interaction of
+                            Reordering ->
+                              let newFocus = fillZipper dest.content dest.target.zipper in
+                              { goal | focus = newFocus }
+                            _ ->
+                              goal
                         
                         _ ->
-                          DoNothing
-                    
-                    updatedModel =
-                      update action model |> Tuple.first
-                    
-                    updatedGoal =
-                      getGoal goal.location updatedModel
-                    
-                    newGoal =
-                      { updatedGoal | mode = defaultMode }
-                    
+                          goal
+
                     newModel =
-                      setGoal goal.location newGoal updatedModel
+                      setGoal goal.location { newGoal | actionMode = defaultMode } model
                   in
                   { newModel | dragDrop = newDragDrop }
 
                 -- Dropping on non-target
                 Nothing ->
-                  let newModel = setGoal goal.location { goal | mode = defaultMode } model in
+                  let newModel = setGoal goal.location { goal | actionMode = defaultMode } model in
                   { newModel | dragDrop = newDragDrop }
         
             -- Dragging
@@ -139,72 +138,38 @@ handleDragDropMsg dndMsg model =
 
 
 update : Msg -> Model -> (Model, Cmd Msg)
-update msg ({ goal, manualExamples } as model) =
+update msg model =
   case msg of
-    ExecAction rule location zipper net ->
-      let
-        newFocus =
-          apply rule zipper net
+    Apply location action ->
+      let newGoal = apply action (getGoal location model) in
+      (setGoalWithHistory location newGoal model, Cmd.none)
+    
+    ExecAll ->
+      ({ model | goal = execAll model.goal }, Cmd.none)
+     
+    Step ->
+      Debug.todo "Action stepping not implemented yet"
 
-        newMode =
-          case goal.mode of
-            EditMode interaction surgery ->
-              EditMode interaction (operate rule zipper net surgery)
-            _ ->
-              goal.mode
-        
-        oldGoal =
-          case location of
-            App -> goal
-            Manual sandboxID -> (getSandbox sandboxID manualExamples).currentGoal
-              
-        newGoal =
-            { oldGoal | focus = newFocus, mode = newMode }
-        
-        newModel =
-          case location of
-            App ->
-              { model
-              | goal = newGoal
-              , history = History { prev = Just model, next = Nothing }
-              }
-            
-            Manual sandboxID ->
-              { model
-              | manualExamples = updateSandbox sandboxID newGoal manualExamples
-              }
-      in
-      (newModel, Cmd.none)
-    
-    Auto ->
-      ( { model | goal =
-          { goal
-          | focus = auto [Close, Decompose, Close, Justify] goal.focus
-          }
-        , history = History { prev = Just model, next = Nothing } }
-      , Cmd.none )
-    
     ChangeActionMode mode ->
-      let
-        newFocus =
-          case mode of
-            ProofMode _ ->
-              List.map commitVal goal.focus
-            _ ->
-              goal.focus
-      in
-      ({ model | goal =
-         { goal
-         | mode = mode
-         , focus = newFocus
-         }
-       }, Cmd.none)
+      ({ model | goal = changeActionMode mode model.goal }, Cmd.none)
     
+    ChangeExecMode mode ->
+      ({ model | goal = changeExecMode mode model.goal }, Cmd.none)
+    
+    ToggleRecording ->
+      ({ model | goal = toggleRecording model.goal }, Cmd.none)
+
     Undo ->
       (undo model, Cmd.none)
 
     Redo ->
       (redo model, Cmd.none)
+
+    Auto ->
+      Debug.todo "Auto not implemented yet"
+    
+    UpdateNewAtomName name ->
+      ({ model | goal = updateNewAtomName name model.goal }, Cmd.none)
 
     DragDropMsg dndMsg ->
       handleDragDropMsg dndMsg model

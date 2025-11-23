@@ -19,9 +19,7 @@ import Utils.Color
 import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
-import Element.Events as Events
 import Element.Font as Font
-import Element.Input as Input
 
 import Html.Attributes exposing (title)
 
@@ -35,7 +33,7 @@ import Color
 import Utils.Color
 import Utils.Events exposing (onClick)
 
-import Dict exposing (Dict)
+import Dict
 
 
 reorderColor : Color.Color
@@ -54,7 +52,7 @@ viewAction goal action actionableStyle titleText =
     Err _ ->
       actionableStyle.inactive
     Ok _ ->
-      Utils.Events.onClick (Record action) ::
+      Utils.Events.onClick (Apply goal.location action) ::
       (htmlAttribute <| title titleText) ::
       actionableStyle.active
 
@@ -142,10 +140,10 @@ viewFormula dnd goal ctx metadata name justif formula =
     dragAction =
       case goal.actionMode of
         ProofMode Interacting ->
-          View.Events.dragAction useColor dnd goal.location ctx.zipper val
+          View.Events.dragAction useColor dnd goal.location ctx val
 
         EditMode _ ->
-          View.Events.dragAction reorderColor dnd goal.location ctx.zipper val
+          View.Events.dragAction reorderColor dnd goal.location ctx val
 
         _ -> []
     
@@ -290,7 +288,7 @@ viewAddInloopZone goal ctx scroll =
 
     addInloopButton =
         ( addButton
-            { action =  Msg (Record insertEnvAction)
+            { action =  Msg (Apply goal.location insertEnvAction)
             , title = "Insert new branch"
             , icon = Icons.plusSquare
             , enabled = True } )
@@ -359,7 +357,7 @@ viewAddValZone location ctx newAtomName =
         [ width fill
         , height fill ]
         ( addButton
-            { action = Msg (Record insertValAction)
+            { action = Msg (Apply location insertValAction)
             , title = "Insert new value"
             , icon = Icons.plus
             , enabled = True } )
@@ -429,7 +427,7 @@ viewVal dnd goal ctx val =
           , height fill
           , Background.color (scrollForegroundColor ctx.polarity) ]
          ++ (List.map htmlAttribute <| DnD.droppable DragDropMsg Nothing)
-         ++ View.Events.dragAction color dnd goal.location ctx.zipper val
+         ++ View.Events.dragAction color dnd goal.location ctx val
          ++ onClick DoNothing
          :: Border.solid
          :: Border.width grownBorder.borderWidth
@@ -465,7 +463,7 @@ viewNet dnd goal ctx net =
     
     dropAction (left, right) =
       case goal.actionMode of
-        ProofMode Argumenting ->
+        ProofMode Justifying ->
           case DnD.getDragId dnd of
             Nothing -> []
             Just { source, content } ->
@@ -498,31 +496,17 @@ viewNet dnd goal ctx net =
               case DnD.getDragId dnd of
                 Just { source, content } ->
                   case source.zipper of
-                    ZNet sourceNet :: sourceParent ->
-                      if sourceParent == ctx.zipper then
+                    ZNet srcNet :: srcParent ->
+                      if srcParent == ctx.zipper then
                         let
-                          (sourceIndex, index) =
-                            (List.length sourceNet.left, List.length left)
+                          srcIdx = List.length srcNet.left
+                          tgtIdx = List.length left
                         in
-                        if sourceIndex == index || index == sourceIndex + 1 then []
+                        if tgtIdx == srcIdx || tgtIdx == srcIdx + 1 then []
                         else
                           let
-                            whole =
-                              left ++ right
-
-                            newNet =
-                              if sourceIndex < index then
-                                let
-                                  middle =
-                                    Utils.List.slice (sourceIndex + 1) (index - 1) whole
-                                in
-                                sourceNet.left ++ middle ++ content :: right
-                              else
-                                let
-                                  middle =
-                                    Utils.List.slice index (sourceIndex - 1) whole
-                                in
-                                left ++ content :: (middle ++ sourceNet.right)
+                            whole = srcNet.left ++ content :: srcNet.right
+                            newNet = Utils.List.move srcIdx tgtIdx whole
 
                             dropStyle =
                               droppable reorderColor
@@ -530,10 +514,9 @@ viewNet dnd goal ctx net =
                             dropTargetStyle =
                               case DnD.getDropId dnd of
                                 Just (Just { target }) ->
-                                  if mkZNet left right :: ctx.zipper == target.zipper
+                                  if (newCtx (left, right)).zipper == target.zipper
                                   then dropStyle.active
                                   else dropStyle.inactive
-
                                 _ ->
                                   dropStyle.inactive
                           in

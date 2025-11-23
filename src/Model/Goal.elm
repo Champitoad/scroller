@@ -22,7 +22,7 @@ type alias Selection
 
 type ProofInteraction
   = Interacting
-  | Argumenting
+  | Justifying
 
 
 {- A `Surgery` remembers the last deleted value or environment in Edit mode,
@@ -172,6 +172,19 @@ map f goal =
   { goal | focus = f goal.focus }
 
 
+updateNewAtomName : String -> Goal -> Goal
+updateNewAtomName name goal =
+  let
+    newMode =
+      case goal.actionMode of
+        EditMode modeData ->
+          EditMode { modeData | newAtomName = name }
+        mode ->
+          mode
+  in
+  { goal | actionMode = newMode }
+      
+
 -- Actions
 
 
@@ -211,7 +224,7 @@ type ActionError
   | IncompatibleBoundaries Zipper Zipper
 
 
-boundaryVal : ExecMode -> Polarity -> Val -> Node
+boundaryVal : ExecMode -> Polarity -> Val -> Struct
 boundaryVal execMode =
   let
     forwardBoundary pol =
@@ -234,6 +247,34 @@ boundary execMode =
   case execMode of
     Forward -> forwardBoundary
     Backward -> invert >> forwardBoundary
+
+
+execAll : Goal -> Goal
+execAll goal =
+  { goal | focus = netFromStruct (boundary goal.execMode Pos goal.focus) }
+
+
+changeActionMode : ActionMode -> Goal -> Goal
+changeActionMode mode goal =
+  let
+    newFocus =
+      case mode of
+        ProofMode _ ->
+          List.map commitVal goal.focus
+        _ ->
+          goal.focus
+  in
+  { goal | actionMode = mode, focus = newFocus }
+
+
+changeExecMode : ExecMode -> Goal -> Goal
+changeExecMode mode goal =
+  { goal | execMode = mode }
+
+
+toggleRecording : Goal -> Goal
+toggleRecording goal =
+  { goal | recording = not goal.recording }
 
 
 getSingleInloop : ExecMode -> Context -> ScrollVal -> Maybe (Ident, Env)
@@ -556,13 +597,18 @@ record action goal =
           fillZipper [newVal] ctx.zipper
 
         IterateVal { srcCtx, srcVal, tgtCtx, tgtName } ->
-          let
-            srcBoundary = boundaryVal goal.execMode srcCtx.polarity srcVal
-            copy = valFromNode srcBoundary
-            tgtVal = { copy | name = tgtName
-                            , justif = { self = False, from = srcVal.name } }
-          in
-          fillZipper [tgtVal] tgtCtx.zipper
+          case boundaryVal goal.execMode srcCtx.polarity srcVal of
+            [node] ->
+              let
+                copy = valFromNode node
+                tgtVal = { copy | name = tgtName
+                                , justif = { self = False, from = srcVal.name } }
+              in
+              fillZipper [tgtVal] tgtCtx.zipper
+            _ ->
+              -- should never happen
+              Debug.log "Error: boundary of an iterated value should be a single node! Doing nothing."
+              fillZipper [] tgtCtx.zipper
         
         IterateEnv { ctx, scroll, srcId, srcEnv, tgtId } ->
           let
@@ -666,6 +712,15 @@ execute actionId goal =
       Debug.log
         "Error: trying to execute action with non-existing ID. Returning the goal unchanged."
         goal
+
+
+apply : Action -> Goal -> Goal
+apply action goal =
+  let (actionId, newGoal) = record action goal in
+  if goal.recording then
+    newGoal
+  else
+    execute actionId goal
 
 
 -- A Sandbox is a Goal that can be reset

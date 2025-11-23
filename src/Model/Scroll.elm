@@ -134,21 +134,77 @@ nodeFromVal { shape } =
 -- Boundaries
 
 
-premissVal : Val -> Node
+premissVal : Val -> Struct
 premissVal val =
-  Debug.todo "Not implemented yet"
+  if Utils.Maybe.isSomething val.justif.from then
+    []
+  else
+    case val.shape of
+      Formula formula ->
+        [NFormula formula]
 
-conclusionVal : Val -> Node
+      Scroll { interaction, outloop, inloops } ->
+        let premissOutloop = conclusion outloop in
+        case interaction.opened of        
+          Nothing ->
+            let
+              remainingInloops =
+                Dict.filter (\_ env -> not env.justif.self) inloops
+              premissInloops =
+                Dict.map (\_ env -> premiss env.content) remainingInloops
+            in
+            [NScroll { outloop = premissOutloop, inloops = premissInloops }]
+
+          Just id ->
+            case Dict.get id inloops of
+              Nothing ->
+                Debug.log
+                  "Invalid branch ID in interaction! Should never happen :|"
+                  [NFormula (Formula.atom "error")]
+              
+              Just env ->
+                let premissInloop = premiss env.content in
+                premissOutloop ++ premissInloop
+
+conclusionVal : Val -> Struct
 conclusionVal val =
-  Debug.todo "Not implemented yet"
+  if val.justif.self then
+    []
+  else
+    case val.shape of
+      Formula formula ->
+        [NFormula formula]
+
+      Scroll { interaction, outloop, inloops } ->
+        let conclusionOutloop = conclusion outloop in
+        case interaction.closed of        
+          Nothing ->
+            let
+              remainingInloops =
+                Dict.filter (\_ env -> Utils.Maybe.isNothing env.justif.from) inloops
+              conclusionInloops =
+                Dict.map (\_ env -> conclusion env.content) remainingInloops
+            in
+            [NScroll { outloop = conclusionOutloop, inloops = conclusionInloops }]
+
+          Just id ->
+            case Dict.get id inloops of
+              Nothing ->
+                Debug.log
+                  "Invalid branch ID in interaction! Should never happen :|"
+                  [NFormula (Formula.atom "error")]
+              
+              Just env ->
+                let conclusionInloop = conclusion env.content in
+                conclusionOutloop ++ conclusionInloop
 
 premiss : Net -> Struct
 premiss =
-  List.map premissVal
+  List.concatMap premissVal
 
 conclusion : Net -> Struct
 conclusion =
-  List.map conclusionVal
+  List.concatMap conclusionVal
 
 
 -- Helper functions

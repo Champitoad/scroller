@@ -1,4 +1,5 @@
 module Utils.List exposing (..)
+import Array
 
 
 toString : (a -> String) -> List a -> String
@@ -69,6 +70,46 @@ forkPrefix list1 list2 =
           (List.reverse acc, l1, l2)
   in
   aux [] list1 list2
+
+
+swap : Int -> Int -> List a -> Maybe (List a)
+swap i j list =
+  let arr = Array.fromList list in
+  case (Array.get i arr, Array.get j arr) of
+    (Just xi, Just xj) ->
+      arr |>
+      Array.set i xj |>
+      Array.set j xi |>
+      Array.toList |>
+      Just
+    _ ->
+      Nothing
+
+
+remove : Int -> List a -> List a
+remove index list =
+  let (front, back) = pivot index list in
+  case back of
+    [] ->
+      list
+    _ :: tail ->
+      front ++ tail
+      
+
+move : Int -> Int -> List a -> List a
+move srcIdx tgtIdx list =
+  case nth srcIdx list of
+    Nothing ->
+      list
+    Just src ->
+      let
+        shift = if srcIdx < tgtIdx then -1 else 0
+        (front, back) =
+          list |>
+          remove srcIdx |>
+          pivot (tgtIdx + shift)
+      in
+      front ++ src :: back
 
 
 forkSuffix : List a -> List a -> (List a, List a, List a)

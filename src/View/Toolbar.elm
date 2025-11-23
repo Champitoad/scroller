@@ -134,7 +134,7 @@ viewModeSelector currentMode =
     , Border.rounded buttonBorderRadius
     , Border.color borderColor
     , Background.color borderColor ]
-    [ item (ProofMode Argumenting) Start
+    [ item (ProofMode Justifying) Start
     , item (EditMode { interaction = Operating
                      , surgery = initialSurgery
                      , newAtomName = "a" }) Middle
