@@ -61,14 +61,14 @@ deleteValAction : Goal -> Context -> Val -> List (Attribute Msg)
 deleteValAction goal ctx val =
   viewAction goal
     (DeleteVal { ctx = ctx, val = val })
-    redActionable "Remove value"
+    redActionable "Delete value"
 
 
 deleteEnvAction : Goal -> Context -> ScrollVal -> Scroll.Ident -> Env -> List (Attribute Msg)
 deleteEnvAction goal ctx scroll id env =
   viewAction goal
     (DeleteEnv { ctx = ctx, scroll = scroll, id = id, env = env })
-    redActionable "Remove branch"
+    redActionable "Delete branch"
 
 
 drawGrownBorder : Bool -> List (Attribute msg)

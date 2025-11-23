@@ -295,8 +295,8 @@ viewToolbar model =
         , spacing 20
         , centerX
         ]
-        [ viewExecModeSelector model.goal.execMode
-        , viewRecordToggle model.goal.recording
+        [ viewRecordToggle model.goal.recording
+        , viewExecModeSelector model.goal.execMode
         , viewExecButtons model.goal
         ]
   in

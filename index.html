@@ -16329,7 +16329,7 @@ var $author$project$View$Goal$deleteEnvAction = F5(
 			$author$project$Model$Goal$DeleteEnv(
 				{ctx: ctx, env: env, id: id, scroll: scroll}),
 			$author$project$View$Style$redActionable,
-			'Remove branch');
+			'Delete branch');
 	});
 var $author$project$Model$Goal$DeleteVal = function (a) {
 	return {$: 'DeleteVal', a: a};
@@ -16342,7 +16342,7 @@ var $author$project$View$Goal$deleteValAction = F3(
 			$author$project$Model$Goal$DeleteVal(
 				{ctx: ctx, val: val}),
 			$author$project$View$Style$redActionable,
-			'Remove value');
+			'Delete value');
 	});
 var $norpan$elm_html5_drag_drop$Html5$DragDrop$DragEnd = {$: 'DragEnd'};
 var $norpan$elm_html5_drag_drop$Html5$DragDrop$DragStart = F2(
@@ -22722,8 +22722,8 @@ var $author$project$View$Toolbar$viewToolbar = function (model) {
 			]),
 		_List_fromArray(
 			[
-				$author$project$View$Toolbar$viewExecModeSelector(model.goal.execMode),
 				$author$project$View$Toolbar$viewRecordToggle(model.goal.recording),
+				$author$project$View$Toolbar$viewExecModeSelector(model.goal.execMode),
 				$author$project$View$Toolbar$viewExecButtons(model.goal)
 			]));
 	var actionToolZone = A2(
