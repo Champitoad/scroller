@@ -251,7 +251,9 @@ boundary execMode =
 
 execAll : Goal -> Goal
 execAll goal =
-  { goal | focus = netFromStruct (boundary goal.execMode Pos goal.focus) }
+  { goal | focus = netFromStruct (boundary goal.execMode Pos goal.focus)
+         , actions = Iddict.empty
+         , actionsQueue = Queue.empty }
 
 
 changeActionMode : ActionMode -> Goal -> Goal
@@ -272,9 +274,9 @@ changeExecMode mode goal =
   { goal | execMode = mode }
 
 
-toggleRecording : Goal -> Goal
-toggleRecording goal =
-  { goal | recording = not goal.recording }
+toggleRecording : Bool -> Goal -> Goal
+toggleRecording recording goal =
+  { goal | recording = recording }
 
 
 getSingleInloop : ExecMode -> Context -> ScrollVal -> Maybe (Ident, Env)

@@ -15,7 +15,6 @@ import Url
 import Browser
 import Browser.Navigation
 import View.Route as Route
-import Css exposing (default)
 
 
 port dragstart : Value -> Cmd msg
@@ -27,7 +26,7 @@ type Msg
   | Step
   | ChangeActionMode ActionMode
   | ChangeExecMode ExecMode
-  | ToggleRecording
+  | ToggleRecording Bool
   | Undo
   | Redo
   | Auto
@@ -156,8 +155,8 @@ update msg model =
     ChangeExecMode mode ->
       ({ model | goal = changeExecMode mode model.goal }, Cmd.none)
     
-    ToggleRecording ->
-      ({ model | goal = toggleRecording model.goal }, Cmd.none)
+    ToggleRecording recording ->
+      ({ model | goal = toggleRecording recording model.goal }, Cmd.none)
 
     Undo ->
       (undo model, Cmd.none)

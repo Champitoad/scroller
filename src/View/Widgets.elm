@@ -4,10 +4,14 @@ import Utils.Color
 import Utils.Events
 
 import Element exposing (..)
-import Element.Background
+import Element.Background as Background
+import Element.Border as Border
+import Element.Events as Events
 import Element.Font
+import Element.Input as Input
 
 import Css
+import Html.Attributes
 import Html.Styled exposing (fromUnstyled, toUnstyled)
 import Html.Styled.Attributes as Attrs exposing (css)
 
@@ -16,7 +20,6 @@ import FeatherIcons exposing (Icon)
 
 import Color
 import Html.Styled.Attributes exposing (action)
-import Css exposing (enabled)
 
 
 buttonBorderRadius : number
@@ -131,12 +134,54 @@ defaultButton =
   button defaultButtonStyle
 
 
+type alias ToggleParams msg
+  = { color : Color
+    , iconOn : Icon
+    , iconOff : Icon
+    , title : String
+    , onChange : Bool -> msg }
+
+
+toggle : ToggleParams msg -> Bool -> Element msg
+toggle { color, iconOn, iconOff, title, onChange } checked =
+  let
+
+    iconEl isChecked =
+      let
+        (bgColor, fgColor) =
+          if isChecked
+          then (color, rgb 1 1 1)
+          else (rgb 1 1 1, rgb 0 0 0)
+      in
+      el
+        ( [ width (60 |> px)
+          , height (defaultButtonSize |> px)
+          , Background.color bgColor
+          , Border.rounded buttonBorderRadius
+          , htmlAttribute <| Html.Attributes.title title ] )
+        ( el
+            [ centerX, centerY ]
+            ( (if isChecked then iconOn else iconOff)
+              |> Icons.withSize 30
+              |> Icons.toHtml [ fgColor 
+                                |> Utils.Color.fromElement
+                                |> Utils.Color.toHtmlAttr ]
+              |> html ) )
+  in
+  Input.checkbox []
+    { onChange = onChange
+    , icon = iconEl
+    , checked = checked
+    , label = Input.labelHidden "Recording"
+    }
+
+
 fullPageTextMessage : String -> Element msg
 fullPageTextMessage txt =
   el
     [ width fill
     , height fill
-    , Element.Background.color (rgb 1 1 1) ]
+    , Background.color (rgb 1 1 1) ]
     ( el
         [ centerX, centerY
         , Element.Font.size 50 ]

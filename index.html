@@ -6386,8 +6386,8 @@ var $author$project$Model$Goal$execute = F2(
 						return _Debug_todo(
 							'Model.Goal',
 							{
-								start: {line: 675, column: 15},
-								end: {line: 675, column: 25}
+								start: {line: 677, column: 15},
+								end: {line: 677, column: 25}
 							})('Open action execution not implemented yet.');
 					case 'Close':
 						var ctx = action.a.ctx;
@@ -6396,8 +6396,8 @@ var $author$project$Model$Goal$execute = F2(
 						return _Debug_todo(
 							'Model.Goal',
 							{
-								start: {line: 678, column: 15},
-								end: {line: 678, column: 25}
+								start: {line: 680, column: 15},
+								end: {line: 680, column: 25}
 							})('Close action execution not implemented yet.');
 					case 'InsertVal':
 						var ctx = action.a.ctx;
@@ -6405,8 +6405,8 @@ var $author$project$Model$Goal$execute = F2(
 						return _Debug_todo(
 							'Model.Goal',
 							{
-								start: {line: 681, column: 15},
-								end: {line: 681, column: 25}
+								start: {line: 683, column: 15},
+								end: {line: 683, column: 25}
 							})('InsertVal action execution not implemented yet.');
 					case 'InsertEnv':
 						var ctx = action.a.ctx;
@@ -6416,8 +6416,8 @@ var $author$project$Model$Goal$execute = F2(
 						return _Debug_todo(
 							'Model.Goal',
 							{
-								start: {line: 684, column: 15},
-								end: {line: 684, column: 25}
+								start: {line: 686, column: 15},
+								end: {line: 686, column: 25}
 							})('InsertEnv action execution not implemented yet.');
 					case 'DeleteVal':
 						var ctx = action.a.ctx;
@@ -6425,8 +6425,8 @@ var $author$project$Model$Goal$execute = F2(
 						return _Debug_todo(
 							'Model.Goal',
 							{
-								start: {line: 687, column: 15},
-								end: {line: 687, column: 25}
+								start: {line: 689, column: 15},
+								end: {line: 689, column: 25}
 							})('DeleteVal action execution not implemented yet.');
 					case 'DeleteEnv':
 						var ctx = action.a.ctx;
@@ -6435,8 +6435,8 @@ var $author$project$Model$Goal$execute = F2(
 						return _Debug_todo(
 							'Model.Goal',
 							{
-								start: {line: 690, column: 15},
-								end: {line: 690, column: 25}
+								start: {line: 692, column: 15},
+								end: {line: 692, column: 25}
 							})('DeleteEnv action execution not implemented yet.');
 					case 'IterateVal':
 						var srcCtx = action.a.srcCtx;
@@ -6446,8 +6446,8 @@ var $author$project$Model$Goal$execute = F2(
 						return _Debug_todo(
 							'Model.Goal',
 							{
-								start: {line: 693, column: 15},
-								end: {line: 693, column: 25}
+								start: {line: 695, column: 15},
+								end: {line: 695, column: 25}
 							})('IterateVal action execution not implemented yet.');
 					case 'IterateEnv':
 						var ctx = action.a.ctx;
@@ -6457,8 +6457,8 @@ var $author$project$Model$Goal$execute = F2(
 						return _Debug_todo(
 							'Model.Goal',
 							{
-								start: {line: 696, column: 15},
-								end: {line: 696, column: 25}
+								start: {line: 698, column: 15},
+								end: {line: 698, column: 25}
 							})('IterateEnv action execution not implemented yet.');
 					case 'DeiterateVal':
 						var srcCtx = action.a.srcCtx;
@@ -6468,8 +6468,8 @@ var $author$project$Model$Goal$execute = F2(
 						return _Debug_todo(
 							'Model.Goal',
 							{
-								start: {line: 699, column: 15},
-								end: {line: 699, column: 25}
+								start: {line: 701, column: 15},
+								end: {line: 701, column: 25}
 							})('DeiterateVal action execution not implemented yet.');
 					case 'DeiterateEnv':
 						var ctx = action.a.ctx;
@@ -6479,8 +6479,8 @@ var $author$project$Model$Goal$execute = F2(
 						return _Debug_todo(
 							'Model.Goal',
 							{
-								start: {line: 702, column: 15},
-								end: {line: 702, column: 25}
+								start: {line: 704, column: 15},
+								end: {line: 704, column: 25}
 							})('DeiterateEnv action execution not implemented yet.');
 					default:
 						var ctx = action.a.ctx;
@@ -6488,8 +6488,8 @@ var $author$project$Model$Goal$execute = F2(
 						return _Debug_todo(
 							'Model.Goal',
 							{
-								start: {line: 705, column: 15},
-								end: {line: 705, column: 25}
+								start: {line: 707, column: 15},
+								end: {line: 707, column: 25}
 							})('Decompose action execution not implemented yet.');
 				}
 			}();
@@ -7492,6 +7492,8 @@ var $author$project$Model$Goal$execAll = function (goal) {
 	return _Utils_update(
 		goal,
 		{
+			actions: $noordstar$elm_iddict$Iddict$empty,
+			actionsQueue: $owanturist$elm_queue$Queue$empty,
 			focus: $author$project$Model$Scroll$netFromStruct(
 				A3($author$project$Model$Goal$boundary, goal.execMode, $author$project$Model$Scroll$Pos, goal.focus))
 		});
@@ -8592,11 +8594,12 @@ var $elm$url$Url$toString = function (url) {
 					_Utils_ap(http, url.host)),
 				url.path)));
 };
-var $author$project$Model$Goal$toggleRecording = function (goal) {
-	return _Utils_update(
-		goal,
-		{recording: !goal.recording});
-};
+var $author$project$Model$Goal$toggleRecording = F2(
+	function (recording, goal) {
+		return _Utils_update(
+			goal,
+			{recording: recording});
+	});
 var $author$project$Model$App$setHistory = F2(
 	function (history, model) {
 		return _Utils_update(
@@ -8666,8 +8669,8 @@ var $author$project$Update$App$update = F2(
 				return _Debug_todo(
 					'Update.App',
 					{
-						start: {line: 151, column: 7},
-						end: {line: 151, column: 17}
+						start: {line: 150, column: 7},
+						end: {line: 150, column: 17}
 					})('Action stepping not implemented yet');
 			case 'ChangeActionMode':
 				var mode = msg.a;
@@ -8688,11 +8691,12 @@ var $author$project$Update$App$update = F2(
 						}),
 					$elm$core$Platform$Cmd$none);
 			case 'ToggleRecording':
+				var recording = msg.a;
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
 						{
-							goal: $author$project$Model$Goal$toggleRecording(model.goal)
+							goal: A2($author$project$Model$Goal$toggleRecording, recording, model.goal)
 						}),
 					$elm$core$Platform$Cmd$none);
 			case 'Undo':
@@ -8707,8 +8711,8 @@ var $author$project$Update$App$update = F2(
 				return _Debug_todo(
 					'Update.App',
 					{
-						start: {line: 169, column: 7},
-						end: {line: 169, column: 17}
+						start: {line: 168, column: 7},
+						end: {line: 168, column: 17}
 					})('Auto not implemented yet');
 			case 'UpdateNewAtomName':
 				var name = msg.a;
@@ -21212,65 +21216,6 @@ var $author$project$View$Shelf$viewShelf = function (goal) {
 };
 var $mdgriffith$elm_ui$Internal$Model$Right = {$: 'Right'};
 var $mdgriffith$elm_ui$Element$alignRight = $mdgriffith$elm_ui$Internal$Model$AlignX($mdgriffith$elm_ui$Internal$Model$Right);
-var $author$project$View$Widgets$Link = function (a) {
-	return {$: 'Link', a: a};
-};
-var $avh4$elm_color$Color$black = A4($avh4$elm_color$Color$RgbaSpace, 0 / 255, 0 / 255, 0 / 255, 1.0);
-var $avh4$elm_color$Color$rgb = F3(
-	function (r, g, b) {
-		return A4($avh4$elm_color$Color$RgbaSpace, r, g, b, 1.0);
-	});
-var $author$project$View$Widgets$defaultButtonStyle = {
-	color: A3($avh4$elm_color$Color$rgb, 0.92, 0.92, 0.92),
-	height: $rtfeldman$elm_css$Css$px($author$project$View$Widgets$defaultButtonSize),
-	iconColorDisabled: A3($avh4$elm_color$Color$rgb, 0.5, 0.5, 0.5),
-	iconColorEnabled: $avh4$elm_color$Color$black,
-	width: $rtfeldman$elm_css$Css$px($author$project$View$Widgets$defaultButtonSize)
-};
-var $author$project$View$Widgets$defaultButton = $author$project$View$Widgets$button($author$project$View$Widgets$defaultButtonStyle);
-var $elm$svg$Svg$circle = $elm$svg$Svg$trustedNode('circle');
-var $elm$svg$Svg$Attributes$cx = _VirtualDom_attribute('cx');
-var $elm$svg$Svg$Attributes$cy = _VirtualDom_attribute('cy');
-var $elm$svg$Svg$Attributes$r = _VirtualDom_attribute('r');
-var $feathericons$elm_feather$FeatherIcons$helpCircle = A2(
-	$feathericons$elm_feather$FeatherIcons$makeBuilder,
-	'help-circle',
-	_List_fromArray(
-		[
-			A2(
-			$elm$svg$Svg$circle,
-			_List_fromArray(
-				[
-					$elm$svg$Svg$Attributes$cx('12'),
-					$elm$svg$Svg$Attributes$cy('12'),
-					$elm$svg$Svg$Attributes$r('10')
-				]),
-			_List_Nil),
-			A2(
-			$elm$svg$Svg$path,
-			_List_fromArray(
-				[
-					$elm$svg$Svg$Attributes$d('M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3')
-				]),
-			_List_Nil),
-			A2(
-			$elm$svg$Svg$line,
-			_List_fromArray(
-				[
-					$elm$svg$Svg$Attributes$x1('12'),
-					$elm$svg$Svg$Attributes$y1('17'),
-					$elm$svg$Svg$Attributes$x2('12.01'),
-					$elm$svg$Svg$Attributes$y2('17')
-				]),
-			_List_Nil)
-		]));
-var $author$project$View$Toolbar$viewHelpButton = $author$project$View$Widgets$defaultButton(
-	{
-		action: $author$project$View$Widgets$Link('/manual'),
-		enabled: true,
-		icon: $feathericons$elm_feather$FeatherIcons$helpCircle,
-		title: 'Help'
-	});
 var $author$project$Update$App$ChangeActionMode = function (a) {
 	return {$: 'ChangeActionMode', a: a};
 };
@@ -21279,10 +21224,17 @@ var $author$project$View$Toolbar$Middle = {$: 'Middle'};
 var $author$project$Model$Goal$NavigationMode = {$: 'NavigationMode'};
 var $author$project$View$Toolbar$Start = {$: 'Start'};
 var $author$project$Model$Goal$initialSurgery = {cropped: $elm$core$Maybe$Nothing, pulled: $elm$core$Maybe$Nothing};
-var $mdgriffith$elm_ui$Element$rgb255 = F3(
-	function (red, green, blue) {
-		return A4($mdgriffith$elm_ui$Internal$Model$Rgba, red / 255, green / 255, blue / 255, 1);
-	});
+var $author$project$View$Toolbar$modeSelectorBorderRound = function (position) {
+	switch (position.$) {
+		case 'Start':
+			return {bottomLeft: $author$project$View$Widgets$buttonBorderRadius, bottomRight: 0, topLeft: $author$project$View$Widgets$buttonBorderRadius, topRight: 0};
+		case 'Middle':
+			return {bottomLeft: 0, bottomRight: 0, topLeft: 0, topRight: 0};
+		default:
+			return {bottomLeft: 0, bottomRight: $author$project$View$Widgets$buttonBorderRadius, topLeft: 0, topRight: $author$project$View$Widgets$buttonBorderRadius};
+	}
+};
+var $author$project$View$Toolbar$modeSelectorColor = A3($mdgriffith$elm_ui$Element$rgb, 0.5, 0.5, 0.5);
 var $avh4$elm_color$Color$toCssString = function (_v0) {
 	var r = _v0.a;
 	var g = _v0.b;
@@ -21316,28 +21268,28 @@ var $author$project$Utils$Color$toHtmlAttr = function (color) {
 	var value = $avh4$elm_color$Color$toCssString(color);
 	return A2($elm$html$Html$Attributes$style, 'color', value);
 };
-var $author$project$View$Toolbar$viewModeSelector = function (currentMode) {
+var $author$project$View$Toolbar$viewActionModeSelector = function (currentMode) {
 	var item = F2(
 		function (mode, position) {
 			var isSelected = function () {
-				var _v5 = _Utils_Tuple2(mode, currentMode);
-				_v5$2:
+				var _v4 = _Utils_Tuple2(mode, currentMode);
+				_v4$2:
 				while (true) {
-					switch (_v5.a.$) {
+					switch (_v4.a.$) {
 						case 'ProofMode':
-							if (_v5.b.$ === 'ProofMode') {
+							if (_v4.b.$ === 'ProofMode') {
 								return true;
 							} else {
-								break _v5$2;
+								break _v4$2;
 							}
 						case 'EditMode':
-							if (_v5.b.$ === 'EditMode') {
+							if (_v4.b.$ === 'EditMode') {
 								return true;
 							} else {
-								break _v5$2;
+								break _v4$2;
 							}
 						default:
-							break _v5$2;
+							break _v4$2;
 					}
 				}
 				return _Utils_eq(mode, currentMode);
@@ -21348,18 +21300,9 @@ var $author$project$View$Toolbar$viewModeSelector = function (currentMode) {
 					$author$project$Update$App$ChangeActionMode(mode)),
 					$mdgriffith$elm_ui$Element$pointer
 				]);
-			var borderRound = function () {
-				switch (position.$) {
-					case 'Start':
-						return {bottomLeft: $author$project$View$Widgets$buttonBorderRadius, bottomRight: 0, topLeft: $author$project$View$Widgets$buttonBorderRadius, topRight: 0};
-					case 'Middle':
-						return {bottomLeft: 0, bottomRight: 0, topLeft: 0, topRight: 0};
-					default:
-						return {bottomLeft: 0, bottomRight: $author$project$View$Widgets$buttonBorderRadius, topLeft: 0, topRight: $author$project$View$Widgets$buttonBorderRadius};
-				}
-			}();
+			var borderRound = $author$project$View$Toolbar$modeSelectorBorderRound(position);
 			var _v0 = isSelected ? _Utils_Tuple2(
-				A3($mdgriffith$elm_ui$Element$rgb255, 58, 134, 255),
+				$author$project$View$Toolbar$modeSelectorColor,
 				A3($mdgriffith$elm_ui$Element$rgb, 1, 1, 1)) : _Utils_Tuple2(
 				A3($mdgriffith$elm_ui$Element$rgb, 1, 1, 1),
 				A3($mdgriffith$elm_ui$Element$rgb, 0, 0, 0));
@@ -21434,11 +21377,257 @@ var $author$project$View$Toolbar$viewModeSelector = function (currentMode) {
 				A2(
 				item,
 				$author$project$Model$Goal$EditMode(
-					{interaction: $author$project$Model$Goal$Operating, newAtomName: 'a', surgery: $author$project$Model$Goal$initialSurgery}),
+					{interaction: $author$project$Model$Goal$Operating, newAtomName: '', surgery: $author$project$Model$Goal$initialSurgery}),
 				$author$project$View$Toolbar$Middle),
 				A2(item, $author$project$Model$Goal$NavigationMode, $author$project$View$Toolbar$End)
 			]));
 };
+var $author$project$Update$App$ExecAll = {$: 'ExecAll'};
+var $author$project$Update$App$Step = {$: 'Step'};
+var $avh4$elm_color$Color$black = A4($avh4$elm_color$Color$RgbaSpace, 0 / 255, 0 / 255, 0 / 255, 1.0);
+var $avh4$elm_color$Color$rgb = F3(
+	function (r, g, b) {
+		return A4($avh4$elm_color$Color$RgbaSpace, r, g, b, 1.0);
+	});
+var $author$project$View$Widgets$defaultButtonStyle = {
+	color: A3($avh4$elm_color$Color$rgb, 0.92, 0.92, 0.92),
+	height: $rtfeldman$elm_css$Css$px($author$project$View$Widgets$defaultButtonSize),
+	iconColorDisabled: A3($avh4$elm_color$Color$rgb, 0.5, 0.5, 0.5),
+	iconColorEnabled: $avh4$elm_color$Color$black,
+	width: $rtfeldman$elm_css$Css$px($author$project$View$Widgets$defaultButtonSize)
+};
+var $author$project$View$Widgets$defaultButton = $author$project$View$Widgets$button($author$project$View$Widgets$defaultButtonStyle);
+var $owanturist$elm_queue$Queue$isEmpty = $elm$core$Basics$eq($owanturist$elm_queue$Queue$Empty);
+var $feathericons$elm_feather$FeatherIcons$play = A2(
+	$feathericons$elm_feather$FeatherIcons$makeBuilder,
+	'play',
+	_List_fromArray(
+		[
+			A2(
+			$elm$svg$Svg$polygon,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$points('5 3 19 12 5 21 5 3')
+				]),
+			_List_Nil)
+		]));
+var $feathericons$elm_feather$FeatherIcons$skipForward = A2(
+	$feathericons$elm_feather$FeatherIcons$makeBuilder,
+	'skip-forward',
+	_List_fromArray(
+		[
+			A2(
+			$elm$svg$Svg$polygon,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$points('5 4 15 12 5 20 5 4')
+				]),
+			_List_Nil),
+			A2(
+			$elm$svg$Svg$line,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$x1('19'),
+					$elm$svg$Svg$Attributes$y1('5'),
+					$elm$svg$Svg$Attributes$x2('19'),
+					$elm$svg$Svg$Attributes$y2('19')
+				]),
+			_List_Nil)
+		]));
+var $author$project$View$Toolbar$viewExecButtons = function (_v0) {
+	var actionsQueue = _v0.actionsQueue;
+	var stepEnabled = !$owanturist$elm_queue$Queue$isEmpty(actionsQueue);
+	var stepButton = $author$project$View$Widgets$defaultButton(
+		{
+			action: $author$project$View$Widgets$Msg($author$project$Update$App$Step),
+			enabled: stepEnabled,
+			icon: $feathericons$elm_feather$FeatherIcons$play,
+			title: 'Step'
+		});
+	var runButton = $author$project$View$Widgets$defaultButton(
+		{
+			action: $author$project$View$Widgets$Msg($author$project$Update$App$ExecAll),
+			enabled: true,
+			icon: $feathericons$elm_feather$FeatherIcons$skipForward,
+			title: 'Run'
+		});
+	return A2(
+		$mdgriffith$elm_ui$Element$row,
+		_List_Nil,
+		_List_fromArray(
+			[stepButton, runButton]));
+};
+var $author$project$Model$Goal$Backward = {$: 'Backward'};
+var $author$project$Update$App$ChangeExecMode = function (a) {
+	return {$: 'ChangeExecMode', a: a};
+};
+var $feathericons$elm_feather$FeatherIcons$chevronsLeft = A2(
+	$feathericons$elm_feather$FeatherIcons$makeBuilder,
+	'chevrons-left',
+	_List_fromArray(
+		[
+			A2(
+			$elm$svg$Svg$polyline,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$points('11 17 6 12 11 7')
+				]),
+			_List_Nil),
+			A2(
+			$elm$svg$Svg$polyline,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$points('18 17 13 12 18 7')
+				]),
+			_List_Nil)
+		]));
+var $feathericons$elm_feather$FeatherIcons$chevronsRight = A2(
+	$feathericons$elm_feather$FeatherIcons$makeBuilder,
+	'chevrons-right',
+	_List_fromArray(
+		[
+			A2(
+			$elm$svg$Svg$polyline,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$points('13 17 18 12 13 7')
+				]),
+			_List_Nil),
+			A2(
+			$elm$svg$Svg$polyline,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$points('6 17 11 12 6 7')
+				]),
+			_List_Nil)
+		]));
+var $author$project$View$Toolbar$viewExecModeSelector = function (currentMode) {
+	var item = F2(
+		function (mode, position) {
+			var isSelected = _Utils_eq(mode, currentMode);
+			var changeAction = _List_fromArray(
+				[
+					$mdgriffith$elm_ui$Element$Events$onClick(
+					$author$project$Update$App$ChangeExecMode(mode)),
+					$mdgriffith$elm_ui$Element$pointer
+				]);
+			var borderRound = $author$project$View$Toolbar$modeSelectorBorderRound(position);
+			var _v0 = isSelected ? _Utils_Tuple2(
+				$author$project$View$Toolbar$modeSelectorColor,
+				A3($mdgriffith$elm_ui$Element$rgb, 1, 1, 1)) : _Utils_Tuple2(
+				A3($mdgriffith$elm_ui$Element$rgb, 1, 1, 1),
+				A3($mdgriffith$elm_ui$Element$rgb, 0, 0, 0));
+			var bgColor = _v0.a;
+			var fgColor = _v0.b;
+			var _v1 = function () {
+				var _v2 = function () {
+					if (mode.$ === 'Forward') {
+						return _Utils_Tuple2('Forward', $feathericons$elm_feather$FeatherIcons$chevronsRight);
+					} else {
+						return _Utils_Tuple2('Backward', $feathericons$elm_feather$FeatherIcons$chevronsLeft);
+					}
+				}();
+				var title = _v2.a;
+				var icon = _v2.b;
+				var elem = A2(
+					$mdgriffith$elm_ui$Element$el,
+					_List_fromArray(
+						[$mdgriffith$elm_ui$Element$centerX, $mdgriffith$elm_ui$Element$centerY]),
+					$mdgriffith$elm_ui$Element$html(
+						A2(
+							$feathericons$elm_feather$FeatherIcons$toHtml,
+							_List_fromArray(
+								[
+									$author$project$Utils$Color$toHtmlAttr(
+									$author$project$Utils$Color$fromElement(fgColor))
+								]),
+							A2($feathericons$elm_feather$FeatherIcons$withSize, 30, icon))));
+				return _Utils_Tuple2(elem, title);
+			}();
+			var iconEl = _v1.a;
+			var titleText = _v1.b;
+			return A2(
+				$mdgriffith$elm_ui$Element$el,
+				_Utils_ap(
+					_List_fromArray(
+						[
+							$mdgriffith$elm_ui$Element$width(
+							$mdgriffith$elm_ui$Element$px(60)),
+							$mdgriffith$elm_ui$Element$height(
+							$mdgriffith$elm_ui$Element$px($author$project$View$Widgets$defaultButtonSize)),
+							$mdgriffith$elm_ui$Element$Background$color(bgColor),
+							$mdgriffith$elm_ui$Element$Border$roundEach(borderRound),
+							$mdgriffith$elm_ui$Element$htmlAttribute(
+							$elm$html$Html$Attributes$title(titleText))
+						]),
+					changeAction),
+				iconEl);
+		});
+	var borderColor = A3($mdgriffith$elm_ui$Element$rgb, 0.6, 0.6, 0.6);
+	return A2(
+		$mdgriffith$elm_ui$Element$row,
+		_List_fromArray(
+			[
+				$mdgriffith$elm_ui$Element$width($mdgriffith$elm_ui$Element$shrink),
+				$mdgriffith$elm_ui$Element$height($mdgriffith$elm_ui$Element$shrink),
+				$mdgriffith$elm_ui$Element$spacing(1),
+				$mdgriffith$elm_ui$Element$Border$width(0),
+				$mdgriffith$elm_ui$Element$Border$rounded($author$project$View$Widgets$buttonBorderRadius),
+				$mdgriffith$elm_ui$Element$Border$color(borderColor),
+				$mdgriffith$elm_ui$Element$Background$color(borderColor)
+			]),
+		_List_fromArray(
+			[
+				A2(item, $author$project$Model$Goal$Backward, $author$project$View$Toolbar$Start),
+				A2(item, $author$project$Model$Goal$Forward, $author$project$View$Toolbar$End)
+			]));
+};
+var $author$project$View$Widgets$Link = function (a) {
+	return {$: 'Link', a: a};
+};
+var $elm$svg$Svg$circle = $elm$svg$Svg$trustedNode('circle');
+var $elm$svg$Svg$Attributes$cx = _VirtualDom_attribute('cx');
+var $elm$svg$Svg$Attributes$cy = _VirtualDom_attribute('cy');
+var $elm$svg$Svg$Attributes$r = _VirtualDom_attribute('r');
+var $feathericons$elm_feather$FeatherIcons$helpCircle = A2(
+	$feathericons$elm_feather$FeatherIcons$makeBuilder,
+	'help-circle',
+	_List_fromArray(
+		[
+			A2(
+			$elm$svg$Svg$circle,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$cx('12'),
+					$elm$svg$Svg$Attributes$cy('12'),
+					$elm$svg$Svg$Attributes$r('10')
+				]),
+			_List_Nil),
+			A2(
+			$elm$svg$Svg$path,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$d('M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3')
+				]),
+			_List_Nil),
+			A2(
+			$elm$svg$Svg$line,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$x1('12'),
+					$elm$svg$Svg$Attributes$y1('17'),
+					$elm$svg$Svg$Attributes$x2('12.01'),
+					$elm$svg$Svg$Attributes$y2('17')
+				]),
+			_List_Nil)
+		]));
+var $author$project$View$Toolbar$viewHelpButton = $author$project$View$Widgets$defaultButton(
+	{
+		action: $author$project$View$Widgets$Link('/manual'),
+		enabled: true,
+		icon: $feathericons$elm_feather$FeatherIcons$helpCircle,
+		title: 'Help'
+	});
 var $author$project$Update$App$UpdateNewAtomName = function (a) {
 	return {$: 'UpdateNewAtomName', a: a};
 };
@@ -22252,8 +22441,6 @@ var $author$project$View$Toolbar$viewNewAtomNameTextEdit = function (newAtomName
 		$mdgriffith$elm_ui$Element$Input$text,
 		_List_fromArray(
 			[
-				$mdgriffith$elm_ui$Element$width(
-				$mdgriffith$elm_ui$Element$px(105)),
 				$mdgriffith$elm_ui$Element$Border$rounded($author$project$View$Style$scrollBorderRound),
 				$author$project$Utils$Events$onClick($author$project$Update$App$DoNothing)
 			]),
@@ -22264,9 +22451,179 @@ var $author$project$View$Toolbar$viewNewAtomNameTextEdit = function (newAtomName
 				A2(
 					$mdgriffith$elm_ui$Element$Input$placeholder,
 					_List_Nil,
-					$mdgriffith$elm_ui$Element$text('new atom name'))),
+					$mdgriffith$elm_ui$Element$text('New atom name'))),
 			text: newAtomName
 		});
+};
+var $author$project$Update$App$ToggleRecording = function (a) {
+	return {$: 'ToggleRecording', a: a};
+};
+var $feathericons$elm_feather$FeatherIcons$camera = A2(
+	$feathericons$elm_feather$FeatherIcons$makeBuilder,
+	'camera',
+	_List_fromArray(
+		[
+			A2(
+			$elm$svg$Svg$path,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$d('M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z')
+				]),
+			_List_Nil),
+			A2(
+			$elm$svg$Svg$circle,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$cx('12'),
+					$elm$svg$Svg$Attributes$cy('13'),
+					$elm$svg$Svg$Attributes$r('4')
+				]),
+			_List_Nil)
+		]));
+var $feathericons$elm_feather$FeatherIcons$cameraOff = A2(
+	$feathericons$elm_feather$FeatherIcons$makeBuilder,
+	'camera-off',
+	_List_fromArray(
+		[
+			A2(
+			$elm$svg$Svg$line,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$x1('1'),
+					$elm$svg$Svg$Attributes$y1('1'),
+					$elm$svg$Svg$Attributes$x2('23'),
+					$elm$svg$Svg$Attributes$y2('23')
+				]),
+			_List_Nil),
+			A2(
+			$elm$svg$Svg$path,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$d('M21 21H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3m3-3h6l2 3h4a2 2 0 0 1 2 2v9.34m-7.72-2.06a4 4 0 1 1-5.56-5.56')
+				]),
+			_List_Nil)
+		]));
+var $mdgriffith$elm_ui$Element$Input$tabindex = A2($elm$core$Basics$composeL, $mdgriffith$elm_ui$Internal$Model$Attr, $elm$html$Html$Attributes$tabindex);
+var $mdgriffith$elm_ui$Element$Input$checkbox = F2(
+	function (attrs, _v0) {
+		var label = _v0.label;
+		var icon = _v0.icon;
+		var checked = _v0.checked;
+		var onChange = _v0.onChange;
+		var attributes = _Utils_ap(
+			_List_fromArray(
+				[
+					$mdgriffith$elm_ui$Element$Input$isHiddenLabel(label) ? $mdgriffith$elm_ui$Internal$Model$NoAttribute : $mdgriffith$elm_ui$Element$spacing(6),
+					$mdgriffith$elm_ui$Internal$Model$Attr(
+					$elm$html$Html$Events$onClick(
+						onChange(!checked))),
+					$mdgriffith$elm_ui$Element$Region$announce,
+					$mdgriffith$elm_ui$Element$Input$onKeyLookup(
+					function (code) {
+						return _Utils_eq(code, $mdgriffith$elm_ui$Element$Input$enter) ? $elm$core$Maybe$Just(
+							onChange(!checked)) : (_Utils_eq(code, $mdgriffith$elm_ui$Element$Input$space) ? $elm$core$Maybe$Just(
+							onChange(!checked)) : $elm$core$Maybe$Nothing);
+					}),
+					$mdgriffith$elm_ui$Element$Input$tabindex(0),
+					$mdgriffith$elm_ui$Element$pointer,
+					$mdgriffith$elm_ui$Element$alignLeft,
+					$mdgriffith$elm_ui$Element$width($mdgriffith$elm_ui$Element$fill)
+				]),
+			attrs);
+		return A3(
+			$mdgriffith$elm_ui$Element$Input$applyLabel,
+			A2(
+				$elm$core$List$cons,
+				$mdgriffith$elm_ui$Internal$Model$Attr(
+					A2($elm$html$Html$Attributes$attribute, 'role', 'checkbox')),
+				A2(
+					$elm$core$List$cons,
+					$mdgriffith$elm_ui$Internal$Model$Attr(
+						A2(
+							$elm$html$Html$Attributes$attribute,
+							'aria-checked',
+							checked ? 'true' : 'false')),
+					A2(
+						$elm$core$List$cons,
+						$mdgriffith$elm_ui$Element$Input$hiddenLabelAttribute(label),
+						attributes))),
+			label,
+			A4(
+				$mdgriffith$elm_ui$Internal$Model$element,
+				$mdgriffith$elm_ui$Internal$Model$asEl,
+				$mdgriffith$elm_ui$Internal$Model$div,
+				_List_fromArray(
+					[
+						$mdgriffith$elm_ui$Element$centerY,
+						$mdgriffith$elm_ui$Element$height($mdgriffith$elm_ui$Element$fill),
+						$mdgriffith$elm_ui$Element$width($mdgriffith$elm_ui$Element$shrink)
+					]),
+				$mdgriffith$elm_ui$Internal$Model$Unkeyed(
+					_List_fromArray(
+						[
+							icon(checked)
+						]))));
+	});
+var $author$project$View$Widgets$toggle = F2(
+	function (_v0, checked) {
+		var color = _v0.color;
+		var iconOn = _v0.iconOn;
+		var iconOff = _v0.iconOff;
+		var title = _v0.title;
+		var onChange = _v0.onChange;
+		var iconEl = function (isChecked) {
+			var _v1 = isChecked ? _Utils_Tuple2(
+				color,
+				A3($mdgriffith$elm_ui$Element$rgb, 1, 1, 1)) : _Utils_Tuple2(
+				A3($mdgriffith$elm_ui$Element$rgb, 1, 1, 1),
+				A3($mdgriffith$elm_ui$Element$rgb, 0, 0, 0));
+			var bgColor = _v1.a;
+			var fgColor = _v1.b;
+			return A2(
+				$mdgriffith$elm_ui$Element$el,
+				_List_fromArray(
+					[
+						$mdgriffith$elm_ui$Element$width(
+						$mdgriffith$elm_ui$Element$px(60)),
+						$mdgriffith$elm_ui$Element$height(
+						$mdgriffith$elm_ui$Element$px($author$project$View$Widgets$defaultButtonSize)),
+						$mdgriffith$elm_ui$Element$Background$color(bgColor),
+						$mdgriffith$elm_ui$Element$Border$rounded($author$project$View$Widgets$buttonBorderRadius),
+						$mdgriffith$elm_ui$Element$htmlAttribute(
+						$elm$html$Html$Attributes$title(title))
+					]),
+				A2(
+					$mdgriffith$elm_ui$Element$el,
+					_List_fromArray(
+						[$mdgriffith$elm_ui$Element$centerX, $mdgriffith$elm_ui$Element$centerY]),
+					$mdgriffith$elm_ui$Element$html(
+						A2(
+							$feathericons$elm_feather$FeatherIcons$toHtml,
+							_List_fromArray(
+								[
+									$author$project$Utils$Color$toHtmlAttr(
+									$author$project$Utils$Color$fromElement(fgColor))
+								]),
+							A2(
+								$feathericons$elm_feather$FeatherIcons$withSize,
+								30,
+								isChecked ? iconOn : iconOff)))));
+		};
+		return A2(
+			$mdgriffith$elm_ui$Element$Input$checkbox,
+			_List_Nil,
+			{
+				checked: checked,
+				icon: iconEl,
+				label: $mdgriffith$elm_ui$Element$Input$labelHidden('Recording'),
+				onChange: onChange
+			});
+	});
+var $author$project$View$Toolbar$viewRecordToggle = function (recording) {
+	return A2(
+		$author$project$View$Widgets$toggle,
+		{color: $author$project$View$Toolbar$modeSelectorColor, iconOff: $feathericons$elm_feather$FeatherIcons$cameraOff, iconOn: $feathericons$elm_feather$FeatherIcons$camera, onChange: $author$project$Update$App$ToggleRecording, title: 'Record'},
+		recording);
 };
 var $feathericons$elm_feather$FeatherIcons$arrowLeft = A2(
 	$feathericons$elm_feather$FeatherIcons$makeBuilder,
@@ -22354,19 +22711,50 @@ var $author$project$View$Toolbar$viewUndoRedo = function (_v0) {
 };
 var $author$project$View$Toolbar$viewToolbar = function (model) {
 	var undoRedo = $author$project$View$Toolbar$viewUndoRedo(model.history);
-	var newAtomNameTextEdit = function () {
-		var _v0 = model.goal.actionMode;
-		if (_v0.$ === 'EditMode') {
-			var newAtomName = _v0.a.newAtomName;
-			return _List_fromArray(
-				[
-					$author$project$View$Toolbar$viewNewAtomNameTextEdit(newAtomName)
-				]);
-		} else {
-			return _List_Nil;
-		}
-	}();
-	var modeSelector = $author$project$View$Toolbar$viewModeSelector(model.goal.actionMode);
+	var helpButton = $author$project$View$Toolbar$viewHelpButton;
+	var execZone = A2(
+		$mdgriffith$elm_ui$Element$row,
+		_List_fromArray(
+			[
+				A2($mdgriffith$elm_ui$Element$paddingXY, 15, 0),
+				$mdgriffith$elm_ui$Element$spacing(20),
+				$mdgriffith$elm_ui$Element$centerX
+			]),
+		_List_fromArray(
+			[
+				$author$project$View$Toolbar$viewExecModeSelector(model.goal.execMode),
+				$author$project$View$Toolbar$viewRecordToggle(model.goal.recording),
+				$author$project$View$Toolbar$viewExecButtons(model.goal)
+			]));
+	var actionToolZone = A2(
+		$mdgriffith$elm_ui$Element$row,
+		_List_fromArray(
+			[
+				A2($mdgriffith$elm_ui$Element$paddingXY, 15, 0),
+				$mdgriffith$elm_ui$Element$spacing(10),
+				$mdgriffith$elm_ui$Element$centerX
+			]),
+		function () {
+			var _v0 = model.goal.actionMode;
+			if (_v0.$ === 'EditMode') {
+				var newAtomName = _v0.a.newAtomName;
+				return _List_fromArray(
+					[
+						A2(
+						$mdgriffith$elm_ui$Element$el,
+						_List_fromArray(
+							[
+								$mdgriffith$elm_ui$Element$width(
+								A2($mdgriffith$elm_ui$Element$maximum, 200, $mdgriffith$elm_ui$Element$fill)),
+								$mdgriffith$elm_ui$Element$centerX
+							]),
+						$author$project$View$Toolbar$viewNewAtomNameTextEdit(newAtomName))
+					]);
+			} else {
+				return _List_Nil;
+			}
+		}());
+	var actionModeSelector = $author$project$View$Toolbar$viewActionModeSelector(model.goal.actionMode);
 	return A2(
 		$mdgriffith$elm_ui$Element$row,
 		_List_fromArray(
@@ -22374,6 +22762,7 @@ var $author$project$View$Toolbar$viewToolbar = function (model) {
 				$mdgriffith$elm_ui$Element$width($mdgriffith$elm_ui$Element$fill),
 				$mdgriffith$elm_ui$Element$height($mdgriffith$elm_ui$Element$shrink),
 				$mdgriffith$elm_ui$Element$padding(15),
+				$mdgriffith$elm_ui$Element$spacing(100),
 				$mdgriffith$elm_ui$Element$Border$widthEach(
 				{bottom: 0, left: 0, right: 0, top: 1}),
 				$mdgriffith$elm_ui$Element$Border$color(
@@ -22391,32 +22780,34 @@ var $author$project$View$Toolbar$viewToolbar = function (model) {
 		_List_fromArray(
 			[
 				A2(
-				$mdgriffith$elm_ui$Element$row,
+				$mdgriffith$elm_ui$Element$el,
 				_List_fromArray(
-					[
-						$mdgriffith$elm_ui$Element$width($mdgriffith$elm_ui$Element$fill),
-						$mdgriffith$elm_ui$Element$spacing(5)
-					]),
-				A2(
-					$elm$core$List$cons,
-					A2(
-						$mdgriffith$elm_ui$Element$el,
-						_List_fromArray(
-							[$mdgriffith$elm_ui$Element$alignLeft]),
-						$author$project$View$Toolbar$viewHelpButton),
-					newAtomNameTextEdit)),
-				modeSelector,
+					[$mdgriffith$elm_ui$Element$alignLeft]),
+				helpButton),
 				A2(
 				$mdgriffith$elm_ui$Element$el,
 				_List_fromArray(
 					[
 						$mdgriffith$elm_ui$Element$width($mdgriffith$elm_ui$Element$fill)
 					]),
+				actionToolZone),
 				A2(
-					$mdgriffith$elm_ui$Element$el,
-					_List_fromArray(
-						[$mdgriffith$elm_ui$Element$alignRight]),
-					undoRedo))
+				$mdgriffith$elm_ui$Element$el,
+				_List_fromArray(
+					[$mdgriffith$elm_ui$Element$centerX]),
+				actionModeSelector),
+				A2(
+				$mdgriffith$elm_ui$Element$el,
+				_List_fromArray(
+					[
+						$mdgriffith$elm_ui$Element$width($mdgriffith$elm_ui$Element$fill)
+					]),
+				execZone),
+				A2(
+				$mdgriffith$elm_ui$Element$el,
+				_List_fromArray(
+					[$mdgriffith$elm_ui$Element$alignRight]),
+				undoRedo)
 			]));
 };
 var $author$project$View$App$view = function (model) {
