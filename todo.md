@@ -16,8 +16,7 @@
     - the action can only be executed if `jnd` is empty
 
 - Execution of actions
-  - "Step" and "Run" buttons that respectively dequeue/execute the next action and execute the whole queue
-  - Forward and Backward exec modes only differ in the polarity of the target path for argumentation actions, and in the swap between `opened` and `closed` in `ScrollData.interaction` for interaction actions
+  - "Step" button that dequeues and executes the next action
   - The action at the head of the queue should always be highlighted at the location where it occurs in the goal
   - **Free execution**:
     - the user can execute actions in the order she wants by clicking directly on them in the goal. However, only actions which are *executable* (and thus do not depend on other actions) can be executed:
@@ -44,8 +43,6 @@
       completely deterministic (and closer to traditional programming). We would still want to force
       constructor labels on every inloop to actually match the semantics of ADTs.
   - Support for DnD actions on inloops
-  - Linear mode: when toggled, DnD will automatically insert a deletion on the source, and be
-    disabled on nodes for which a (de)iteration has already been recorded
 
 - Edit mode
   - Still just a means to perform the insertion and deletion rules
