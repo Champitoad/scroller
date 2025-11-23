@@ -77,3 +77,8 @@ stir =
 fold : Val
 fold =
   entails [f whiskedWhites, f thickPaste] [f mascarponeCream]
+
+
+mascarponeCreamRecipe : Net
+mascarponeCreamRecipe =
+  [entails [crack, whisk, beat, stir, fold] [entails [f egg, f sugar, f mascarpone] [f mascarponeCream]]]

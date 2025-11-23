@@ -6,7 +6,6 @@ import Utils.Events
 import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
-import Element.Events as Events
 import Element.Font
 import Element.Input as Input
 
@@ -69,7 +68,7 @@ button style { action, title, icon, enabled } =
       Html.Styled.div
         [ css [ Css.color (iconColor |> Utils.Color.toCss) ] ]
         [ iconHtml ]
-    
+
     styleAttrs =
       Css.width style.width ::
       Css.height style.height ::
@@ -95,7 +94,7 @@ button style { action, title, icon, enabled } =
       else
         [ Css.borderColor Css.transparent
         , Css.backgroundColor Css.transparent ]
-    
+
     tag =
       case action of
         Msg _ ->

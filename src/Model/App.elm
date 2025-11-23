@@ -39,7 +39,8 @@ type alias Model
 
 init : Url.Url -> Browser.Navigation.Key -> Model
 init url key =
-  { goal = Goal.fromNet [entails [crack, whisk, beat, stir, fold] [entails [f egg, f sugar, f mascarpone] [f mascarponeCream]]]
+  { goal = Goal.fromNet mascarponeCreamRecipe
+  -- { goal = Goal.fromNet []
   , history = History { prev = Nothing, next = Nothing }
   , manualExamples = manualExamples
   , dragDrop = DnD.init

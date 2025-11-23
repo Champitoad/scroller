@@ -5236,9 +5236,83 @@ var $elm$browser$Browser$application = _Browser_application;
 var $author$project$Model$App$History = function (a) {
 	return {$: 'History', a: a};
 };
-var $author$project$Model$Scroll$Scroll = function (a) {
-	return {$: 'Scroll', a: a};
+var $author$project$Model$Goal$App = {$: 'App'};
+var $author$project$Model$Goal$Forward = {$: 'Forward'};
+var $author$project$Model$Goal$Interacting = {$: 'Interacting'};
+var $author$project$Model$Goal$ProofMode = function (a) {
+	return {$: 'ProofMode', a: a};
 };
+var $noordstar$elm_iddict$Iddict$Iddict = function (a) {
+	return {$: 'Iddict', a: a};
+};
+var $miniBill$elm_fast_dict$Internal$Dict = F2(
+	function (a, b) {
+		return {$: 'Dict', a: a, b: b};
+	});
+var $miniBill$elm_fast_dict$Internal$Leaf = {$: 'Leaf'};
+var $miniBill$elm_fast_dict$FastDict$empty = A2($miniBill$elm_fast_dict$Internal$Dict, 0, $miniBill$elm_fast_dict$Internal$Leaf);
+var $noordstar$elm_iddict$Iddict$empty = $noordstar$elm_iddict$Iddict$Iddict(
+	{cursor: 0, dict: $miniBill$elm_fast_dict$FastDict$empty});
+var $owanturist$elm_queue$Queue$Empty = {$: 'Empty'};
+var $owanturist$elm_queue$Queue$empty = $owanturist$elm_queue$Queue$Empty;
+var $author$project$Model$Scroll$Context = F2(
+	function (zipper, polarity) {
+		return {polarity: polarity, zipper: zipper};
+	});
+var $author$project$Model$Scroll$Pos = {$: 'Pos'};
+var $author$project$Model$Goal$initialNavigation = _List_fromArray(
+	[
+		A2($author$project$Model$Scroll$Context, _List_Nil, $author$project$Model$Scroll$Pos)
+	]);
+var $author$project$Model$Goal$fromNet = function (net) {
+	return {
+		actionMode: $author$project$Model$Goal$ProofMode($author$project$Model$Goal$Interacting),
+		actions: $noordstar$elm_iddict$Iddict$empty,
+		actionsQueue: $owanturist$elm_queue$Queue$empty,
+		execMode: $author$project$Model$Goal$Forward,
+		focus: net,
+		location: $author$project$Model$Goal$App,
+		navigation: $author$project$Model$Goal$initialNavigation,
+		recording: true
+	};
+};
+var $norpan$elm_html5_drag_drop$Html5$DragDrop$NotDragging = {$: 'NotDragging'};
+var $norpan$elm_html5_drag_drop$Html5$DragDrop$init = $norpan$elm_html5_drag_drop$Html5$DragDrop$NotDragging;
+var $author$project$Model$Goal$Manual = function (a) {
+	return {$: 'Manual', a: a};
+};
+var $author$project$Model$Formula$Atom = function (a) {
+	return {$: 'Atom', a: a};
+};
+var $author$project$Model$Formula$Name = function (a) {
+	return {$: 'Name', a: a};
+};
+var $author$project$Model$Formula$atom = function (name) {
+	return $author$project$Model$Formula$Atom(
+		$author$project$Model$Formula$Name(name));
+};
+var $author$project$Model$Scroll$Formula = function (a) {
+	return {$: 'Formula', a: a};
+};
+var $author$project$Model$Scroll$assumption = {from: $elm$core$Maybe$Nothing, self: false};
+var $author$project$Model$Scroll$mkShape = F2(
+	function (metadata, shape) {
+		return {justif: $author$project$Model$Scroll$assumption, metadata: metadata, name: $elm$core$Maybe$Nothing, shape: shape};
+	});
+var $author$project$Model$Scroll$mkFormula = F2(
+	function (metadata, statement) {
+		return A2(
+			$author$project$Model$Scroll$mkShape,
+			metadata,
+			$author$project$Model$Scroll$Formula(statement));
+	});
+var $author$project$Model$Scroll$mkRealFormula = $author$project$Model$Scroll$mkFormula(
+	{grown: false});
+var $author$project$Model$Scroll$atom = function (name) {
+	return $author$project$Model$Scroll$mkRealFormula(
+		$author$project$Model$Formula$atom(name));
+};
+var $author$project$Model$Scroll$a = $author$project$Model$Scroll$atom;
 var $elm$core$Dict$RBEmpty_elm_builtin = {$: 'RBEmpty_elm_builtin'};
 var $elm$core$Dict$empty = $elm$core$Dict$RBEmpty_elm_builtin;
 var $elm$core$Dict$Black = {$: 'Black'};
@@ -5362,14 +5436,12 @@ var $elm$core$Dict$fromList = function (assocs) {
 		$elm$core$Dict$empty,
 		assocs);
 };
-var $author$project$Model$Scroll$assumption = {from: $elm$core$Maybe$Nothing, self: false};
+var $author$project$Model$Scroll$Scroll = function (a) {
+	return {$: 'Scroll', a: a};
+};
 var $author$project$Model$Scroll$mkEnv = F2(
 	function (metadata, content) {
 		return {content: content, justif: $author$project$Model$Scroll$assumption, metadata: metadata};
-	});
-var $author$project$Model$Scroll$mkShape = F2(
-	function (metadata, shape) {
-		return {justif: $author$project$Model$Scroll$assumption, metadata: metadata, name: $elm$core$Maybe$Nothing, shape: shape};
 	});
 var $author$project$Model$Scroll$mkScroll = F3(
 	function (metadata, outloop, inloopsAssoc) {
@@ -5397,149 +5469,6 @@ var $author$project$Model$Scroll$mkScroll = F3(
 	});
 var $author$project$Model$Scroll$mkRealScroll = $author$project$Model$Scroll$mkScroll(
 	{grown: false});
-var $author$project$Model$Scroll$entails = F2(
-	function (phi, psi) {
-		return A2(
-			$author$project$Model$Scroll$mkRealScroll,
-			phi,
-			_List_fromArray(
-				[
-					_Utils_Tuple2('Return', psi)
-				]));
-	});
-var $author$project$Model$Scroll$Formula = function (a) {
-	return {$: 'Formula', a: a};
-};
-var $author$project$Model$Scroll$mkFormula = F2(
-	function (metadata, statement) {
-		return A2(
-			$author$project$Model$Scroll$mkShape,
-			metadata,
-			$author$project$Model$Scroll$Formula(statement));
-	});
-var $author$project$Model$Scroll$mkRealFormula = $author$project$Model$Scroll$mkFormula(
-	{grown: false});
-var $author$project$Model$Scroll$f = $author$project$Model$Scroll$mkRealFormula;
-var $author$project$Model$Formula$Atom = function (a) {
-	return {$: 'Atom', a: a};
-};
-var $author$project$Model$Formula$Image = function (a) {
-	return {$: 'Image', a: a};
-};
-var $author$project$Model$Mascarpone$sugar = $author$project$Model$Formula$Atom(
-	$author$project$Model$Formula$Image(
-		{description: 'sugar', src: 'public/assets/img/sugar.png'}));
-var $author$project$Model$Mascarpone$yolk = $author$project$Model$Formula$Atom(
-	$author$project$Model$Formula$Image(
-		{description: 'yolk', src: 'public/assets/img/yolk.png'}));
-var $author$project$Model$Mascarpone$yolkPaste = $author$project$Model$Formula$Atom(
-	$author$project$Model$Formula$Image(
-		{description: 'yolk paste', src: 'public/assets/img/yolk-paste.png'}));
-var $author$project$Model$Mascarpone$beat = A2(
-	$author$project$Model$Scroll$entails,
-	_List_fromArray(
-		[
-			$author$project$Model$Scroll$f($author$project$Model$Mascarpone$yolk),
-			$author$project$Model$Scroll$f($author$project$Model$Mascarpone$sugar)
-		]),
-	_List_fromArray(
-		[
-			$author$project$Model$Scroll$f($author$project$Model$Mascarpone$yolkPaste)
-		]));
-var $author$project$Model$Mascarpone$egg = $author$project$Model$Formula$Atom(
-	$author$project$Model$Formula$Image(
-		{description: 'egg', src: 'public/assets/img/egg.png'}));
-var $author$project$Model$Mascarpone$white = $author$project$Model$Formula$Atom(
-	$author$project$Model$Formula$Image(
-		{description: 'white', src: 'public/assets/img/white.png'}));
-var $author$project$Model$Mascarpone$crack = A2(
-	$author$project$Model$Scroll$entails,
-	_List_fromArray(
-		[
-			$author$project$Model$Scroll$f($author$project$Model$Mascarpone$egg)
-		]),
-	_List_fromArray(
-		[
-			$author$project$Model$Scroll$f($author$project$Model$Mascarpone$yolk),
-			$author$project$Model$Scroll$f($author$project$Model$Mascarpone$white)
-		]));
-var $author$project$Model$Mascarpone$mascarponeCream = $author$project$Model$Formula$Atom(
-	$author$project$Model$Formula$Image(
-		{description: 'mascarpone cream', src: 'public/assets/img/mascarpone-cream.png'}));
-var $author$project$Model$Mascarpone$thickPaste = $author$project$Model$Formula$Atom(
-	$author$project$Model$Formula$Image(
-		{description: 'thick paste', src: 'public/assets/img/thick-paste.png'}));
-var $author$project$Model$Mascarpone$whiskedWhites = $author$project$Model$Formula$Atom(
-	$author$project$Model$Formula$Image(
-		{description: 'whisked whites', src: 'public/assets/img/whisked-whites.png'}));
-var $author$project$Model$Mascarpone$fold = A2(
-	$author$project$Model$Scroll$entails,
-	_List_fromArray(
-		[
-			$author$project$Model$Scroll$f($author$project$Model$Mascarpone$whiskedWhites),
-			$author$project$Model$Scroll$f($author$project$Model$Mascarpone$thickPaste)
-		]),
-	_List_fromArray(
-		[
-			$author$project$Model$Scroll$f($author$project$Model$Mascarpone$mascarponeCream)
-		]));
-var $author$project$Model$Goal$App = {$: 'App'};
-var $author$project$Model$Goal$Forward = {$: 'Forward'};
-var $author$project$Model$Goal$Interacting = {$: 'Interacting'};
-var $author$project$Model$Goal$ProofMode = function (a) {
-	return {$: 'ProofMode', a: a};
-};
-var $noordstar$elm_iddict$Iddict$Iddict = function (a) {
-	return {$: 'Iddict', a: a};
-};
-var $miniBill$elm_fast_dict$Internal$Dict = F2(
-	function (a, b) {
-		return {$: 'Dict', a: a, b: b};
-	});
-var $miniBill$elm_fast_dict$Internal$Leaf = {$: 'Leaf'};
-var $miniBill$elm_fast_dict$FastDict$empty = A2($miniBill$elm_fast_dict$Internal$Dict, 0, $miniBill$elm_fast_dict$Internal$Leaf);
-var $noordstar$elm_iddict$Iddict$empty = $noordstar$elm_iddict$Iddict$Iddict(
-	{cursor: 0, dict: $miniBill$elm_fast_dict$FastDict$empty});
-var $owanturist$elm_queue$Queue$Empty = {$: 'Empty'};
-var $owanturist$elm_queue$Queue$empty = $owanturist$elm_queue$Queue$Empty;
-var $author$project$Model$Scroll$Context = F2(
-	function (zipper, polarity) {
-		return {polarity: polarity, zipper: zipper};
-	});
-var $author$project$Model$Scroll$Pos = {$: 'Pos'};
-var $author$project$Model$Goal$initialNavigation = _List_fromArray(
-	[
-		A2($author$project$Model$Scroll$Context, _List_Nil, $author$project$Model$Scroll$Pos)
-	]);
-var $author$project$Model$Goal$fromNet = function (net) {
-	return {
-		actionMode: $author$project$Model$Goal$ProofMode($author$project$Model$Goal$Interacting),
-		actions: $noordstar$elm_iddict$Iddict$empty,
-		actionsQueue: $owanturist$elm_queue$Queue$empty,
-		execMode: $author$project$Model$Goal$Forward,
-		focus: net,
-		location: $author$project$Model$Goal$App,
-		navigation: $author$project$Model$Goal$initialNavigation,
-		recording: true
-	};
-};
-var $norpan$elm_html5_drag_drop$Html5$DragDrop$NotDragging = {$: 'NotDragging'};
-var $norpan$elm_html5_drag_drop$Html5$DragDrop$init = $norpan$elm_html5_drag_drop$Html5$DragDrop$NotDragging;
-var $author$project$Model$Goal$Manual = function (a) {
-	return {$: 'Manual', a: a};
-};
-var $author$project$Model$Formula$Name = function (a) {
-	return {$: 'Name', a: a};
-};
-var $author$project$Model$Formula$atom = function (name) {
-	return $author$project$Model$Formula$Atom(
-		$author$project$Model$Formula$Name(name));
-};
-var $author$project$Model$Scroll$atom = function (name) {
-	return $author$project$Model$Scroll$mkRealFormula(
-		$author$project$Model$Formula$atom(name));
-};
-var $author$project$Model$Scroll$a = $author$project$Model$Scroll$atom;
 var $author$project$Model$Scroll$s = F2(
 	function (inloop, outloopsContents) {
 		var outloops = A2(
@@ -5808,6 +5737,77 @@ var $author$project$Model$Goal$manualExamples = function () {
 			},
 			examples));
 }();
+var $author$project$Model$Scroll$entails = F2(
+	function (phi, psi) {
+		return A2(
+			$author$project$Model$Scroll$mkRealScroll,
+			phi,
+			_List_fromArray(
+				[
+					_Utils_Tuple2('Return', psi)
+				]));
+	});
+var $author$project$Model$Scroll$f = $author$project$Model$Scroll$mkRealFormula;
+var $author$project$Model$Formula$Image = function (a) {
+	return {$: 'Image', a: a};
+};
+var $author$project$Model$Mascarpone$sugar = $author$project$Model$Formula$Atom(
+	$author$project$Model$Formula$Image(
+		{description: 'sugar', src: 'public/assets/img/sugar.png'}));
+var $author$project$Model$Mascarpone$yolk = $author$project$Model$Formula$Atom(
+	$author$project$Model$Formula$Image(
+		{description: 'yolk', src: 'public/assets/img/yolk.png'}));
+var $author$project$Model$Mascarpone$yolkPaste = $author$project$Model$Formula$Atom(
+	$author$project$Model$Formula$Image(
+		{description: 'yolk paste', src: 'public/assets/img/yolk-paste.png'}));
+var $author$project$Model$Mascarpone$beat = A2(
+	$author$project$Model$Scroll$entails,
+	_List_fromArray(
+		[
+			$author$project$Model$Scroll$f($author$project$Model$Mascarpone$yolk),
+			$author$project$Model$Scroll$f($author$project$Model$Mascarpone$sugar)
+		]),
+	_List_fromArray(
+		[
+			$author$project$Model$Scroll$f($author$project$Model$Mascarpone$yolkPaste)
+		]));
+var $author$project$Model$Mascarpone$egg = $author$project$Model$Formula$Atom(
+	$author$project$Model$Formula$Image(
+		{description: 'egg', src: 'public/assets/img/egg.png'}));
+var $author$project$Model$Mascarpone$white = $author$project$Model$Formula$Atom(
+	$author$project$Model$Formula$Image(
+		{description: 'white', src: 'public/assets/img/white.png'}));
+var $author$project$Model$Mascarpone$crack = A2(
+	$author$project$Model$Scroll$entails,
+	_List_fromArray(
+		[
+			$author$project$Model$Scroll$f($author$project$Model$Mascarpone$egg)
+		]),
+	_List_fromArray(
+		[
+			$author$project$Model$Scroll$f($author$project$Model$Mascarpone$yolk),
+			$author$project$Model$Scroll$f($author$project$Model$Mascarpone$white)
+		]));
+var $author$project$Model$Mascarpone$mascarponeCream = $author$project$Model$Formula$Atom(
+	$author$project$Model$Formula$Image(
+		{description: 'mascarpone cream', src: 'public/assets/img/mascarpone-cream.png'}));
+var $author$project$Model$Mascarpone$thickPaste = $author$project$Model$Formula$Atom(
+	$author$project$Model$Formula$Image(
+		{description: 'thick paste', src: 'public/assets/img/thick-paste.png'}));
+var $author$project$Model$Mascarpone$whiskedWhites = $author$project$Model$Formula$Atom(
+	$author$project$Model$Formula$Image(
+		{description: 'whisked whites', src: 'public/assets/img/whisked-whites.png'}));
+var $author$project$Model$Mascarpone$fold = A2(
+	$author$project$Model$Scroll$entails,
+	_List_fromArray(
+		[
+			$author$project$Model$Scroll$f($author$project$Model$Mascarpone$whiskedWhites),
+			$author$project$Model$Scroll$f($author$project$Model$Mascarpone$thickPaste)
+		]),
+	_List_fromArray(
+		[
+			$author$project$Model$Scroll$f($author$project$Model$Mascarpone$mascarponeCream)
+		]));
 var $author$project$Model$Mascarpone$mascarpone = $author$project$Model$Formula$Atom(
 	$author$project$Model$Formula$Image(
 		{description: 'mascarpone', src: 'public/assets/img/mascarpone.png'}));
@@ -5832,33 +5832,33 @@ var $author$project$Model$Mascarpone$whisk = A2(
 		[
 			$author$project$Model$Scroll$f($author$project$Model$Mascarpone$whiskedWhites)
 		]));
+var $author$project$Model$Mascarpone$mascarponeCreamRecipe = _List_fromArray(
+	[
+		A2(
+		$author$project$Model$Scroll$entails,
+		_List_fromArray(
+			[$author$project$Model$Mascarpone$crack, $author$project$Model$Mascarpone$whisk, $author$project$Model$Mascarpone$beat, $author$project$Model$Mascarpone$stir, $author$project$Model$Mascarpone$fold]),
+		_List_fromArray(
+			[
+				A2(
+				$author$project$Model$Scroll$entails,
+				_List_fromArray(
+					[
+						$author$project$Model$Scroll$f($author$project$Model$Mascarpone$egg),
+						$author$project$Model$Scroll$f($author$project$Model$Mascarpone$sugar),
+						$author$project$Model$Scroll$f($author$project$Model$Mascarpone$mascarpone)
+					]),
+				_List_fromArray(
+					[
+						$author$project$Model$Scroll$f($author$project$Model$Mascarpone$mascarponeCream)
+					]))
+			]))
+	]);
 var $author$project$Model$App$init = F2(
 	function (url, key) {
 		return {
 			dragDrop: $norpan$elm_html5_drag_drop$Html5$DragDrop$init,
-			goal: $author$project$Model$Goal$fromNet(
-				_List_fromArray(
-					[
-						A2(
-						$author$project$Model$Scroll$entails,
-						_List_fromArray(
-							[$author$project$Model$Mascarpone$crack, $author$project$Model$Mascarpone$whisk, $author$project$Model$Mascarpone$beat, $author$project$Model$Mascarpone$stir, $author$project$Model$Mascarpone$fold]),
-						_List_fromArray(
-							[
-								A2(
-								$author$project$Model$Scroll$entails,
-								_List_fromArray(
-									[
-										$author$project$Model$Scroll$f($author$project$Model$Mascarpone$egg),
-										$author$project$Model$Scroll$f($author$project$Model$Mascarpone$sugar),
-										$author$project$Model$Scroll$f($author$project$Model$Mascarpone$mascarpone)
-									]),
-								_List_fromArray(
-									[
-										$author$project$Model$Scroll$f($author$project$Model$Mascarpone$mascarponeCream)
-									]))
-							]))
-					])),
+			goal: $author$project$Model$Goal$fromNet($author$project$Model$Mascarpone$mascarponeCreamRecipe),
 			history: $author$project$Model$App$History(
 				{next: $elm$core$Maybe$Nothing, prev: $elm$core$Maybe$Nothing}),
 			key: key,
@@ -14345,6 +14345,21 @@ var $author$project$View$Style$fillXY = _List_fromArray(
 		$mdgriffith$elm_ui$Element$width($mdgriffith$elm_ui$Element$fill),
 		$mdgriffith$elm_ui$Element$height($mdgriffith$elm_ui$Element$fill)
 	]);
+var $mdgriffith$elm_ui$Element$htmlAttribute = $mdgriffith$elm_ui$Internal$Model$Attr;
+var $elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
+var $elm$html$Html$Attributes$style = $elm$virtual_dom$VirtualDom$style;
+var $author$project$View$Style$styleAttr = F2(
+	function (attr, val) {
+		return $mdgriffith$elm_ui$Element$htmlAttribute(
+			A2($elm$html$Html$Attributes$style, attr, val));
+	});
+var $author$project$View$Widgets$defaultButtonSize = 55;
+var $author$project$View$Toolbar$toolbarPadding = 15;
+var $author$project$View$Toolbar$toolbarHeight = $author$project$View$Widgets$defaultButtonSize + (2 * $author$project$View$Toolbar$toolbarPadding);
+var $author$project$View$Goal$goalHeightAttr = A2(
+	$author$project$View$Style$styleAttr,
+	'height',
+	'calc(100vh - ' + ($elm$core$String$fromInt($author$project$View$Toolbar$toolbarHeight) + 'px)'));
 var $author$project$Update$App$HandleKeyboardEvent = function (a) {
 	return {$: 'HandleKeyboardEvent', a: a};
 };
@@ -15673,7 +15688,6 @@ var $author$project$View$Manual$resetButton = function (id) {
 		});
 };
 var $author$project$Model$Scroll$emptyCtx = {polarity: $author$project$Model$Scroll$Pos, zipper: _List_Nil};
-var $mdgriffith$elm_ui$Element$fillPortion = $mdgriffith$elm_ui$Internal$Model$Fill;
 var $mdgriffith$elm_ui$Element$rgb = F3(
 	function (r, g, b) {
 		return A4($mdgriffith$elm_ui$Internal$Model$Rgba, r, g, b, 1);
@@ -15706,7 +15720,6 @@ var $author$project$View$Goal$inEditMode = function (_v0) {
 		return false;
 	}
 };
-var $mdgriffith$elm_ui$Element$scrollbars = A2($mdgriffith$elm_ui$Internal$Model$Class, $mdgriffith$elm_ui$Internal$Flag$overflow, $mdgriffith$elm_ui$Internal$Style$classes.scrollbars);
 var $author$project$Model$Goal$Close = function (a) {
 	return {$: 'Close', a: a};
 };
@@ -16277,7 +16290,6 @@ var $author$project$Update$App$Apply = F2(
 	function (a, b) {
 		return {$: 'Apply', a: a, b: b};
 	});
-var $mdgriffith$elm_ui$Element$htmlAttribute = $mdgriffith$elm_ui$Internal$Model$Attr;
 var $elm$virtual_dom$VirtualDom$MayStopPropagation = function (a) {
 	return {$: 'MayStopPropagation', a: a};
 };
@@ -18586,7 +18598,6 @@ var $rtfeldman$elm_css$Html$Styled$Internal$css = function (styles) {
 };
 var $rtfeldman$elm_css$Html$Styled$Attributes$css = $rtfeldman$elm_css$Html$Styled$Internal$css;
 var $rtfeldman$elm_css$Css$cursor = $rtfeldman$elm_css$Css$prop1('cursor');
-var $author$project$View$Widgets$defaultButtonSize = 55;
 var $rtfeldman$elm_css$Css$displayFlex = A2($rtfeldman$elm_css$Css$property, 'display', 'flex');
 var $rtfeldman$elm_css$Html$Styled$div = $rtfeldman$elm_css$Html$Styled$node('div');
 var $rtfeldman$elm_css$VirtualDom$Styled$Unstyled = function (a) {
@@ -19642,10 +19653,7 @@ var $author$project$View$Goal$viewAddValZone = F3(
 var $author$project$Model$Goal$Decompose = function (a) {
 	return {$: 'Decompose', a: a};
 };
-var $elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
-var $elm$html$Html$Attributes$style = $elm$virtual_dom$VirtualDom$style;
-var $author$project$View$Style$nonSelectable = $mdgriffith$elm_ui$Element$htmlAttribute(
-	A2($elm$html$Html$Attributes$style, 'user-select', 'none'));
+var $author$project$View$Style$nonSelectable = A2($author$project$View$Style$styleAttr, 'user-select', 'none');
 var $elm$html$Html$Attributes$alt = $elm$html$Html$Attributes$stringProperty('alt');
 var $elm$html$Html$Attributes$src = function (url) {
 	return A2(
@@ -20630,8 +20638,6 @@ var $author$project$View$Goal$viewVal = F4(
 	});
 var $author$project$View$Goal$viewGoal = F2(
 	function (dnd, goal) {
-		var goalHeight = $mdgriffith$elm_ui$Element$height(
-			$mdgriffith$elm_ui$Element$fillPortion(4));
 		var congratsFontSize = function () {
 			var _v2 = goal.location;
 			if (_v2.$ === 'App') {
@@ -20646,7 +20652,7 @@ var $author$project$View$Goal$viewGoal = F2(
 				_List_fromArray(
 					[
 						$mdgriffith$elm_ui$Element$width($mdgriffith$elm_ui$Element$fill),
-						goalHeight
+						$author$project$View$Goal$goalHeightAttr
 					]),
 				A2(
 					$mdgriffith$elm_ui$Element$el,
@@ -20665,9 +20671,10 @@ var $author$project$View$Goal$viewGoal = F2(
 				$mdgriffith$elm_ui$Element$el,
 				_List_fromArray(
 					[
-						$mdgriffith$elm_ui$Element$scrollbars,
 						$mdgriffith$elm_ui$Element$width($mdgriffith$elm_ui$Element$fill),
-						goalHeight
+						$author$project$View$Goal$goalHeightAttr,
+						A2($author$project$View$Style$styleAttr, 'overflow-x', 'hidden'),
+						A2($author$project$View$Style$styleAttr, 'overflow-y', 'auto')
 					]),
 				A4($author$project$View$Goal$viewNet, dnd, goal, $author$project$Model$Scroll$emptyCtx, goal.focus));
 		};
@@ -20681,7 +20688,7 @@ var $author$project$View$Goal$viewGoal = F2(
 				return A2(
 					$mdgriffith$elm_ui$Element$el,
 					_List_fromArray(
-						[goalHeight, $mdgriffith$elm_ui$Element$centerX]),
+						[$author$project$View$Goal$goalHeightAttr, $mdgriffith$elm_ui$Element$centerX]),
 					$author$project$View$Widgets$fullPageTextMessage('Working on it!'));
 		}
 	});
@@ -21103,6 +21110,7 @@ var $author$project$View$Manual$page = function (model) {
 				$author$project$View$Manual$navbar
 			]));
 };
+var $mdgriffith$elm_ui$Element$fillPortion = $mdgriffith$elm_ui$Internal$Model$Fill;
 var $mdgriffith$elm_ui$Internal$Flag$bgGradient = $mdgriffith$elm_ui$Internal$Flag$flag(10);
 var $mdgriffith$elm_ui$Element$Background$gradient = function (_v0) {
 	var angle = _v0.angle;
@@ -22760,8 +22768,9 @@ var $author$project$View$Toolbar$viewToolbar = function (model) {
 		_List_fromArray(
 			[
 				$mdgriffith$elm_ui$Element$width($mdgriffith$elm_ui$Element$fill),
-				$mdgriffith$elm_ui$Element$height($mdgriffith$elm_ui$Element$shrink),
-				$mdgriffith$elm_ui$Element$padding(15),
+				$mdgriffith$elm_ui$Element$height(
+				$mdgriffith$elm_ui$Element$px($author$project$View$Toolbar$toolbarHeight)),
+				$mdgriffith$elm_ui$Element$padding($author$project$View$Toolbar$toolbarPadding),
 				$mdgriffith$elm_ui$Element$spacing(100),
 				$mdgriffith$elm_ui$Element$Border$widthEach(
 				{bottom: 0, left: 0, right: 0, top: 1}),
@@ -22814,15 +22823,34 @@ var $author$project$View$App$view = function (model) {
 	var _v0 = $author$project$View$Route$fromUrl(model.url);
 	switch (_v0.$) {
 		case 'App':
-			var toolbar = $author$project$View$Toolbar$viewToolbar(model);
+			var toolbar = A2(
+				$mdgriffith$elm_ui$Element$el,
+				_List_fromArray(
+					[
+						$mdgriffith$elm_ui$Element$width($mdgriffith$elm_ui$Element$fill),
+						A2($author$project$View$Style$styleAttr, 'position', 'fixed'),
+						A2($author$project$View$Style$styleAttr, 'bottom', '0')
+					]),
+				$author$project$View$Toolbar$viewToolbar(model));
 			var shelf = $author$project$View$Shelf$viewShelf(model.goal);
-			var goal = A2($author$project$View$Goal$viewGoal, model.dragDrop, model.goal);
+			var goal = A2(
+				$mdgriffith$elm_ui$Element$el,
+				_List_fromArray(
+					[
+						$mdgriffith$elm_ui$Element$width($mdgriffith$elm_ui$Element$fill),
+						$author$project$View$Goal$goalHeightAttr
+					]),
+				A2($author$project$View$Goal$viewGoal, model.dragDrop, model.goal));
 			var app = A2(
 				$mdgriffith$elm_ui$Element$layout,
 				_List_Nil,
 				A2(
 					$mdgriffith$elm_ui$Element$column,
-					$author$project$View$Style$fillXY,
+					_List_fromArray(
+						[
+							$mdgriffith$elm_ui$Element$width($mdgriffith$elm_ui$Element$fill),
+							$mdgriffith$elm_ui$Element$height($mdgriffith$elm_ui$Element$fill)
+						]),
 					_List_fromArray(
 						[goal, toolbar])));
 			return {
@@ -22832,8 +22860,6 @@ var $author$project$View$App$view = function (model) {
 						$elm$html$Html$div,
 						_List_fromArray(
 							[
-								A2($elm$html$Html$Attributes$style, 'width', '100%'),
-								A2($elm$html$Html$Attributes$style, 'height', '100%'),
 								$author$project$View$App$keyboardListener,
 								$elm$html$Html$Attributes$tabindex(0)
 							]),

@@ -23,6 +23,7 @@ import Json.Decode
 import Keyboard.Event exposing (decodeKeyboardEvent)
 import Html.Attributes exposing (tabindex)
 import Browser exposing (Document)
+import View.Style exposing (styleAttr)
 
 
 keyboardListener : Html.Attribute Msg
@@ -40,22 +41,29 @@ view model =
           viewShelf model.goal
         
         goal =
-          viewGoal model.dragDrop model.goal
+          el
+            [ width fill
+            , goalHeightAttr
+            ]
+            ( viewGoal model.dragDrop model.goal )
         
         toolbar =
-          viewToolbar model
+          el
+            [ width fill
+            , styleAttr "position" "fixed"
+            , styleAttr "bottom" "0"
+            ]
+            ( viewToolbar model )
         
         app =
-          column fillXY [ goal, toolbar ]
-          |> layout []
+          column [ width fill, height fill ] [ goal, toolbar ] |>
+          layout []
       in
       { title = "Flower Prover"
       , body =
         [
           div
-          [ style "width" "100%"
-          , style "height" "100%"
-          , keyboardListener
+          [ keyboardListener
           , tabindex 0 ]
           [ app ]
         ]

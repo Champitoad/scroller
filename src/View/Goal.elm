@@ -3,6 +3,7 @@ module View.Goal exposing (..)
 import View.Style as Style exposing (..)
 import View.Widgets as Widgets exposing (..)
 import View.Events
+import View.Toolbar exposing (toolbarHeight)
 
 import Model.Formula as Formula exposing (..)
 import Model.Scroll as Scroll exposing (..)
@@ -538,8 +539,8 @@ viewNet dnd goal ctx net =
         Manual _ -> 10
     
     layoutAttrs =
-      [ (width (fill |> minimum spaceSize))
-      , (height (fill |> minimum spaceSize))
+      [ width (fill |> minimum spaceSize)
+      , height (fill |> minimum spaceSize)
       , padding spaceSize
       , spacing spaceSize ]
      
@@ -634,6 +635,11 @@ inEditMode { actionMode } =
     _ -> False
 
 
+goalHeightAttr : Attribute msg
+goalHeightAttr =
+  styleAttr "height" ("calc(100vh - " ++ String.fromInt toolbarHeight ++ "px)")
+
+
 viewGoal : ValDnD -> Goal -> Element Msg
 viewGoal dnd goal =
   let
@@ -641,13 +647,10 @@ viewGoal dnd goal =
       case goal.location of
         App -> 48
         Manual _ -> 32
-        
-    goalHeight =
-      height (fillPortion 4)
 
     goalEl () =
       if List.isEmpty goal.focus && not (inEditMode goal) then
-        el [width fill, goalHeight]
+        el [width fill, goalHeightAttr]
           ( el
               [ centerX, centerY
               , Font.size congratsFontSize
@@ -660,9 +663,11 @@ viewGoal dnd goal =
           )
       else
         el
-          [ scrollbars
-          , width fill
-          , goalHeight ]
+          [ width fill
+          , goalHeightAttr
+          , styleAttr "overflow-x" "hidden"
+          , styleAttr "overflow-y" "auto"
+          ]
           ( viewNet dnd goal emptyCtx goal.focus )
   in
   case goal.actionMode of
@@ -673,4 +678,4 @@ viewGoal dnd goal =
       goalEl ()
 
     _ ->
-      el [goalHeight, centerX] (Widgets.fullPageTextMessage "Working on it!")
+      el [ goalHeightAttr, centerX ] (Widgets.fullPageTextMessage "Working on it!")

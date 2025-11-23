@@ -264,6 +264,16 @@ viewExecButtons { actionsQueue } =
   row [] [stepButton, runButton]
 
 
+toolbarPadding : Int
+toolbarPadding =
+  15
+
+
+toolbarHeight : Int
+toolbarHeight =
+  defaultButtonSize + 2 * toolbarPadding
+
+
 viewToolbar : Model -> Element Msg
 viewToolbar model =
   let
@@ -302,8 +312,8 @@ viewToolbar model =
   in
   row
     [ width fill
-    , height shrink
-    , padding 15
+    , height (toolbarHeight |> px)
+    , padding toolbarPadding
     , spacing 100
     , Border.widthEach { top = 1, right = 0, bottom = 0, left = 0 }
     , Border.color (rgb 0.6 0.6 0.6)
@@ -314,9 +324,12 @@ viewToolbar model =
     --     , color = rgb 0.5 0.5 0.5 }
     , Background.gradient
         { angle = 0
-        , steps = [ rgb 0.8 0.8 0.8, rgb 0.9 0.9 0.9 ] } ]
+        , steps = [ rgb 0.8 0.8 0.8, rgb 0.9 0.9 0.9 ]
+        }
+    ]
     [ el [ alignLeft ] helpButton
     , el [ width fill ] (actionToolZone)
     , el [ centerX ] actionModeSelector
     , el [ width fill ] (execZone)
-    , el [ alignRight ] undoRedo ]
+    , el [ alignRight ] undoRedo
+    ]

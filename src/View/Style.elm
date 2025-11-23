@@ -13,12 +13,17 @@ import Element.Font as Font
 import Html.Attributes exposing (style)
 
 
+styleAttr : String -> String -> Attribute msg
+styleAttr attr val =
+  htmlAttribute <| style attr val
+
+
 -- Interaction
 
 
 nonSelectable : Attribute msg
 nonSelectable =
-  htmlAttribute <| style "user-select" "none"
+  styleAttr "user-select" "none"
 
 
 -- Text
@@ -57,7 +62,7 @@ transparent =
   rgba 0 0 0 0
 
 
--- Flower styling
+-- Scroll styling
 
 
 negativeColor : Color
