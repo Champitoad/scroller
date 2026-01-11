@@ -77,6 +77,26 @@ drawGrownBorder doit =
   if doit then grownBorder.active else grownBorder.inactive
 
 
+introButton : Goal -> Int -> String -> Element Msg -> Element Msg
+introButton goal actionId title content =
+  let
+    style =
+      { width = Css.pct 100
+      , height = Css.px 30
+      , color = Color.rgb255 58 134 255
+      , iconColorEnabled = Color.white
+      , iconColorDisabled = Color.darkGray }
+    
+    params =
+      { action =  Msg (Exec goal.location actionId)
+      , title = title
+      , content = content
+      , enabled = True } 
+  in
+  button style params
+
+
+
 viewAtom : Formula.Ident -> Element Msg
 viewAtom ident =
   case ident of
@@ -265,7 +285,7 @@ viewInloop dnd goal ctx scroll (id, env) =
         ( viewNet dnd goal newCtx env.content ) )
 
 
-addButton : ButtonParams msg -> Element msg
+addButton : IconButtonParams msg -> Element msg
 addButton params =
   let
     style =
@@ -275,7 +295,7 @@ addButton params =
       , iconColorEnabled = Color.white
       , iconColorDisabled = Color.darkGray }
   in
-  button style params
+  iconButton style params
 
 
 viewAddInloopZone : Goal -> Context -> ScrollVal -> List (Element Msg)

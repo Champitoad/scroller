@@ -42,6 +42,7 @@
     - or we don't do it up to permutation. Then it puts more load on the user, but makes things
       completely deterministic (and closer to traditional programming). We would still want to force
       constructor labels on every inloop to actually match the semantics of ADTs.
+    - OR we admit that scroll structures are *hierarchical imperative states*: they hold variable names, and order does not matter
   - Support for DnD actions on inloops
 
 - Edit mode

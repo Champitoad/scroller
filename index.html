@@ -8657,6 +8657,16 @@ var $author$project$Update$App$update = F2(
 				return _Utils_Tuple2(
 					A3($author$project$Model$App$setGoalWithHistory, location, newGoal, model),
 					$elm$core$Platform$Cmd$none);
+			case 'Exec':
+				var location = msg.a;
+				var actionId = msg.b;
+				var newGoal = A2(
+					$author$project$Model$Goal$execute,
+					actionId,
+					A2($author$project$Model$App$getGoal, location, model));
+				return _Utils_Tuple2(
+					A3($author$project$Model$App$setGoalWithHistory, location, newGoal, model),
+					$elm$core$Platform$Cmd$none);
 			case 'ExecAll':
 				return _Utils_Tuple2(
 					_Utils_update(
@@ -8669,8 +8679,8 @@ var $author$project$Update$App$update = F2(
 				return _Debug_todo(
 					'Update.App',
 					{
-						start: {line: 150, column: 7},
-						end: {line: 150, column: 17}
+						start: {line: 155, column: 7},
+						end: {line: 155, column: 17}
 					})('Action stepping not implemented yet');
 			case 'ChangeActionMode':
 				var mode = msg.a;
@@ -8711,8 +8721,8 @@ var $author$project$Update$App$update = F2(
 				return _Debug_todo(
 					'Update.App',
 					{
-						start: {line: 168, column: 7},
-						end: {line: 168, column: 17}
+						start: {line: 173, column: 7},
+						end: {line: 173, column: 17}
 					})('Auto not implemented yet');
 			case 'UpdateNewAtomName':
 				var name = msg.a;
@@ -16783,6 +16793,7 @@ var $author$project$Model$Goal$InsertEnv = function (a) {
 var $author$project$View$Widgets$Msg = function (a) {
 	return {$: 'Msg', a: a};
 };
+var $avh4$elm_color$Color$darkGray = A4($avh4$elm_color$Color$RgbaSpace, 186 / 255, 189 / 255, 182 / 255, 1.0);
 var $rtfeldman$elm_css$VirtualDom$Styled$Node = F3(
 	function (a, b, c) {
 		return {$: 'Node', a: a, b: b, c: c};
@@ -19294,7 +19305,7 @@ var $author$project$View$Widgets$button = F2(
 	function (style, _v0) {
 		var action = _v0.action;
 		var title = _v0.title;
-		var icon = _v0.icon;
+		var content = _v0.content;
 		var enabled = _v0.enabled;
 		var tag = function () {
 			if (action.$ === 'Msg') {
@@ -19365,11 +19376,6 @@ var $author$project$View$Widgets$button = F2(
 														$rtfeldman$elm_css$Css$backgroundColor($rtfeldman$elm_css$Css$transparent)
 													])))))))))));
 		var iconStyledHtml = function () {
-			var iconHtml = $rtfeldman$elm_css$Html$Styled$fromUnstyled(
-				A2(
-					$feathericons$elm_feather$FeatherIcons$toHtml,
-					_List_Nil,
-					A2($feathericons$elm_feather$FeatherIcons$withSize, 30, icon)));
 			var iconColor = enabled ? style.iconColorEnabled : style.iconColorDisabled;
 			return A2(
 				$rtfeldman$elm_css$Html$Styled$div,
@@ -19383,7 +19389,10 @@ var $author$project$View$Widgets$button = F2(
 							]))
 					]),
 				_List_fromArray(
-					[iconHtml]));
+					[
+						$rtfeldman$elm_css$Html$Styled$fromUnstyled(
+						A2($mdgriffith$elm_ui$Element$layout, _List_Nil, content))
+					]));
 		}();
 		var actionAttr = function () {
 			if (enabled) {
@@ -19418,7 +19427,26 @@ var $author$project$View$Widgets$button = F2(
 					_List_fromArray(
 						[iconStyledHtml]))));
 	});
-var $avh4$elm_color$Color$darkGray = A4($avh4$elm_color$Color$RgbaSpace, 186 / 255, 189 / 255, 182 / 255, 1.0);
+var $author$project$View$Widgets$iconButton = F2(
+	function (style, _v0) {
+		var action = _v0.action;
+		var title = _v0.title;
+		var icon = _v0.icon;
+		var enabled = _v0.enabled;
+		return A2(
+			$author$project$View$Widgets$button,
+			style,
+			{
+				action: action,
+				content: $mdgriffith$elm_ui$Element$html(
+					A2(
+						$feathericons$elm_feather$FeatherIcons$toHtml,
+						_List_Nil,
+						A2($feathericons$elm_feather$FeatherIcons$withSize, 30, icon))),
+				enabled: enabled,
+				title: title
+			});
+	});
 var $rtfeldman$elm_css$Css$PercentageUnits = {$: 'PercentageUnits'};
 var $rtfeldman$elm_css$Css$pct = A2($rtfeldman$elm_css$Css$Internal$lengthConverter, $rtfeldman$elm_css$Css$PercentageUnits, '%');
 var $avh4$elm_color$Color$scaleFrom255 = function (c) {
@@ -19442,7 +19470,7 @@ var $author$project$View$Goal$addButton = function (params) {
 		iconColorEnabled: $avh4$elm_color$Color$white,
 		width: $rtfeldman$elm_css$Css$pct(100)
 	};
-	return A2($author$project$View$Widgets$button, style, params);
+	return A2($author$project$View$Widgets$iconButton, style, params);
 };
 var $elm$svg$Svg$line = $elm$svg$Svg$trustedNode('line');
 var $elm$svg$Svg$rect = $elm$svg$Svg$trustedNode('rect');
@@ -21404,7 +21432,7 @@ var $author$project$View$Widgets$defaultButtonStyle = {
 	iconColorEnabled: $avh4$elm_color$Color$black,
 	width: $rtfeldman$elm_css$Css$px($author$project$View$Widgets$defaultButtonSize)
 };
-var $author$project$View$Widgets$defaultButton = $author$project$View$Widgets$button($author$project$View$Widgets$defaultButtonStyle);
+var $author$project$View$Widgets$defaultButton = $author$project$View$Widgets$iconButton($author$project$View$Widgets$defaultButtonStyle);
 var $owanturist$elm_queue$Queue$isEmpty = $elm$core$Basics$eq($owanturist$elm_queue$Queue$Empty);
 var $feathericons$elm_feather$FeatherIcons$play = A2(
 	$feathericons$elm_feather$FeatherIcons$makeBuilder,

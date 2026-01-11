@@ -10,6 +10,7 @@ import Element.Font
 import Element.Input as Input
 
 import Css
+import Html exposing (Html)
 import Html.Attributes
 import Html.Styled exposing (fromUnstyled, toUnstyled)
 import Html.Styled.Attributes as Attrs exposing (css)
@@ -45,12 +46,18 @@ type ButtonAction msg
 type alias ButtonParams msg
   = { action : ButtonAction msg
     , title : String
+    , content : Element msg
+    , enabled : Bool }
+
+type alias IconButtonParams msg
+  = { action : ButtonAction msg
+    , title : String
     , icon : Icon
     , enabled : Bool }
 
 
 button : ButtonStyle widthUnit heightUnit -> ButtonParams msg -> Element msg
-button style { action, title, icon, enabled } =
+button style { action, title, content, enabled } =
   let
     iconStyledHtml =
       let
@@ -59,15 +66,10 @@ button style { action, title, icon, enabled } =
             style.iconColorEnabled
           else
             style.iconColorDisabled
-        iconHtml =
-          icon
-          |> Icons.withSize 30
-          |> Icons.toHtml []
-          |> fromUnstyled
       in
       Html.Styled.div
         [ css [ Css.color (iconColor |> Utils.Color.toCss) ] ]
-        [ iconHtml ]
+        [ content |> layout [] |> fromUnstyled ]
 
     styleAttrs =
       Css.width style.width ::
@@ -119,6 +121,16 @@ button style { action, title, icon, enabled } =
   |> html
 
 
+iconButton : ButtonStyle widthUnit heightUnit -> IconButtonParams msg -> Element msg
+iconButton style { action, title, icon, enabled } =
+  button
+    style
+    { action = action
+    , title = title
+    , content = icon |> Icons.withSize 30 |> Icons.toHtml [] |> Element.html
+    , enabled = enabled }
+
+
 defaultButtonStyle : ButtonStyle Css.Px Css.Px
 defaultButtonStyle =
   { width = Css.px defaultButtonSize
@@ -128,9 +140,9 @@ defaultButtonStyle =
   , iconColorDisabled = Color.rgb 0.5 0.5 0.5 }
 
 
-defaultButton : ButtonParams msg -> Element msg
+defaultButton : IconButtonParams msg -> Element msg
 defaultButton =
-  button defaultButtonStyle
+  iconButton defaultButtonStyle
 
 
 type alias ToggleParams msg

@@ -22,6 +22,7 @@ port dragstart : Value -> Cmd msg
 
 type Msg
   = Apply Location Action
+  | Exec Location Int
   | ExecAll
   | Step
   | ChangeActionMode ActionMode
@@ -141,6 +142,10 @@ update msg model =
   case msg of
     Apply location action ->
       let newGoal = apply action (getGoal location model) in
+      (setGoalWithHistory location newGoal model, Cmd.none)
+    
+    Exec location actionId ->
+      let newGoal = execute actionId (getGoal location model) in
       (setGoalWithHistory location newGoal model, Cmd.none)
     
     ExecAll ->
