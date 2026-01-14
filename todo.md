@@ -1,20 +1,5 @@
 # Features
 
-- Maintain uniqueness of same-scope bound variables in various operations
-  - Function `bvu` (bound vars upward) that computes the bound variables available at a given `Path`
-  - Function `bvd` (bound vars downward) that computes all the bound variables in scope of a given `Path`
-  - All actions that introduce a new node (`Open`/`Insert`/`Iterate`):
-    - can compute a fresh name automatically, or can ask the user for a name and deny it if it is already in `bvu ∪ bvd`
-  - All actions that change the scope of a binder (`Close`)
-    - can compute fresh names automatically for all bound vars in the inloop, or can ask the user to rename all those that are already in `bvd`
-  - Renaming
-    - check that the new name is not already in `bvu ∪ bvd`
-
-- Maintain well-scopedness of justifications in various operations:
-  - Function `jnd` (justified nodes downward) that computes the paths to all nodes that are justified from a given bound variable
-  - All actions that eliminate a node (`Close`/`Delete`/`Deiterate`)
-    - the action can only be executed if `jnd` is empty
-
 - Execution of actions
   - "Step" button that dequeues and executes the next action
   - The action at the head of the queue should always be highlighted at the location where it occurs in the goal
@@ -115,3 +100,30 @@
     = IVal ONode
     | ICont (List INode)
   ```
+  
+## Names
+
+### Variables
+
+- Two options for shadowing:
+  1. **Yes:** name uniqueness is only required locally or "horizontally", i.e. in the same area/address space. Then in order to still allow every (well-scoped) iteration, we should use a named De Bruijn representation, where a variable $(x, n)$ refers to the variable $x$ occurring in the $n$-th outer cut area. **We also need to ensure operations that insert or remove nodes update indices accordingly**. Frontend-wise, the index should be visible but unobtrusive, maybe using an on-demand disambiguation mechanism like source hover on highlighting. Then there is no shadowing stricto sensu, but we can achieve an observationally indistinguishable user experience by hiding the index $n$ if there is no bound variable with name $x$ in the $i$-th outer cut area for every $i < n$.
+  2. **No:** name uniqueness is required for every union of areas/address spaces in the same scope. Then we do not need De Bruijn indices, but the burden of maintaining index consistency becomes that of maintaining scope-wise uniqueness. While it may actually be simpler to implement correctly (e.g. no shifting), it does deprive the user from some naming freedom. But some people argue that shadowing is just bad practice, so it may be wiser to go for the simplest option and see if anyone complains later on.
+
+- Maintain uniqueness of same-scope bound variables in various operations
+  - Function `bvu` (bound vars upward) that computes the bound variables available at a given `Path`
+  - Function `bvd` (bound vars downward) that computes all the bound variables in scope of a given `Path`
+  - Notice that $\mathsf{bv} = \mathsf{bvu} \cap \mathsf{bvd}$, where `bv` is the set of variables bound precisely in the area of the `Path` 
+  - All actions that introduce a new node (`Open`/`Insert`/`Iterate`):
+    - can compute a fresh name automatically, or can ask the user for a name and deny it if it is already in `bvu ∪ bvd`
+  - All actions that change the scope of a binder (`Close`)
+    - can compute fresh names automatically for all bound vars in the inloop, or can ask the user to rename all those that are already in `bvd`
+  - Renaming
+    - check that the new name is not already in `bvu ∪ bvd`
+
+### Non-semantic names
+
+I want a notion of « frontend » name for nodes, that is orthogonal to the notion of node identifier (NodeId) living purely in the backend and invisible to the user.
+
+So by default, nodes do not have a name. But still, we do not want to display the argumentation with arrows as in the diagrammatic notation for scroll nets, because it would make the layouting algorithm way too difficult to implement (or even specify). I imagine an interactive display mechanism: when the user hovers some justified target node, its source becomes highlighted. This supposes that it is visible on screen at the same time as the target. In case it is not, we could rely on the shelf mechanism that I plan to implement later. In a nutshell, the shelf is a scrollable (in the UI sense) area of the UI which holds all the nodes that are available in the currently focused subnet. This assumes that we have implemented the Navigation mode allowing to navigate scroll nets by zooming in or out of subnets, which I imagine implementing ideally as a ZUI. Then the source would always be somewhere in the shelf, and would first be scrolled to if not visible yet, then highlighted. One could also directly focus the subnet holding the source in the main view, indeed a form of « jump to definition ».
+
+But we’re getting led astray here. The purpose of name is to give a more traditional, symbolic mechanism for tracking provenance of data/justification, just like variables. However since it is independent from the actual proof object stored internally, these names do not really hold any semantic value. This gives the user the freedom to name nodes however they want in principle, and we shall indeed refrain from implementing any restriction at first for the sake of simplicity. For instance, variable shadowing can trivially be done in this context. Later on, one might want to impose (or at least suggest) some good naming practices to the user, the most basic one being to avoid giving the same name to different nodes in the same subnet.
