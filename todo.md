@@ -126,4 +126,25 @@ I want a notion of « frontend » name for nodes, that is orthogonal to the no
 
 So by default, nodes do not have a name. But still, we do not want to display the argumentation with arrows as in the diagrammatic notation for scroll nets, because it would make the layouting algorithm way too difficult to implement (or even specify). I imagine an interactive display mechanism: when the user hovers some justified target node, its source becomes highlighted. This supposes that it is visible on screen at the same time as the target. In case it is not, we could rely on the shelf mechanism that I plan to implement later. In a nutshell, the shelf is a scrollable (in the UI sense) area of the UI which holds all the nodes that are available in the currently focused subnet. This assumes that we have implemented the Navigation mode allowing to navigate scroll nets by zooming in or out of subnets, which I imagine implementing ideally as a ZUI. Then the source would always be somewhere in the shelf, and would first be scrolled to if not visible yet, then highlighted. One could also directly focus the subnet holding the source in the main view, indeed a form of « jump to definition ».
 
-But we’re getting led astray here. The purpose of name is to give a more traditional, symbolic mechanism for tracking provenance of data/justification, just like variables. However since it is independent from the actual proof object stored internally, these names do not really hold any semantic value. This gives the user the freedom to name nodes however they want in principle, and we shall indeed refrain from implementing any restriction at first for the sake of simplicity. For instance, variable shadowing can trivially be done in this context. Later on, one might want to impose (or at least suggest) some good naming practices to the user, the most basic one being to avoid giving the same name to different nodes in the same subnet.
+But we’re getting led astray here. The purpose of names is to give a more traditional, symbolic mechanism for tracking provenance of data/justification, just like variables. However since it is independent from the actual proof object stored internally, these names do not really hold any semantic value. This gives the user the freedom to name nodes however they want in principle, and we shall indeed refrain from implementing any restriction at first for the sake of simplicity. For instance, variable shadowing can trivially be done in this context. Later on, one might want to impose (or at least suggest) some good naming practices to the user, the most basic one being to avoid giving the same name to different nodes in the same subnet.
+
+## Modularity
+
+In our first implementation, we will only have one big program that cannot interact neither with the external world (i.e. "side-effects" like I/O, network, etc), nor even with other Scroller programs.
+
+Later on, we will want to have a notion of **module** allowing to export and import functionalities from other programs. The right way to do so is very non-obvious, as it would (at least traditionally) crucially depends on how we manage identifiers and names.
+
+One inspiration is how it is actually done in Elm with `export/import ... exposing (...)`. If we stick to the intended separation between backend identifiers and frontend names, then the content that is exposed is really just the identifier and its content.
+
+Then comes the question of what to do with dependencies of the exposed content. A priori they should not be exposed themselves, but still be linked somehow so that evaluation does not get stuck.
+
+Now let's consider an example. I import the addition function `add` from some external module, and just iterate it once without applying it. There are (at least) two possibilities for the semantics of import:
+
+1. The original copy of `add` is inlined in the current program. Then evaluation will perform the copy and remove the dependency to the inlined copy. The implementation of `add` is visible to the user in the inlined copy before evaluation, and in both copies after.
+2. An iterated copy of `add` is inlined in the current program, with a special kind of external dependency so that the `from` ID is not a dangling pointer. Then evaluation gets stuck, except if we implement a mechanism to fetch external dependencies. In that case, the implementation of `add` is visible to the user in neither of the copies before evaluation, and in both copies after.
+
+It seems that in both cases, the implementation of `add` is revealed after evaluation. But in a traditional (functional) language, the implementation of `add` would still be hidden after evaluation. So basically, it seems there is no obvious way to have a separation between evaluation and linking phases.
+
+I wonder how this is actually handled in proof assistants. For instance, it seems to me that every imported definition in Rocq can have its implementation exposed with `Print`, although `Compute` will not unfold the definition.
+
+A trivial workaround is if `add` is a primitive function of Scroller. Then by "definition" (i.e. it is hardcoded in Scroller), it only evaluates when both arguments are given and the scroll is closed.
