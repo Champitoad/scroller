@@ -1,115 +1,137 @@
 module Model.App exposing (..)
 
-import Model.Scroll exposing (..)
-import Model.Mascarpone exposing (..)
-import Model.Goal as Goal exposing (Goal, Location, Sandboxes, manualExamples)
-
-import Url
 import Browser.Navigation
 import Html5.DragDrop as DnD
+import Model.Mascarpone exposing (..)
+import Model.Program as Program exposing (Program, Route, Sandboxes, manualExamples)
+import Model.Scroll exposing (..)
+import Url
+
 
 
 -- Drag-and-Drop
 
 
-type alias ValDragId
-  = { location : Location, source : Context, content : Val }
+type alias ValDragId =
+    { route : Route, source : Context, content : Val }
 
-type alias ValDropId
-  = Maybe { location : Location, target : Context, content : Net }
 
-type alias ValDnD
-  = DnD.Model ValDragId ValDropId
+type alias ValDropId =
+    Maybe { route : Route, target : Context, content : Net }
 
-type alias ValDnDMsg
-  = DnD.Msg ValDragId ValDropId
+
+type alias ValDnD =
+    DnD.Model ValDragId ValDropId
+
+
+type alias ValDnDMsg =
+    DnD.Msg ValDragId ValDropId
+
 
 
 -- Full state of the application
 
 
-type alias Model
-  = { goal : Goal
+type alias Model =
+    { goal : Program
     , history : History
     , manualExamples : Sandboxes
     , dragDrop : ValDnD
     , url : Url.Url
-    , key : Browser.Navigation.Key }
+    , key : Browser.Navigation.Key
+    }
 
 
 init : Url.Url -> Browser.Navigation.Key -> Model
 init url key =
-  { goal = Goal.fromNet mascarponeCreamRecipe
-  -- { goal = Goal.fromNet []
-  , history = History { prev = Nothing, next = Nothing }
-  , manualExamples = manualExamples
-  , dragDrop = DnD.init
-  , url = url
-  , key = key
-  }
+    { goal = Program.fromNet mascarponeCreamRecipe
+
+    -- { goal = Program.fromNet []
+    , history = History { prev = Nothing, next = Nothing }
+    , manualExamples = manualExamples
+    , dragDrop = DnD.init
+    , url = url
+    , key = key
+    }
 
 
-getGoal : Location -> Model -> Goal
-getGoal location model =
-  case location of
-    Goal.App ->
-      model.goal
-    Goal.Manual sandboxID ->
-      (Goal.getSandbox sandboxID model.manualExamples).currentGoal
+getProgram : Route -> Model -> Program
+getProgram route model =
+    case route of
+        Program.Playground ->
+            model.goal
+
+        Program.Manual sandboxID ->
+            (Program.getSandbox sandboxID model.manualExamples).currentProgram
 
 
-setGoal : Location -> Goal -> Model -> Model
-setGoal location goal model =
-  case location of
-    Goal.App ->
-      { model | goal = goal }
-    Goal.Manual sandboxID ->
-      { model | manualExamples = Goal.updateSandbox sandboxID goal model.manualExamples }
+setProgram : Route -> Program -> Model -> Model
+setProgram route goal model =
+    case route of
+        Program.Playground ->
+            { model | goal = goal }
+
+        Program.Manual sandboxID ->
+            { model | manualExamples = Program.updateSandbox sandboxID goal model.manualExamples }
 
 
-setGoalWithHistory : Location -> Goal -> Model -> Model
-setGoalWithHistory location goal model =
-  case location of
-    Goal.App ->
-      { model | goal = goal
-              , history = History { prev = Just model, next = Nothing } }
-    Goal.Manual sandboxID ->
-      { model | manualExamples = Goal.updateSandbox sandboxID goal model.manualExamples }
+setProgramWithHistory : Route -> Program -> Model -> Model
+setProgramWithHistory route goal model =
+    case route of
+        Program.Playground ->
+            { model
+                | goal = goal
+                , history = History { prev = Just model, next = Nothing }
+            }
+
+        Program.Manual sandboxID ->
+            { model | manualExamples = Program.updateSandbox sandboxID goal model.manualExamples }
+
 
 
 -- History of the full state mutually defined
 
 
 type History
-  = History { prev : Maybe Model
-            , next : Maybe Model }
+    = History
+        { prev : Maybe Model
+        , next : Maybe Model
+        }
 
 
 getHistory : Model -> { prev : Maybe Model, next : Maybe Model }
 getHistory model =
-  let (History history) = model.history in
-  history
+    let
+        (History history) =
+            model.history
+    in
+    history
 
 
 setHistory : { prev : Maybe Model, next : Maybe Model } -> Model -> Model
 setHistory history model =
-  { model | history = History history }
+    { model | history = History history }
 
 
 undo : Model -> Model
 undo model =
-  case (getHistory model).prev of
-    Just prevModel ->
-      let prevHistory = getHistory prevModel in
-      setHistory { prevHistory | next = Just model } prevModel
-    Nothing ->
-      model
+    case (getHistory model).prev of
+        Just prevModel ->
+            let
+                prevHistory =
+                    getHistory prevModel
+            in
+            setHistory { prevHistory | next = Just model } prevModel
+
+        Nothing ->
+            model
 
 
 redo : Model -> Model
 redo model =
-  case (getHistory model).next of
-    Just nextModel ->
-      nextModel
-    Nothing ->
-      model
+    case (getHistory model).next of
+        Just nextModel ->
+            nextModel
+
+        Nothing ->
+            model

@@ -1,12 +1,37 @@
 module Model.Scroll exposing (..)
 
-import Array exposing (Array)
 import Dict exposing (Dict)
 import Model.Formula exposing (..)
 
 
 
--- Identifiers
+{- Outer token -}
+
+
+type OToken
+    = OForm Formula
+    | OSep (List IToken)
+
+
+
+{- Inner token -}
+
+
+type IToken
+    = ITok OToken
+    | ISep (List IToken)
+
+
+
+{- Generalized scroll structure -}
+
+
+type alias Struct =
+    List OToken
+
+
+
+-- Identifiers for nodes
 
 
 type alias Id =
@@ -34,34 +59,200 @@ rightId ( p, i ) =
 
 type Shape
     = Formula Formula
-    | Sep (Array Id)
+    | Sep (List Id)
+
+
+type Copy
+    = Direct Id
+    | Indirect { anc : Id, src : Id }
 
 
 type alias Justification =
     { self : Bool
-    , from : Maybe Id
-    , copy : Maybe Id
+    , from : Maybe Copy
     }
 
 
 type alias Interaction =
-    { attached : Bool
-    , opened : Bool
+    { opened : Bool
     , closed : Bool
     }
+
+
+type Context
+    = TopLevel
+    | InSep Id
+
+
+type alias Location =
+    { ctx : Context, idx : Int }
 
 
 type alias Node =
     { shape : Shape
     , name : String
     , justif : Justification
+    , parent : Context
     }
 
 
 type alias Net =
     { nodes : Dict Id Node
-    , roots : Array Id
-    , interactions : Dict ( Id, Id ) Interaction
+    , roots : List Id
+    , interactions : Dict ( Id, Id ) Interaction -- Edges oriented from leaves to roots<@
+    }
+
+
+
+-- Basic operations
+
+
+type Polarity
+    = Pos
+    | Neg
+
+
+invert : Polarity -> Polarity
+invert polarity =
+    case polarity of
+        Pos ->
+            Neg
+
+        Neg ->
+            Pos
+
+
+getParent : Net -> Id -> Context
+getParent net id =
+    Dict.get id net.nodes
+        |> Maybe.map .parent
+        |> Maybe.withDefault TopLevel
+
+
+getPolarity : Net -> Id -> Polarity
+getPolarity net id =
+    case getParent net id of
+        TopLevel ->
+            Pos
+
+        InSep par ->
+            invert (getPolarity net par)
+
+
+
+-- Hydration pattern
+
+
+type Tree
+    = TNode
+        { id : Id
+        , node : Node
+        , polarity : Polarity
+        , children : List Tree
+        }
+
+
+hydrate : Net -> List Tree
+hydrate net =
+    net.roots
+        |> List.filterMap (buildTree Pos net)
+
+
+buildTree : Polarity -> Net -> Id -> Maybe Tree
+buildTree polarity net id =
+    Dict.get id net.nodes
+        |> Maybe.map
+            (\node ->
+                let
+                    resolvedChildren =
+                        case node.shape of
+                            Formula _ ->
+                                []
+
+                            Sep childIds ->
+                                childIds
+                                    |> List.filterMap (buildTree (invert polarity) net)
+                in
+                TNode
+                    { id = id
+                    , node = node
+                    , polarity = polarity
+                    , children = resolvedChildren
+                    }
+            )
+
+
+
+-- Handling identifiers
+
+
+idMapShape : (Id -> Id) -> Shape -> Shape
+idMapShape f shape =
+    case shape of
+        Formula _ ->
+            shape
+
+        Sep children ->
+            Sep (List.map f children)
+
+
+idMapCopy : (Id -> Id) -> Copy -> Copy
+idMapCopy f copy =
+    case copy of
+        Direct src ->
+            Direct (f src)
+
+        Indirect j ->
+            Indirect { j | anc = f j.anc, src = f j.src }
+
+
+idMapJustif : (Id -> Id) -> Justification -> Justification
+idMapJustif f justif =
+    { justif
+        | from = Maybe.map (idMapCopy f) justif.from
+    }
+
+
+idMapContext : (Id -> Id) -> Context -> Context
+idMapContext f ctx =
+    case ctx of
+        TopLevel ->
+            TopLevel
+
+        InSep id ->
+            InSep (f id)
+
+
+idMapNode : (Id -> Id) -> Node -> Node
+idMapNode f node =
+    { node
+        | shape = idMapShape f node.shape
+        , justif = idMapJustif f node.justif
+        , parent = idMapContext f node.parent
+    }
+
+
+idMapDict : ((Id -> Id) -> a -> a) -> (Id -> Id) -> Dict Id a -> Dict Id a
+idMapDict vmap f dict =
+    dict
+        |> Dict.toList
+        |> List.map (\( id, v ) -> ( f id, vmap f v ))
+        |> Dict.fromList
+
+
+pairIdMapDict : ((Id -> Id) -> a -> a) -> (Id -> Id) -> Dict ( Id, Id ) a -> Dict ( Id, Id ) a
+pairIdMapDict vmap f dict =
+    dict
+        |> Dict.toList
+        |> List.map (\( ( id1, id2 ), v ) -> ( ( f id1, f id2 ), vmap f v ))
+        |> Dict.fromList
+
+
+idMapNet : (Id -> Id) -> Net -> Net
+idMapNet f net =
+    { nodes = idMapDict idMapNode f net.nodes
+    , roots = List.map f net.roots
+    , interactions = pairIdMapDict (\_ -> identity) f net.interactions
     }
 
 
@@ -85,49 +276,14 @@ freshId { nodes } =
 
 
 
--- Combine
+{- `freshify s t` returns a net `t'` equal to `t` where all IDs have been changed so that they don't
+   overlap with those in `s`.
+-}
 
 
-idMapShape : (Id -> Id) -> Shape -> Shape
-idMapShape f shape =
-    case shape of
-        Formula _ ->
-            shape
-
-        Sep children ->
-            Sep (Array.map f children)
-
-
-idMapJustif : (Id -> Id) -> Justification -> Justification
-idMapJustif f justif =
-    { justif
-        | from = Maybe.map f justif.from
-        , copy = Maybe.map f justif.copy
-    }
-
-
-idMapNode : (Id -> Id) -> Node -> Node
-idMapNode f node =
-    { node
-        | shape = idMapShape f node.shape
-        , justif = idMapJustif f node.justif
-    }
-
-
-idMapDict : ((Id -> Id) -> a -> a) -> (Id -> Id) -> Dict Id a -> Dict Id a
-idMapDict vmap f dict =
-    dict
-        |> Dict.toList
-        |> List.map (\( id, v ) -> ( f id, vmap f v ))
-        |> Dict.fromList
-
-
-pairIdMapDict : ((Id -> Id) -> a -> a) -> (Id -> Id) -> Dict ( Id, Id ) a -> Dict ( Id, Id ) a
-pairIdMapDict vmap f dict =
-    dict
-        |> Dict.toList
-        |> List.map (\( ( id1, id2 ), v ) -> ( ( f id1, f id2 ), vmap f v ))
-        |> Dict.fromList
+freshify : Net -> Net -> Net
+freshify s t =
+    idMapNet (Tuple.mapSecond (\i -> i + Tuple.second (freshId s))) t
 
 
 
@@ -136,17 +292,17 @@ pairIdMapDict vmap f dict =
 
 assumption : Justification
 assumption =
-    { self = False, from = Nothing, copy = Nothing }
+    { self = False, from = Nothing }
 
 
 attachment : Interaction
 attachment =
-    { attached = True, opened = False, closed = False }
+    { opened = False, closed = False }
 
 
 nodeOfShape : Shape -> Node
 nodeOfShape shape =
-    { shape = shape, name = "", justif = assumption }
+    { shape = shape, name = "", justif = assumption, parent = TopLevel }
 
 
 
@@ -156,19 +312,19 @@ nodeOfShape shape =
 empty : Net
 empty =
     { nodes = Dict.empty
-    , roots = Array.empty
+    , roots = []
     , interactions = Dict.empty
     }
 
 
 
-{- `f form` returns the singleton net with formula `form` -}
+{- `fo form` returns the singleton net with formula `form` -}
 
 
 fo : Formula -> Net
 fo form =
     { nodes = Dict.fromList [ ( baseId 0, nodeOfShape (Formula form) ) ]
-    , roots = Array.fromList [ baseId 0 ]
+    , roots = [ baseId 0 ]
     , interactions = Dict.empty
     }
 
@@ -192,9 +348,9 @@ juxtapose s t =
             (idMapDict idMapNode leftId s.nodes)
             (idMapDict idMapNode rightId t.nodes)
     , roots =
-        Array.append
-            (Array.map leftId s.roots)
-            (Array.map rightId t.roots)
+        List.append
+            (List.map leftId s.roots)
+            (List.map rightId t.roots)
     , interactions =
         Dict.union
             (pairIdMapDict (\_ -> identity) leftId s.interactions)
@@ -242,12 +398,12 @@ curl outloop inloops =
                     |> Tuple.first
 
             outloopNode =
-                Dict.insert (baseId 0) (nodeOfShape (Sep (Array.map leftId outloop.roots))) Dict.empty
+                Dict.insert (baseId 0) (nodeOfShape (Sep (List.map leftId outloop.roots))) Dict.empty
 
             inloopsNodes =
                 List.foldl
                     (\inloop ( acc, ( idx, inj ) ) ->
-                        ( Dict.insert (baseId idx) (nodeOfShape (Sep (Array.map inj inloop.roots))) acc
+                        ( Dict.insert (baseId idx) (nodeOfShape (Sep (List.map inj inloop.roots))) acc
                         , ( idx + 1, inj >> rightId )
                         )
                     )
@@ -257,7 +413,7 @@ curl outloop inloops =
         in
         List.foldl Dict.union Dict.empty [ outloopContent, inloopsContents, outloopNode, inloopsNodes ]
     , roots =
-        Array.push (baseId 0) Array.empty
+        [ baseId 0 ]
     , interactions =
         let
             outloopInteractions =
@@ -273,34 +429,9 @@ curl outloop inloops =
                     |> Tuple.first
 
             attachments =
-                Array.initialize
-                    (List.length inloops)
-                    (\i -> ( ( baseId 0, baseId (i + 1) ), attachment ))
-                    |> Array.toList
+                List.range 0 (List.length inloops)
+                    |> List.map (\i -> ( ( baseId 0, baseId (i + 1) ), attachment ))
                     |> Dict.fromList
         in
         Dict.union outloopInteractions (Dict.union inloopsInteractions attachments)
     }
-
-
-
--- Basic operations
-
-
-parent : Net -> Id -> Maybe Id
-parent net id =
-    Dict.foldl
-        (\pId node acc ->
-            case node.shape of
-                Sep children ->
-                    if Array.toList children |> List.member id then
-                        Just pId
-
-                    else
-                        acc
-
-                _ ->
-                    acc
-        )
-        Nothing
-        net.nodes

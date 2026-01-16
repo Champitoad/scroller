@@ -1,4 +1,4 @@
-module Model.Goal exposing (..)
+module Model.Program exposing (..)
 
 import Dict exposing (Dict)
 import Iddict exposing (Iddict)
@@ -13,7 +13,7 @@ import Utils.Maybe
 
 
 type alias Selection =
-    List Context
+    List Id
 
 
 
@@ -25,25 +25,6 @@ type ProofInteraction
     | Justifying
 
 
-
-{- A `Surgery` remembers the last deleted value or environment in Edit mode,
-   so that it can be pasted elsewhere.
--}
-
-
-type alias Surgery =
-    { cropped : Maybe Val
-    , pulled : Maybe Env
-    }
-
-
-initialSurgery : Surgery
-initialSurgery =
-    { cropped = Nothing
-    , pulled = Nothing
-    }
-
-
 type EditInteraction
     = Operating
     | Reordering
@@ -53,7 +34,6 @@ type ActionMode
     = ProofMode ProofInteraction
     | EditMode
         { interaction : EditInteraction
-        , surgery : Surgery
         , newAtomName : String
         }
     | NavigationMode
@@ -66,93 +46,74 @@ type ExecMode
 
 
 -- Navigation
-{- A `Navigation` is a non-empty sequence of visited [Context]s.
+{- A `Navigation` is a non-empty sequence of visited `Location`s.
 
    It is used to keep track of the user's navigation history, i.e. the different
    locations in a goal that she has visited.
-
-   The head of the list corresponds to the last visited location, and the last
-   element to the initial location.
 -}
 
 
-type alias Navigation =
-    List Context
+type Navigation
+    = Initial Location
+    | Visit Location Navigation
 
 
 initialNavigation : Navigation
 initialNavigation =
-    [ Context [] Pos ]
-
-
-visit : Context -> Navigation -> Navigation
-visit context navigation =
-    context :: navigation
+    Initial TopLevel
 
 
 current : Navigation -> Context
 current navigation =
     case navigation of
-        context :: _ ->
+        Visit context _ ->
             context
 
-        [] ->
-            Context [] Pos
-
-
-
--- should never happen
+        Initial context ->
+            context
 
 
 changeFocus : Context -> Navigation -> Navigation
 changeFocus context navigation =
     case navigation of
-        _ :: rest ->
-            context :: rest
+        Visit _ hist ->
+            Visit context hist
 
-        [] ->
-            [ context ]
-
-
-
--- should never happen
+        Initial _ ->
+            Initial context
 
 
 backtrack : Navigation -> Navigation
 backtrack navigation =
     case navigation of
-        [ _ ] ->
+        Initial _ ->
             navigation
 
-        _ :: ((_ :: _) as rest) ->
-            rest
-
-        [] ->
-            initialNavigation
+        Visit _ hist ->
+            hist
 
 
 
--- should never happen
--- Goals
+-- Programs
 
 
 type alias SandboxID =
     String
 
 
-type Location
-    = App
+type Route
+    = Playground
     | Manual SandboxID
 
 
 
-{- A `Goal` is made of the following data:
+{- A `Program` is made of the following data:
 
-   `focus`: the net that the user is currently working on
+   `net`: the whole net the user is working on
 
    `navigation`: the navigation history
 
-   `location`: a unique, semantic identifier for the goal's location in the app
+   `route`: a unique identifier determining where the goal appears in the app
 
    `actionMode`: the current mode determining which actions can be performed through direct manipulation
 
@@ -166,10 +127,10 @@ type Location
 -}
 
 
-type alias Goal =
-    { focus : Net
+type alias Program =
+    { net : Net
     , navigation : Navigation
-    , location : Location
+    , route : Route
     , actionMode : ActionMode
     , execMode : ExecMode
     , recording : Bool
@@ -178,11 +139,11 @@ type alias Goal =
     }
 
 
-fromNet : Net -> Goal
+fromNet : Net -> Program
 fromNet net =
-    { focus = net
+    { net = net
     , navigation = initialNavigation
-    , location = App
+    , route = Playground
     , actionMode = ProofMode Interacting
     , execMode = Forward
     , recording = True
@@ -191,12 +152,12 @@ fromNet net =
     }
 
 
-map : (Net -> Net) -> Goal -> Goal
+map : (Net -> Net) -> Program -> Program
 map f goal =
-    { goal | focus = fo goal.focus }
+    { goal | net = f goal.net }
 
 
-updateNewAtomName : String -> Goal -> Goal
+updateNewAtomName : String -> Program -> Program
 updateNewAtomName name goal =
     let
         newMode =
@@ -217,38 +178,29 @@ updateNewAtomName name goal =
 type
     Action
     -- Open a scroll with an empty outloop and a single empty inloop
-    = Open { ctx : Context, name : Maybe Ident }
+    = Open Location
       -- Close a scroll with an empty outloop and a single inloop
-    | Close { ctx : Context, scroll : ScrollVal, id : Ident }
-      -- Insert a value in a net
-    | InsertVal { ctx : Context, val : Val }
-      -- Insert an inloop in a scroll
-    | InsertEnv { ctx : Context, scroll : ScrollVal, id : Ident, content : Net }
-      -- Delete a value from a net
-    | DeleteVal { ctx : Context, val : Val }
-      -- Delete an inloop from a scroll
-    | DeleteEnv { ctx : Context, scroll : ScrollVal, id : Ident, env : Env }
-      -- Iterate a source value into a net
-    | IterateVal { srcCtx : Context, srcVal : Val, tgtCtx : Context, tgtName : Maybe Ident }
-      -- Iterate a source inloop in the same scroll
-    | IterateEnv { ctx : Context, scroll : ScrollVal, srcId : Ident, srcEnv : Env, tgtId : Ident }
-      -- Deiterate a target value from an identical source
-    | DeiterateVal { srcCtx : Context, srcVal : Val, tgtCtx : Context, tgtVal : Val }
-      -- Deiterate a target inloop from an identical source in the same scroll
-    | DeiterateEnv { ctx : Context, scroll : ScrollVal, srcId : Ident, srcEnv : Env, tgtId : Ident, tgtEnv : Env }
+    | Close Id
+      -- Insert a (possibly attached) token
+    | Insert Location IToken
+      -- Delete a node
+    | Delete Id
+      -- Iterate a node
+    | Iterate Id Location
+      -- Deiterate a node
+    | Deiterate Id Id
       -- Decompose a symbolic formula into the corresponding scroll structure
-    | Decompose { ctx : Context, formula : Formula }
+    | Decompose Id
 
 
 type ActionError
     = InvalidPolarity Polarity
-    | InvalidBranchId Zipper Ident
-    | Erased Zipper
-    | NonEmptyOutloop Zipper
-    | NonSingleInloop Zipper
-    | OutOfScope Zipper Zipper
-    | UnnamedSource Zipper
-    | IncompatibleBoundaries Zipper Zipper
+    | Erased Id
+    | InvalidBranchId Id Id
+    | NonEmptyOutloop Id
+    | NonSingleInloop Id
+    | OutOfScope Id Id
+    | IncompatibleBoundaries Id Id
 
 
 boundaryVal : ExecMode -> Polarity -> Val -> Struct
@@ -289,35 +241,35 @@ boundary execMode =
             invert >> forwardBoundary
 
 
-execAll : Goal -> Goal
+execAll : Program -> Program
 execAll goal =
     { goal
-        | focus = netFromStruct (boundary goal.execMode Pos goal.focus)
+        | net = netFromStruct (boundary goal.execMode Pos goal.net)
         , actions = Iddict.empty
         , actionsQueue = Queue.empty
     }
 
 
-changeActionMode : ActionMode -> Goal -> Goal
+changeActionMode : ActionMode -> Program -> Program
 changeActionMode mode goal =
     let
         newFocus =
             case mode of
                 ProofMode _ ->
-                    List.map commitVal goal.focus
+                    List.map commitVal goal.net
 
                 _ ->
-                    goal.focus
+                    goal.net
     in
-    { goal | actionMode = mode, focus = newFocus }
+    { goal | actionMode = mode, net = newFocus }
 
 
-changeExecMode : ExecMode -> Goal -> Goal
+changeExecMode : ExecMode -> Program -> Program
 changeExecMode mode goal =
     { goal | execMode = mode }
 
 
-toggleRecording : Bool -> Goal -> Goal
+toggleRecording : Bool -> Program -> Program
 toggleRecording recording goal =
     { goal | recording = recording }
 
@@ -346,7 +298,7 @@ getSingleInloop execMode ctx scroll =
             Nothing
 
 
-applicable : Goal -> Action -> Result ActionError ()
+applicable : Program -> Action -> Result ActionError ()
 applicable goal action =
     let
         { erasedVal, erasedScrollVal, erasedEnv, erasedArea } =
@@ -414,7 +366,7 @@ applicable goal action =
             else
                 Ok ()
 
-        InsertEnv { ctx, scroll, id } ->
+        InsertInloop { ctx, scroll, id } ->
             if isNegative ctx then
                 Err (InvalidPolarity Pos)
 
@@ -600,17 +552,17 @@ applicable goal action =
 {- `record action goal` records `action` in `goal` by:
    - generating a new ID `id` and associating `action` to `id` in `goal.actions`
    - pushing `id` in `goal.actionsQueue`
-   - decorating the scroll net `goal.focus` with the argumentation/interaction corresponding to `action`
-   - returning `id` for later usage (typically with `Goal.execute`)
+   - decorating the scroll net `goal.net` with the argumentation/interaction corresponding to `action`
+   - returning `id` for later usage (typically with `Program.execute`)
 
    This assumes that the action is indeed applicable in the goal.
 
-   **Note:** for now we assume that `goal.focus` is always the top-level net, and thus the action's
-   paths are walked from the root of `goal.focus`.
+   **Note:** for now we assume that `goal.net` is always the top-level net, and thus the action's
+   paths are walked from the root of `goal.net`.
 -}
 
 
-record : Action -> Goal -> ( Int, Goal )
+record : Action -> Program -> ( Int, Program )
 record action goal =
     let
         ( actionId, newActions ) =
@@ -694,7 +646,7 @@ record action goal =
                     in
                     fillZipper [ newVal ] ctx.zipper
 
-                InsertEnv { ctx, scroll, id, content } ->
+                InsertInloop { ctx, scroll, id, content } ->
                     let
                         grown =
                             isGrownZipper ctx.zipper
@@ -835,7 +787,7 @@ record action goal =
     , { goal
         | actions = newActions
         , actionsQueue = newActionsQueue
-        , focus = newFocus
+        , net = newFocus
       }
     )
 
@@ -844,14 +796,14 @@ record action goal =
 {- `execute actionId goal` executes the action with ID `actionId` in `goal` by:
    - deleting the associated entry in `goal.actions`
    - deleting `actionId` from `goal.actionsQueue` if not already done
-   - applying the semantics of the action in `goal.focus`
+   - applying the semantics of the action in `goal.net`
 
-   **Note:** for now we assume that `goal.focus` is always the top-level net, and thus the action's
-   paths are walked from the root of `goal.focus`.
+   **Note:** for now we assume that `goal.net` is always the top-level net, and thus the action's
+   paths are walked from the root of `goal.net`.
 -}
 
 
-execute : Int -> Goal -> Goal
+execute : Int -> Program -> Program
 execute actionId goal =
     case Iddict.get actionId goal.actions of
         Just action ->
@@ -874,7 +826,7 @@ execute actionId goal =
                         InsertVal { ctx, val } ->
                             Debug.todo "InsertVal action execution not implemented yet."
 
-                        InsertEnv { ctx, scroll, id, content } ->
+                        InsertInloop { ctx, scroll, id, content } ->
                             Debug.todo "InsertEnv action execution not implemented yet."
 
                         DeleteVal { ctx, val } ->
@@ -901,7 +853,7 @@ execute actionId goal =
             { goal
                 | actions = newActions
                 , actionsQueue = newActionsQueue
-                , focus = newFocus
+                , net = newFocus
             }
 
         Nothing ->
@@ -910,26 +862,26 @@ execute actionId goal =
                 goal
 
 
-apply : Action -> Goal -> Goal
+apply : Action -> Program -> Program
 apply action goal =
     let
-        ( actionId, newGoal ) =
+        ( actionId, newProgram ) =
             record action goal
     in
     if goal.recording then
-        newGoal
+        newProgram
 
     else
         execute actionId goal
 
 
 
--- A Sandbox is a Goal that can be reset
+-- A Sandbox is a Program that can be reset
 
 
 type alias Sandbox =
-    { initialGoal : Goal
-    , currentGoal : Goal
+    { initialProgram : Program
+    , currentProgram : Program
     }
 
 
@@ -937,10 +889,10 @@ type alias Sandboxes =
     Dict SandboxID Sandbox
 
 
-mkSandbox : Goal -> Sandbox
+mkSandbox : Program -> Sandbox
 mkSandbox goal =
-    { initialGoal = goal
-    , currentGoal = goal
+    { initialProgram = goal
+    , currentProgram = goal
     }
 
 
@@ -958,7 +910,7 @@ getSandbox id sandboxes =
             sandbox
 
 
-updateSandbox : SandboxID -> Goal -> Sandboxes -> Sandboxes
+updateSandbox : SandboxID -> Program -> Sandboxes -> Sandboxes
 updateSandbox id goal sandboxes =
     case Dict.get id sandboxes of
         Nothing ->
@@ -971,8 +923,8 @@ updateSandbox id goal sandboxes =
         Just sandbox ->
             let
                 updatedSandbox =
-                    { initialGoal = sandbox.initialGoal
-                    , currentGoal = goal
+                    { initialProgram = sandbox.initialProgram
+                    , currentProgram = goal
                     }
             in
             Dict.insert id updatedSandbox sandboxes
@@ -989,22 +941,22 @@ resetSandbox id sandboxes =
             sandboxes
 
         Just sandbox ->
-            updateSandbox id sandbox.initialGoal sandboxes
+            updateSandbox id sandbox.initialProgram sandboxes
 
 
 resetAllSandboxes : Sandboxes -> Sandboxes
 resetAllSandboxes sandboxes =
-    Dict.map (\_ sb -> { sb | currentGoal = sb.initialGoal }) sandboxes
+    Dict.map (\_ sb -> { sb | currentProgram = sb.initialProgram }) sandboxes
 
 
 manualExamples : Sandboxes
 manualExamples =
     let
-        makeSandbox id actionMode execMode focus =
+        makeSandbox id actionMode execMode net =
             mkSandbox
-                { focus = focus
+                { net = net
                 , navigation = initialNavigation
-                , location = Manual id
+                , route = Manual id
                 , actionMode = actionMode
                 , execMode = execMode
                 , recording = True
