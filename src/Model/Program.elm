@@ -181,7 +181,7 @@ type
     = Open Location
       -- Close a scroll with an empty outloop and a single inloop
     | Close Id
-      -- Insert a (possibly attached) token
+      -- Insert a token
     | Insert Location IToken
       -- Delete a node
     | Delete Id
@@ -203,16 +203,16 @@ type ActionError
     | IncompatibleBoundaries Id Id
 
 
-boundaryVal : ExecMode -> Polarity -> Val -> Struct
+boundaryVal : ExecMode -> Polarity -> Node -> Struct
 boundaryVal execMode =
     let
         forwardBoundary pol =
             case pol of
                 Pos ->
-                    conclusionVal
+                    conclusionNode
 
                 Neg ->
-                    premissVal
+                    premissNode
     in
     case execMode of
         Forward ->

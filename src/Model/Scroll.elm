@@ -2,10 +2,12 @@ module Model.Scroll exposing (..)
 
 import Dict exposing (Dict)
 import Model.Formula exposing (..)
+import Utils.List
+import Utils.Maybe
 
 
 
-{- Outer token -}
+{- Outer (unattached) token -}
 
 
 type OToken
@@ -14,7 +16,7 @@ type OToken
 
 
 
-{- Inner token -}
+{- Inner (possibly attached) token -}
 
 
 type IToken
@@ -58,7 +60,7 @@ rightId ( p, i ) =
 
 
 type Shape
-    = Formula Formula
+    = Form Formula
     | Sep (List Id)
 
 
@@ -81,7 +83,7 @@ type alias Interaction =
 
 type Context
     = TopLevel
-    | InSep Id
+    | Inside Id
 
 
 type alias Location =
@@ -93,13 +95,14 @@ type alias Node =
     , name : String
     , justif : Justification
     , parent : Context
+    , polarity : Polarity
     }
 
 
 type alias Net =
     { nodes : Dict Id Node
     , roots : List Id
-    , interactions : Dict ( Id, Id ) Interaction -- Edges oriented from leaves to roots<@
+    , interactions : Dict ( Id, Id ) Interaction -- Edges oriented from leaves to roots
     }
 
 
@@ -122,21 +125,46 @@ invert polarity =
             Pos
 
 
+getNode : Net -> Id -> Node
+getNode net id =
+    Dict.get id net.nodes
+        |> Maybe.withDefault
+            { shape = Form (Atom (Image { src = "node-not-found.png", description = "Node not found!" }))
+            , name = ""
+            , parent = TopLevel
+            , polarity = Pos
+            , justif = assumption
+            }
+
+
+getInteractions : Net -> Id -> Dict Id Interaction
+getInteractions net id =
+    Debug.todo ""
+
+
+getShape : Net -> Id -> Shape
+getShape net id =
+    (getNode net id).shape
+
+
+getName : Net -> Id -> String
+getName net id =
+    (getNode net id).name
+
+
+getJustif : Net -> Id -> Justification
+getJustif net id =
+    (getNode net id).justif
+
+
 getParent : Net -> Id -> Context
 getParent net id =
-    Dict.get id net.nodes
-        |> Maybe.map .parent
-        |> Maybe.withDefault TopLevel
+    (getNode net id).parent
 
 
 getPolarity : Net -> Id -> Polarity
 getPolarity net id =
-    case getParent net id of
-        TopLevel ->
-            Pos
-
-        InSep par ->
-            invert (getPolarity net par)
+    (getNode net id).polarity
 
 
 
@@ -147,7 +175,6 @@ type Tree
     = TNode
         { id : Id
         , node : Node
-        , polarity : Polarity
         , children : List Tree
         }
 
@@ -155,28 +182,27 @@ type Tree
 hydrate : Net -> List Tree
 hydrate net =
     net.roots
-        |> List.filterMap (buildTree Pos net)
+        |> List.filterMap (buildTree net)
 
 
-buildTree : Polarity -> Net -> Id -> Maybe Tree
-buildTree polarity net id =
+buildTree : Net -> Id -> Maybe Tree
+buildTree net id =
     Dict.get id net.nodes
         |> Maybe.map
             (\node ->
                 let
                     resolvedChildren =
                         case node.shape of
-                            Formula _ ->
+                            Form _ ->
                                 []
 
                             Sep childIds ->
                                 childIds
-                                    |> List.filterMap (buildTree (invert polarity) net)
+                                    |> List.filterMap (buildTree net)
                 in
                 TNode
                     { id = id
                     , node = node
-                    , polarity = polarity
                     , children = resolvedChildren
                     }
             )
@@ -189,7 +215,7 @@ buildTree polarity net id =
 idMapShape : (Id -> Id) -> Shape -> Shape
 idMapShape f shape =
     case shape of
-        Formula _ ->
+        Form _ ->
             shape
 
         Sep children ->
@@ -219,8 +245,8 @@ idMapContext f ctx =
         TopLevel ->
             TopLevel
 
-        InSep id ->
-            InSep (f id)
+        Inside id ->
+            Inside (f id)
 
 
 idMapNode : (Id -> Id) -> Node -> Node
@@ -302,7 +328,7 @@ attachment =
 
 nodeOfShape : Shape -> Node
 nodeOfShape shape =
-    { shape = shape, name = "", justif = assumption, parent = TopLevel }
+    { shape = shape, name = "", justif = assumption, parent = TopLevel, polarity = Pos }
 
 
 
@@ -323,7 +349,7 @@ empty =
 
 fo : Formula -> Net
 fo form =
-    { nodes = Dict.fromList [ ( baseId 0, nodeOfShape (Formula form) ) ]
+    { nodes = Dict.fromList [ ( baseId 0, nodeOfShape (Form form) ) ]
     , roots = [ baseId 0 ]
     , interactions = Dict.empty
     }
@@ -435,3 +461,91 @@ curl outloop inloops =
         in
         Dict.union outloopInteractions (Dict.union inloopsInteractions attachments)
     }
+
+
+
+-- Boundaries and detours
+
+
+isInserted : Node -> Bool
+isInserted node =
+    node.polarity == Neg && node.justif.self
+
+
+isDeleted : Node -> Bool
+isDeleted node =
+    node.polarity == Pos && node.justif.self
+
+
+isDirectlyJustified : Node -> Bool
+isDirectlyJustified node =
+    case node.justif.from of
+        Just (Direct _) ->
+            True
+
+        _ ->
+            False
+
+
+isIterated : Node -> Bool
+isIterated node =
+    node.polarity == Pos && isDirectlyJustified node
+
+
+isDeiterated : Node -> Bool
+isDeiterated node =
+    node.polarity == Neg && isDirectlyJustified node
+
+
+isExpansion : Polarity -> Interaction -> Bool
+isExpansion pol int =
+    (pol == Pos && int.opened) || (pol == Neg && int.closed)
+
+
+isCollapse : Polarity -> Interaction -> Bool
+isCollapse pol int =
+    (pol == Pos && int.closed) || (pol == Neg && int.opened)
+
+
+isCreated : Node -> Bool
+isCreated node =
+    isInserted node || isIterated node
+
+
+isDestroyed : Node -> Bool
+isDestroyed node =
+    isDeleted node || isDeiterated node
+
+
+isExpanded : Net -> Id -> Bool
+isExpanded net id =
+    getInteractions net id
+        |> Dict.toList
+        |> Utils.List.exists (\( _, int ) -> isExpansion (getPolarity net id) int)
+
+
+isCollapsed : Net -> Id -> Bool
+isCollapsed net id =
+    getInteractions net id
+        |> Dict.toList
+        |> Utils.List.exists (\( _, int ) -> isCollapse (getPolarity net id) int)
+
+
+isDetour : Net -> Id -> Bool
+isDetour net id =
+    let
+        node =
+            getNode net id
+    in
+    (isCreated node && isDestroyed node) || (isExpanded net id && isCollapsed net id)
+
+
+
+{- A net is normal when it is detour-free -}
+
+
+isNormal : Net -> Bool
+isNormal net =
+    net.nodes
+        |> Dict.keys
+        |> Utils.List.forall (not << isDetour net)
