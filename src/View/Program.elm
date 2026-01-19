@@ -135,7 +135,7 @@ viewFormula dnd goal ctx metadata name justif formula =
             { metadata = metadata
             , name = name
             , justif = justif
-            , shape = Form formula
+            , shape = Formula formula
             }
 
         clickAction =
@@ -446,7 +446,7 @@ viewAddValZone location ctx newAtomName =
 viewVal : ValDnD -> Program -> Context -> Val -> Element Msg
 viewVal dnd goal ctx val =
     case val.shape of
-        Form formula ->
+        Formula formula ->
             viewFormula dnd goal ctx val.metadata val.name val.justif formula
 
         Scroll ({ inloops } as scrollData) ->
@@ -672,7 +672,7 @@ viewNet dnd goal ctx net =
 
         length val =
             case val.shape of
-                Form _ ->
+                Formula _ ->
                     shrink
 
                 Scroll _ ->
