@@ -495,67 +495,66 @@ dehydrate trees =
 -- although I do not expect too many levels of `Sep` nesting in actual programs
 
 
-hydrateOToken : Context -> OToken -> Tree
-hydrateOToken context token =
+hydrateFormula : Context -> Formula -> Tree
+hydrateFormula context form =
+    TNode
+        { id = freshIdContext context
+        , node =
+            { shape = Formula form
+            , name = ""
+            , justif = assumption
+            , context = context
+            }
+        , children = []
+        }
+
+
+hydrateTokens : Context -> Bool -> List IToken -> Tree
+hydrateTokens context isAttached tokens =
     let
         id =
             freshIdContext context
+
+        children =
+            List.map (hydrateIToken (Inside id)) tokens
+
+        interaction =
+            if isAttached then
+                Just attachment
+
+            else
+                Nothing
     in
+    TNode
+        { id = id
+        , node =
+            { shape = Sep (List.map getTreeId children) interaction
+            , name = ""
+            , justif = assumption
+            , context = context
+            }
+        , children = children
+        }
+
+
+hydrateOToken : Context -> OToken -> Tree
+hydrateOToken context token =
     case token of
         OForm form ->
-            TNode
-                { id = id
-                , node =
-                    { shape = Formula form
-                    , name = ""
-                    , justif = assumption
-                    , context = context
-                    }
-                , children = []
-                }
+            hydrateFormula context form
 
-        OSep toks ->
-            let
-                children =
-                    List.map (hydrateIToken (Inside id)) toks
-            in
-            TNode
-                { id = id
-                , node =
-                    { shape = Sep (List.map getTreeId children) Nothing
-                    , name = ""
-                    , justif = assumption
-                    , context = context
-                    }
-                , children = children
-                }
+        OSep tokens ->
+            hydrateTokens context False tokens
 
 
 hydrateIToken : Context -> IToken -> Tree
 hydrateIToken context token =
-    let
-        id =
-            freshIdContext context
-    in
     case token of
-        ITok tok ->
-            hydrateOToken context tok
+        ITok otoken ->
+            hydrateOToken context otoken
 
-        ISep toks ->
-            let
-                children =
-                    List.map (hydrateIToken (Inside id)) toks
-            in
-            TNode
-                { id = id
-                , node =
-                    { shape = Sep (List.map getTreeId children) (Just attachment)
-                    , name = ""
-                    , justif = assumption
-                    , context = context
-                    }
-                , children = children
-                }
+        ISep tokens ->
+            hydrateTokens context True tokens
 
 
 
