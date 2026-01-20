@@ -1,7 +1,8 @@
 module Model.Scroll exposing (..)
 
 import Dict exposing (Dict)
-import Model.Formula exposing (..)
+import List.Extra
+import Model.Formula as Formula exposing (..)
 import Utils.List
 
 
@@ -83,6 +84,13 @@ type alias Interaction =
 attachment : Interaction
 attachment =
     { opened = False, closed = False }
+
+
+
+{- `Sep ids int` encodes a **sep node** with children identified and ordered in `ids`, having a
+   potential interaction with its parent `int`. That is, the sep is an *outloop* if `int = Nothing`,
+   and an *inloop* if `int = Just ...`.
+-}
 
 
 type Shape
@@ -210,20 +218,18 @@ getInteractions id net =
             Dict.empty
 
 
+getChildren : Id -> Net -> List Id
+getChildren id net =
+    case getShape id net of
+        Sep children _ ->
+            children
+
+        _ ->
+            []
+
+
 
 -- Identifier handling
-
-
-stringOfId : Id -> String
-stringOfId ( p, i ) =
-    let
-        prefix =
-            p
-                |> List.map String.fromInt
-                |> List.intersperse "."
-                |> List.foldl String.append ""
-    in
-    prefix ++ "::" ++ String.fromInt i
 
 
 idMapShape : (Id -> Id) -> Shape -> Shape
@@ -360,35 +366,6 @@ fo form =
     in
     { nodes = Dict.fromList [ ( id, nodeOfShape (Formula form) ) ]
     , roots = [ id ]
-    }
-
-
-
-{- Grafts net `src` onto net `tgt` at location `loc`. -}
-
-
-graft : Location -> Net -> Net -> Net
-graft { ctx, idx } src tgt =
-    { nodes =
-        Dict.foldl
-            (\srcNodeId srcNode acc ->
-                let
-                    updatedSrcNode =
-                        -- if List.mem srcNodeId
-                        Debug.todo ""
-                in
-                case ctx of
-                    TopLevel ->
-                        -- Dict.insert srcNodeId { srcNode acc
-                        Debug.todo ""
-
-                    Inside parentId ->
-                        Debug.todo ""
-            )
-            tgt.nodes
-            (freshify tgt src).nodes
-    , roots =
-        Debug.todo ""
     }
 
 
@@ -614,59 +591,112 @@ hydrateIToken context token =
             hydrateTokens context True tokens
 
 
+netOfTokens : Context -> List IToken -> Net
+netOfTokens context =
+    List.map (hydrateIToken context) >> dehydrate
+
+
 hydrateStruct : Struct -> List Tree
 hydrateStruct struct =
     List.map (hydrateOToken TopLevel) struct
 
 
+netOfStruct : Struct -> Net
+netOfStruct =
+    hydrateStruct >> dehydrate
+
+
 
 -- Surgery
+
+
+removeSingleNode : Id -> Net -> Net
+removeSingleNode id net =
+    { nodes = Dict.remove id net.nodes
+    , roots = List.Extra.remove id net.roots
+    }
+
+
+
 {- `prune net id` removes the subnet with root `id` in `net`. -}
 
 
 prune : Id -> Net -> Net
 prune id net =
-    Debug.todo ""
+    List.foldl
+        removeSingleNode
+        (removeSingleNode id net)
+        (getChildren id net)
 
 
 
-{- `insert net loc tok` inserts token `tok` at location `loc` in `net`, by properly "dehydrating" it
-   into a node with fresh IDs for every subnodes, as well as the correct attachment structure.
+{- Grafts net `src` onto net `tgt` at location `loc`. -}
+
+
+graft : Location -> Net -> Net -> Net
+graft { ctx, idx } src tgt =
+    let
+        srcFresh =
+            freshify tgt src
+    in
+    { nodes =
+        Dict.foldl
+            (\srcNodeId srcNode acc ->
+                let
+                    ( updatedSrcNode, srcRootIdx ) =
+                        case List.Extra.elemIndex srcNodeId srcFresh.roots of
+                            Just i ->
+                                ( { srcNode | context = ctx }, Just i )
+
+                            Nothing ->
+                                ( srcNode, Nothing )
+
+                    accWithSrcNode =
+                        Dict.insert srcNodeId updatedSrcNode acc
+                in
+                case ctx of
+                    TopLevel ->
+                        accWithSrcNode
+
+                    Inside parentId ->
+                        accWithSrcNode
+                            |> Dict.update parentId
+                                (Maybe.map
+                                    (\parent ->
+                                        let
+                                            updatedShape =
+                                                case ( parent.shape, srcRootIdx ) of
+                                                    ( Sep childIds int, Just i ) ->
+                                                        Sep (Utils.List.insert (idx + i) [ srcNodeId ] childIds) int
+
+                                                    ( shape, _ ) ->
+                                                        shape
+                                        in
+                                        { parent | shape = updatedShape }
+                                    )
+                                )
+            )
+            tgt.nodes
+            srcFresh.nodes
+    , roots =
+        case ctx of
+            TopLevel ->
+                Utils.List.insert idx srcFresh.roots tgt.roots
+
+            _ ->
+                tgt.roots
+    }
+
+
+
+{- Inserts token `tok` at location `loc` in `net`, by properly "dehydrating" it into a node with
+   fresh IDs for every subnodes, as well as the correct attachment structure.
 -}
 
 
 insert : Location -> IToken -> Net -> Net
-insert { ctx, idx } tok net =
-    let
-        id =
-            freshId net
-
-        node =
-            { shape =
-                Debug.todo ""
-            , name =
-                Debug.todo ""
-            , justif =
-                assumption
-            , parent =
-                ctx
-            , polarity =
-                polarityOfContext ctx net
-            }
-
-        acc =
-            { nodes =
-                Dict.insert id net
-            , roots =
-                case ctx of
-                    TopLevel ->
-                        Utils.List.insert idx id net.roots
-
-                    _ ->
-                        net.roots
-            }
-    in
-    Debug.todo ""
+insert loc tok net =
+    graft loc (netOfTokens loc.ctx [ tok ]) net
 
 
 
@@ -768,3 +798,95 @@ isNormal net =
 premiss : Net -> Struct
 premiss net =
     Debug.todo ""
+
+
+
+-- Pretty-printing
+
+
+stringOfId : Id -> String
+stringOfId ( p, i ) =
+    let
+        prefix =
+            p
+                |> List.map String.fromInt
+                |> List.intersperse "."
+                |> List.foldl String.append ""
+    in
+    prefix ++ "::" ++ String.fromInt i
+
+
+stringOfNet : Net -> String
+stringOfNet net =
+    net
+        |> hydrate
+        >> stringOfTreeList net
+
+
+stringOfTree : Net -> Tree -> String
+stringOfTree net (TNode { node, children }) =
+    children
+        |> stringOfTreeList net
+        |> (\content -> stringOfNode net content node)
+
+
+stringOfTreeList : Net -> List Tree -> String
+stringOfTreeList net trees =
+    trees
+        |> List.map (stringOfTree net)
+        >> List.intersperse ", "
+        >> List.foldl String.append ""
+
+
+stringOfNode : Net -> String -> Node -> String
+stringOfNode net content node =
+    stringOfJustification net node.justif
+        ++ node.name
+        ++ ":"
+        ++ stringOfShape content node.shape
+
+
+stringOfCopy : Net -> Copy -> String
+stringOfCopy net copy =
+    case copy of
+        Direct srcId ->
+            getName srcId net
+
+        _ ->
+            ""
+
+
+stringOfJustification : Net -> Justification -> String
+stringOfJustification net { self, from } =
+    let
+        selfText =
+            if self then
+                "•"
+
+            else
+                ""
+
+        fromText =
+            case from of
+                Just copy ->
+                    stringOfCopy net copy ++ "/"
+
+                Nothing ->
+                    ""
+    in
+    fromText ++ selfText
+
+
+stringOfShape : String -> Shape -> String
+stringOfShape content shape =
+    case shape of
+        Formula form ->
+            Formula.toString form
+
+        Sep _ interaction ->
+            case interaction of
+                Nothing ->
+                    "[" ++ content ++ "]"
+
+                Just _ ->
+                    "(" ++ content ++ ")"

@@ -106,13 +106,13 @@ swap i j list =
             Nothing
 
 
-insert : Int -> a -> List a -> List a
-insert index x list =
+insert : Int -> List a -> List a -> List a
+insert index l list =
     let
         ( front, back ) =
             pivot index list
     in
-    front ++ x :: back
+    front ++ l ++ back
 
 
 remove : Int -> List a -> List a
