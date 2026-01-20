@@ -45,9 +45,34 @@ baseId i =
     ( [], i )
 
 
+copyId : Id -> Id
+copyId ( p, i ) =
+    ( 0 :: p, i )
+
+
+originalId : Id -> Id
+originalId ( p, i ) =
+    case p of
+        0 :: p_ ->
+            ( p_, i )
+
+        _ ->
+            ( p, i )
+
+
+
+{- Whether `c == copyId o`. -}
+
+
+isCopyId : Id -> Id -> Bool
+isCopyId c o =
+    (Tuple.first c == 0 :: Tuple.first o)
+        && (Tuple.second c == Tuple.second o)
+
+
 leftId : Id -> Id
 leftId ( p, i ) =
-    ( 0 :: p, i )
+    ( -1 :: p, i )
 
 
 rightId : Id -> Id
@@ -201,7 +226,7 @@ polarityOfContext ctx net =
 getInteractions : Id -> Net -> Dict Id Interaction
 getInteractions id net =
     case getShape id net of
-        Sep children _ ->
+        Sep childIds _ ->
             List.foldl
                 (\childId acc ->
                     case getShape childId net of
@@ -212,20 +237,29 @@ getInteractions id net =
                             Dict.empty
                 )
                 Dict.empty
-                children
+                childIds
 
         _ ->
             Dict.empty
 
 
-getChildren : Id -> Net -> List Id
-getChildren id net =
+getChildIds : Id -> Net -> List Id
+getChildIds id net =
     case getShape id net of
-        Sep children _ ->
-            children
+        Sep childIds _ ->
+            childIds
 
         _ ->
             []
+
+
+
+{- Returns the singleton subnet of `net` rooted at `id`. -}
+
+
+getSubnet : Id -> Net -> Net
+getSubnet id =
+    buildTree id >> dehydrateTree
 
 
 
@@ -238,8 +272,8 @@ idMapShape f shape =
         Formula _ ->
             shape
 
-        Sep children interaction ->
-            Sep (List.map f children) interaction
+        Sep childIds interaction ->
+            Sep (List.map f childIds) interaction
 
 
 idMapCopy : (Id -> Id) -> Copy -> Copy
@@ -438,10 +472,10 @@ curl outloop inloops =
 
             outloopNode =
                 let
-                    children =
+                    childIds =
                         List.map leftId outloop.roots
                 in
-                Dict.insert (baseId 0) (nodeOfShape (Sep children Nothing)) Dict.empty
+                Dict.insert (baseId 0) (nodeOfShape (Sep childIds Nothing)) Dict.empty
         in
         List.foldl Dict.union Dict.empty [ outloopContent, inloopsContents, outloopNode, inloopsNodes ]
     , roots =
@@ -493,8 +527,8 @@ buildTree id net =
                 Formula _ ->
                     []
 
-                Sep children _ ->
-                    children
+                Sep childIds _ ->
+                    childIds
                         |> List.map (\cid -> buildTree cid net)
     in
     TNode
@@ -618,7 +652,7 @@ removeSingleNode id net =
 
 
 
-{- `prune net id` removes the subnet with root `id` in `net`. -}
+{- Prunes the subnet with root `id` in `net`. -}
 
 
 prune : Id -> Net -> Net
@@ -626,7 +660,7 @@ prune id net =
     List.foldl
         removeSingleNode
         (removeSingleNode id net)
-        (getChildren id net)
+        (getChildIds id net)
 
 
 
@@ -686,6 +720,37 @@ graft { ctx, idx } src tgt =
             _ ->
                 tgt.roots
     }
+
+
+
+{- Returns a deep copy of the conclusion of node `id` in `net`, holding `Copy` backpointers to the
+   original nodes. The root node is a `Direct` copy, while subnodes are `Indirect` copies.
+-}
+
+
+deepcopy : Id -> Net -> Net
+deepcopy id net =
+    let
+        subnet =
+            net |> getSubnet id |> conclusion
+    in
+    idMapNet copyId
+        { subnet
+            | nodes =
+                Dict.map
+                    (\nodeId node ->
+                        let
+                            copy =
+                                if nodeId == id then
+                                    Direct id
+
+                                else
+                                    Indirect { anc = id, src = nodeId }
+                        in
+                        { node | justif = { self = node.justif.self, from = Just copy } }
+                    )
+                    subnet.nodes
+        }
 
 
 
@@ -795,8 +860,13 @@ isNormal net =
 -- Boundaries
 
 
-premiss : Net -> Struct
+premiss : Net -> Net
 premiss net =
+    Debug.todo ""
+
+
+conclusion : Net -> Net
+conclusion net =
     Debug.todo ""
 
 
