@@ -108,7 +108,9 @@ type alias Node =
 
 
 type alias Net =
-    Dict Id Node
+    { nodes : Dict Id Node
+    , roots : List Id
+    }
 
 
 
@@ -136,9 +138,17 @@ invert polarity =
 
 getNode : Id -> Net -> Node
 getNode id net =
-    Dict.get id net
+    Dict.get id net.nodes
         |> Maybe.withDefault
-            { shape = Formula (Atom (Image { src = "node-not-found.png", description = "Node not found!" }))
+            { shape =
+                Formula
+                    (Atom
+                        (Image
+                            { src = "node-not-found.png"
+                            , description = "Node " ++ stringOfId id ++ " not found!"
+                            }
+                        )
+                    )
             , name = "Error 404"
             , justif = assumption
             , context = TopLevel
@@ -180,20 +190,6 @@ polarityOfContext ctx net =
             invert (getPolarity parentId net)
 
 
-getRoots : Net -> List Id
-getRoots net =
-    net
-        |> Dict.toList
-        |> List.filterMap
-            (\( id, node ) ->
-                if node.context == TopLevel then
-                    Just id
-
-                else
-                    Nothing
-            )
-
-
 getInteractions : Id -> Net -> Dict Id Interaction
 getInteractions id net =
     case getShape id net of
@@ -216,6 +212,18 @@ getInteractions id net =
 
 
 -- Identifier handling
+
+
+stringOfId : Id -> String
+stringOfId ( p, i ) =
+    let
+        prefix =
+            p
+                |> List.map String.fromInt
+                |> List.intersperse "."
+                |> List.foldl String.append ""
+    in
+    prefix ++ "::" ++ String.fromInt i
 
 
 idMapShape : (Id -> Id) -> Shape -> Shape
@@ -274,7 +282,9 @@ idMapDict vmap f dict =
 
 idMapNet : (Id -> Id) -> Net -> Net
 idMapNet f net =
-    idMapDict idMapNode f net
+    { nodes = idMapDict idMapNode f net.nodes
+    , roots = List.map f net.roots
+    }
 
 
 freshIdContext : Context -> Id
@@ -303,12 +313,12 @@ freshId net =
                 -1
                 nodeDict
     in
-    ( [], maxId net + 1 )
+    ( [], maxId net.nodes + 1 )
 
 
 
-{- `freshify s t` returns a net `t'` equal to `t` where all IDs have been changed so that they don't
-   overlap with those in `s`.
+{- Returns a net `t'` equal to `t` where all IDs have been changed so that they don't overlap with
+   those in `s`.
 -}
 
 
@@ -318,7 +328,8 @@ freshify s t =
 
 
 
--- Constructors
+-- Constructors and combinators
+-- Note that all operations here preserve uniqueness of identifiers
 
 
 nodeOfShape : Shape -> Node
@@ -327,40 +338,80 @@ nodeOfShape shape =
 
 
 
-{- The empty scroll net -}
+{- The empty scroll net. -}
 
 
 empty : Net
 empty =
-    Dict.empty
+    { nodes = Dict.empty
+    , roots = []
+    }
 
 
 
-{- `fo form` returns the singleton net with formula `form` -}
+{- The singleton net with formula `form`. -}
 
 
 fo : Formula -> Net
 fo form =
-    Dict.fromList [ ( baseId 0, nodeOfShape (Formula form) ) ]
+    let
+        id =
+            baseId 0
+    in
+    { nodes = Dict.fromList [ ( id, nodeOfShape (Formula form) ) ]
+    , roots = [ id ]
+    }
 
 
 
-{- `juxtapose s t` returns the juxtaposition `s ⊗ t` of the nets `s` and `t`.
+{- Grafts net `src` onto net `tgt` at location `loc`. -}
 
-   This involves performing the following operations:
-   - `nodes` is the disjoint union `◅s ∪ ▻t`, where `◅s` is obtained by turning every `Id`
-     `x` occurring in `s` (including references in `justif` fields) into `leftId x`, and
-     symmetrically `▻t` is obtained by turning every `Id` `y` occurring in `t` into `rightId y`
-   - `roots` is the disjoint concatenation of `s.roots` and `t.roots`
-   - `interactions` is the disjoint union of `s.interactions` and `t.interactions`
+
+graft : Location -> Net -> Net -> Net
+graft { ctx, idx } src tgt =
+    { nodes =
+        Dict.foldl
+            (\srcNodeId srcNode acc ->
+                let
+                    updatedSrcNode =
+                        -- if List.mem srcNodeId
+                        Debug.todo ""
+                in
+                case ctx of
+                    TopLevel ->
+                        -- Dict.insert srcNodeId { srcNode acc
+                        Debug.todo ""
+
+                    Inside parentId ->
+                        Debug.todo ""
+            )
+            tgt.nodes
+            (freshify tgt src).nodes
+    , roots =
+        Debug.todo ""
+    }
+
+
+
+{- The juxtaposition `s ⊗ t` of nets `s` and `t`.
+
+   This is implemented as the disjoint union `◅s ∪ ▻t`, where `◅s` is obtained by turning every `Id`
+   `x` occurring in `s` (including references in `justif` fields) into `leftId x`, and symmetrically
+   `▻t` is obtained by turning every `Id` `y` occurring in `t` into `rightId y`.
 -}
 
 
 juxtapose : Net -> Net -> Net
 juxtapose s t =
-    Dict.union
-        (idMapDict idMapNode leftId s)
-        (idMapDict idMapNode rightId t)
+    { nodes =
+        Dict.union
+            (idMapDict idMapNode leftId s.nodes)
+            (idMapDict idMapNode rightId t.nodes)
+    , roots =
+        List.append
+            (List.map leftId s.roots)
+            (List.map rightId t.roots)
+    }
 
 
 juxtaposeList : List Net -> Net
@@ -369,57 +420,56 @@ juxtaposeList nets =
 
 
 
-{- `curl s [t1, ..., tn]` returns the curl (or n-ary scroll) `s ⫐ t1; ...; tn` with outloop `s` and
-   inloops `t1`, ..., `tn`.
+{- The curl (or n-ary scroll) `s ⫐ t1; ...; tn` with outloop `s` and inloops `t1`, ..., `tn`.
 
-   This involves performing the following operations:
-   - `nodes` is the disjoint union `◅s ∪ ▻t1 ∪ ... ∪ ▻(...(▻tn))` where right injection is iterated
-     `i` times for `ti.nodes`, to which we add appropriate `Sep`s for the outloop (ID `0`) and
-     inloops (IDs `1` to `n`)
-   - `roots` is the singleton array `[0]`
-   - `interactions` is the disjoint union of the interactions of the outloop and inloops, to which
-     we add attachments `(0, 1)` ... `(0, n)`
+   This is implemented as the disjoint union `◅s ∪ ▻t1 ∪ ... ∪ ▻(...(▻tn))` where right injection is
+   iterated `i` times for `ti`, to which we add appropriate `Sep`s for the outloop (ID `0`)
+   and inloops (IDs `1` to `n`).
 -}
 
 
 curl : Net -> List Net -> Net
 curl outloop inloops =
-    let
-        outloopContent =
-            idMapDict idMapNode leftId outloop
+    { nodes =
+        let
+            outloopContent =
+                idMapDict idMapNode leftId outloop.nodes
 
-        inloopsContents =
-            List.foldl
-                (\inloop ( acc, inj ) ->
-                    let
-                        inloopNodes =
-                            idMapDict idMapNode inj inloop
-                    in
-                    ( Dict.union acc inloopNodes, inj >> rightId )
-                )
-                ( Dict.empty, rightId )
-                inloops
-                |> Tuple.first
-
-        inloopsNodes =
-            List.foldl
-                (\inloop ( acc, ( idx, inj ) ) ->
-                    ( Dict.insert (baseId idx) (nodeOfShape (Sep (getRoots inloop) (Just attachment))) acc
-                    , ( idx + 1, inj >> rightId )
+            inloopsContents =
+                List.foldl
+                    (\inloop ( acc, inj ) ->
+                        let
+                            inloopNodes =
+                                idMapDict idMapNode inj inloop.nodes
+                        in
+                        ( Dict.union acc inloopNodes, inj >> rightId )
                     )
-                )
-                ( Dict.empty, ( 1, rightId ) )
-                inloops
-                |> Tuple.first
+                    ( Dict.empty, rightId )
+                    inloops
+                    |> Tuple.first
 
-        outloopNode =
-            let
-                children =
-                    List.map leftId (getRoots outloop)
-            in
-            Dict.insert (baseId 0) (nodeOfShape (Sep children Nothing)) Dict.empty
-    in
-    List.foldl Dict.union Dict.empty [ outloopContent, inloopsContents, outloopNode, inloopsNodes ]
+            inloopsNodes =
+                List.foldl
+                    (\inloop ( acc, ( idx, inj ) ) ->
+                        ( Dict.insert (baseId idx) (nodeOfShape (Sep inloop.roots (Just attachment))) acc
+                        , ( idx + 1, inj >> rightId )
+                        )
+                    )
+                    ( Dict.empty, ( 1, rightId ) )
+                    inloops
+                    |> Tuple.first
+
+            outloopNode =
+                let
+                    children =
+                        List.map leftId outloop.roots
+                in
+                Dict.insert (baseId 0) (nodeOfShape (Sep children Nothing)) Dict.empty
+        in
+        List.foldl Dict.union Dict.empty [ outloopContent, inloopsContents, outloopNode, inloopsNodes ]
+    , roots =
+        [ baseId 0 ]
+    }
 
 
 
@@ -451,43 +501,50 @@ getTreeChildren (TNode { children }) =
 
 hydrate : Net -> List Tree
 hydrate net =
-    getRoots net
-        |> List.filterMap (\id -> buildTree id net)
+    net.roots
+        |> List.map (\id -> buildTree id net)
 
 
-buildTree : Id -> Net -> Maybe Tree
+buildTree : Id -> Net -> Tree
 buildTree id net =
-    Dict.get id net
-        |> Maybe.map
-            (\node ->
-                let
-                    resolvedChildren =
-                        case node.shape of
-                            Formula _ ->
-                                []
+    let
+        node =
+            getNode id net
 
-                            Sep children _ ->
-                                children
-                                    |> List.filterMap (\cid -> buildTree cid net)
-                in
-                TNode
-                    { id = id
-                    , node = node
-                    , children = resolvedChildren
-                    }
-            )
+        resolvedChildren =
+            case node.shape of
+                Formula _ ->
+                    []
+
+                Sep children _ ->
+                    children
+                        |> List.map (\cid -> buildTree cid net)
+    in
+    TNode
+        { id = id
+        , node = node
+        , children = resolvedChildren
+        }
 
 
 dehydrateTree : Tree -> Net
-dehydrateTree tree =
-    Debug.todo ""
+dehydrateTree ((TNode root) as tree) =
+    let
+        dehydrateNodes (TNode node) acc =
+            acc
+                |> Dict.insert node.id node.node
+                |> Dict.union (dehydrate node.children).nodes
+    in
+    { nodes = dehydrateNodes tree Dict.empty
+    , roots = List.map getTreeId root.children
+    }
 
 
 dehydrate : List Tree -> Net
 dehydrate trees =
     trees
         |> List.map dehydrateTree
-        |> List.foldl Dict.union Dict.empty
+        |> List.foldl juxtapose empty
 
 
 
@@ -557,6 +614,11 @@ hydrateIToken context token =
             hydrateTokens context True tokens
 
 
+hydrateStruct : Struct -> List Tree
+hydrateStruct struct =
+    List.map (hydrateOToken TopLevel) struct
+
+
 
 -- Surgery
 {- `prune net id` removes the subnet with root `id` in `net`. -}
@@ -598,10 +660,10 @@ insert { ctx, idx } tok net =
             , roots =
                 case ctx of
                     TopLevel ->
-                        Utils.List.insert idx id (getRoots net)
+                        Utils.List.insert idx id net.roots
 
                     _ ->
-                        getRoots net
+                        net.roots
             }
     in
     Debug.todo ""
@@ -694,7 +756,7 @@ isDetour id net =
 
 isNormal : Net -> Bool
 isNormal net =
-    net
+    net.nodes
         |> Dict.keys
         |> Utils.List.forall (\id -> not (isDetour id net))
 
