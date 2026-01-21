@@ -3,6 +3,7 @@ module Model.Scroll exposing (..)
 import Dict exposing (Dict)
 import List.Extra
 import Model.Formula as Formula exposing (..)
+import Set
 import Utils.List
 
 
@@ -84,20 +85,30 @@ rightId ( p, i ) =
 -- Scroll nets
 
 
-type Copy
+type Origin
     = Direct Id
     | Indirect { anc : Id, src : Id }
 
 
 type alias Justification =
     { self : Bool
-    , from : Maybe Copy
+    , from : Maybe Origin
     }
 
 
 assumption : Justification
 assumption =
     { self = False, from = Nothing }
+
+
+selfJustify : Justification -> Justification
+selfJustify justif =
+    { justif | self = True }
+
+
+justifyFrom : Origin -> Justification -> Justification
+justifyFrom copy justif =
+    { justif | from = Just copy }
 
 
 type alias Interaction =
@@ -109,6 +120,16 @@ type alias Interaction =
 attachment : Interaction
 attachment =
     { opened = False, closed = False }
+
+
+open : Interaction -> Interaction
+open interaction =
+    { interaction | opened = True }
+
+
+close : Interaction -> Interaction
+close interaction =
+    { interaction | closed = True }
 
 
 
@@ -263,6 +284,55 @@ getSubnet id =
 
 
 
+-- Update
+
+
+updateShapeNode : (Shape -> Shape) -> Node -> Node
+updateShapeNode update node =
+    { node | shape = update node.shape }
+
+
+updateNameNode : (String -> String) -> Node -> Node
+updateNameNode update node =
+    { node | name = update node.name }
+
+
+updateJustifNode : (Justification -> Justification) -> Node -> Node
+updateJustifNode update node =
+    { node | justif = update node.justif }
+
+
+updateContextNode : (Context -> Context) -> Node -> Node
+updateContextNode update node =
+    { node | context = update node.context }
+
+
+updateNode : Id -> (Node -> Node) -> Net -> Net
+updateNode id update net =
+    { net | nodes = Dict.update id (Maybe.map update) net.nodes }
+
+
+updateShape : Id -> (Shape -> Shape) -> Net -> Net
+updateShape id update net =
+    updateNode id (updateShapeNode update) net
+
+
+updateName : Id -> (String -> String) -> Net -> Net
+updateName id update net =
+    updateNode id (updateNameNode update) net
+
+
+updateContext : Id -> (Context -> Context) -> Net -> Net
+updateContext id update net =
+    updateNode id (updateContextNode update) net
+
+
+updateJustif : Id -> (Justification -> Justification) -> Net -> Net
+updateJustif id update net =
+    updateNode id (updateJustifNode update) net
+
+
+
 -- Identifier handling
 
 
@@ -276,8 +346,8 @@ idMapShape f shape =
             Sep (List.map f childIds) interaction
 
 
-idMapCopy : (Id -> Id) -> Copy -> Copy
-idMapCopy f copy =
+idMapOrigin : (Id -> Id) -> Origin -> Origin
+idMapOrigin f copy =
     case copy of
         Direct src ->
             Direct (f src)
@@ -289,7 +359,7 @@ idMapCopy f copy =
 idMapJustif : (Id -> Id) -> Justification -> Justification
 idMapJustif f justif =
     { justif
-        | from = Maybe.map (idMapCopy f) justif.from
+        | from = Maybe.map (idMapOrigin f) justif.from
     }
 
 
@@ -369,7 +439,21 @@ freshify s t =
 
 
 -- Constructors and combinators
--- Note that all operations here preserve uniqueness of identifiers
+{- Updates the content of `t.nodes` with that of `s.nodes`, assuming the IDs of `s` form a subset of
+   those of `t`. If this assumption is false, the result will be a non-sensical union with the roots
+   of `t`.
+-}
+
+
+merge : Net -> Net -> Net
+merge s t =
+    { nodes = Dict.union s.nodes t.nodes
+    , roots = t.roots
+    }
+
+
+
+-- Note that all operations other than `union` preserve uniqueness of identifiers
 
 
 nodeOfShape : Shape -> Node
@@ -547,7 +631,7 @@ dehydrateTree ((TNode root) as tree) =
                 |> Dict.union (dehydrate node.children).nodes
     in
     { nodes = dehydrateNodes tree Dict.empty
-    , roots = List.map getTreeId root.children
+    , roots = [ root.id ]
     }
 
 
@@ -625,14 +709,14 @@ hydrateIToken context token =
             hydrateTokens context True tokens
 
 
-netOfTokens : Context -> List IToken -> Net
-netOfTokens context =
-    List.map (hydrateIToken context) >> dehydrate
-
-
 hydrateStruct : Struct -> List Tree
 hydrateStruct struct =
     List.map (hydrateOToken TopLevel) struct
+
+
+netOfTokens : Context -> List IToken -> Net
+netOfTokens context =
+    List.map (hydrateIToken context) >> dehydrate
 
 
 netOfStruct : Struct -> Net
@@ -668,7 +752,7 @@ prune id net =
 
 
 graft : Location -> Net -> Net -> Net
-graft { ctx, idx } src tgt =
+graft loc src tgt =
     let
         srcFresh =
             freshify tgt src
@@ -680,7 +764,7 @@ graft { ctx, idx } src tgt =
                     ( updatedSrcNode, srcRootIdx ) =
                         case List.Extra.elemIndex srcNodeId srcFresh.roots of
                             Just i ->
-                                ( { srcNode | context = ctx }, Just i )
+                                ( { srcNode | context = loc.ctx }, Just i )
 
                             Nothing ->
                                 ( srcNode, Nothing )
@@ -688,10 +772,13 @@ graft { ctx, idx } src tgt =
                     accWithSrcNode =
                         Dict.insert srcNodeId updatedSrcNode acc
                 in
-                case ctx of
+                case loc.ctx of
+                    -- If we graft at the top-level, just add the node
                     TopLevel ->
                         accWithSrcNode
 
+                    -- If we graft in a sep and the node is a root,
+                    -- then we need to link the sep to its new child
                     Inside parentId ->
                         accWithSrcNode
                             |> Dict.update parentId
@@ -700,8 +787,9 @@ graft { ctx, idx } src tgt =
                                         let
                                             updatedShape =
                                                 case ( parent.shape, srcRootIdx ) of
+                                                    --
                                                     ( Sep childIds int, Just i ) ->
-                                                        Sep (Utils.List.insert (idx + i) [ srcNodeId ] childIds) int
+                                                        Sep (Utils.List.insert (loc.idx + i) [ srcNodeId ] childIds) int
 
                                                     ( shape, _ ) ->
                                                         shape
@@ -713,9 +801,9 @@ graft { ctx, idx } src tgt =
             tgt.nodes
             srcFresh.nodes
     , roots =
-        case ctx of
+        case loc.ctx of
             TopLevel ->
-                Utils.List.insert idx srcFresh.roots tgt.roots
+                Utils.List.insert loc.idx srcFresh.roots tgt.roots
 
             _ ->
                 tgt.roots
@@ -723,45 +811,118 @@ graft { ctx, idx } src tgt =
 
 
 
-{- Returns a deep copy of the conclusion of node `id` in `net`, holding `Copy` backpointers to the
-   original nodes. The root node is a `Direct` copy, while subnodes are `Indirect` copies.
+{- Assuming that `source` and `target` are isomorphic, this updates the `justif.from` field of every
+   node in `target` so that it holds a `Copy` backpointer to the corresponding node in `source`. The
+   root node is a `Direct` copy, while subnodes are `Indirect` copies.
 -}
 
 
-deepcopy : Id -> Net -> Net
-deepcopy id net =
+deeplinkTree : Tree -> Tree -> Tree
+deeplinkTree source target =
     let
-        subnet =
-            net |> getSubnet id |> conclusion
+        aux ancId src tgt =
+            let
+                srcId =
+                    getTreeId src
+
+                tgtNode =
+                    getTreeNode tgt
+
+                tgtJustif =
+                    tgtNode.justif
+
+                ( copy, acc ) =
+                    case ancId of
+                        Nothing ->
+                            ( Direct srcId, Just srcId )
+
+                        Just id ->
+                            ( Indirect { anc = id, src = srcId }, Just id )
+            in
+            TNode
+                { id = getTreeId tgt
+                , node = { tgtNode | justif = { tgtJustif | from = Just copy } }
+                , children = List.map2 (aux acc) (getTreeChildren src) (getTreeChildren tgt)
+                }
     in
-    idMapNet copyId
-        { subnet
-            | nodes =
-                Dict.map
-                    (\nodeId node ->
-                        let
-                            copy =
-                                if nodeId == id then
-                                    Direct id
+    aux Nothing source target
 
-                                else
-                                    Indirect { anc = id, src = nodeId }
-                        in
-                        { node | justif = { self = node.justif.self, from = Just copy } }
-                    )
-                    subnet.nodes
-        }
+
+deeplink : Net -> Net -> Net
+deeplink source target =
+    dehydrate (List.map2 deeplinkTree (hydrate source) (hydrate target))
 
 
 
-{- Inserts token `tok` at location `loc` in `net`, by properly "dehydrating" it into a node with
-   fresh IDs for every subnodes, as well as the correct attachment structure.
+{- Returns a deep copy of `net` with fresh IDs, holding `Copy` backpointers to the original nodes. -}
+
+
+deepcopy : Net -> Net
+deepcopy net =
+    net |> deeplink net |> idMapNet copyId
+
+
+
+-- Illative transformations
+{- Inserts token `tok` at location `loc` in `net`, by properly "dehydrating" it into a
+   self-justified node with fresh IDs for its subnodes, as well as the correct attachment structure.
 -}
 
 
 insert : Location -> IToken -> Net -> Net
 insert loc tok net =
-    graft loc (netOfTokens loc.ctx [ tok ]) net
+    let
+        newTree =
+            hydrateIToken loc.ctx tok
+
+        newNet =
+            dehydrateTree newTree
+
+        ins =
+            updateJustif (getTreeId newTree) selfJustify newNet
+    in
+    graft loc ins net
+
+
+
+{- "Deletes" node `id` in `net` by marking it as self-justified. -}
+
+
+delete : Id -> Net -> Net
+delete id net =
+    updateJustif id selfJustify net
+
+
+
+{- Iterates node `id` at location `loc` in `net` by inserting a deep copy of the conclusion of `id`. -}
+
+
+iterate : Id -> Location -> Net -> Net
+iterate id loc net =
+    let
+        copy =
+            net
+                |> getSubnet id
+                |> conclusion
+                |> deepcopy
+    in
+    graft loc copy net
+
+
+
+{- "Deiterates" node `tgt` from `src` in `net` by deep linking the conclusion of `tgt` back to that of `src`. -}
+
+
+deiterate : Id -> Id -> Net -> Net
+deiterate src tgt net =
+    let
+        ( subnetSrc, subnetTgt ) =
+            ( getSubnet src net, getSubnet tgt net )
+
+        backlinkedTgtConclusion =
+            deeplink (conclusion subnetSrc) (conclusion subnetTgt)
+    in
+    merge backlinkedTgtConclusion net
 
 
 
@@ -818,6 +979,16 @@ isDestruction polarity justif =
     isDeletion polarity justif || isDeiteration polarity justif
 
 
+isCreated : Id -> Net -> Bool
+isCreated id net =
+    isCreation (getPolarity id net) (getJustif id net)
+
+
+isDestructed : Id -> Net -> Bool
+isDestructed id net =
+    isDestruction (getPolarity id net) (getJustif id net)
+
+
 isExpanded : Id -> Net -> Bool
 isExpanded id net =
     getInteractions id net
@@ -862,12 +1033,30 @@ isNormal net =
 
 premiss : Net -> Net
 premiss net =
-    Debug.todo ""
+    Dict.foldl
+        (\id _ acc ->
+            if isCreated id net then
+                prune id acc
+
+            else
+                acc
+        )
+        net
+        net.nodes
 
 
 conclusion : Net -> Net
 conclusion net =
-    Debug.todo ""
+    Dict.foldl
+        (\id _ acc ->
+            if isDestructed id net then
+                prune id acc
+
+            else
+                acc
+        )
+        net
+        net.nodes
 
 
 
@@ -916,7 +1105,7 @@ stringOfNode net content node =
         ++ stringOfShape content node.shape
 
 
-stringOfCopy : Net -> Copy -> String
+stringOfCopy : Net -> Origin -> String
 stringOfCopy net copy =
     case copy of
         Direct srcId ->
