@@ -9,7 +9,7 @@ import View.Program exposing (..)
 
 
 viewShelf : Program -> Element Msg
-viewShelf goal =
+viewShelf program =
     row
         [ width fill
         , height (fillPortion 1)

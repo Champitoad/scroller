@@ -55,11 +55,11 @@ handleDragDropMsg dndMsg model =
             case dragStart of
                 Just { dragId } ->
                     let
-                        goal =
+                        program =
                             getProgram dragId.location model
 
                         newMode =
-                            case goal.actionMode of
+                            case program.actionMode of
                                 ProofMode Interacting ->
                                     ProofMode Justifying
 
@@ -67,10 +67,10 @@ handleDragDropMsg dndMsg model =
                                     EditMode { modeData | interaction = Reordering }
 
                                 _ ->
-                                    goal.actionMode
+                                    program.actionMode
 
                         newProgram =
-                            { goal | actionMode = newMode }
+                            { program | actionMode = newMode }
 
                         newModel =
                             { model | dragDrop = newDragDrop }
@@ -81,11 +81,11 @@ handleDragDropMsg dndMsg model =
                     case result of
                         Just ( drag, drop, _ ) ->
                             let
-                                goal =
+                                program =
                                     getProgram drag.location model
 
                                 defaultMode =
-                                    case goal.actionMode of
+                                    case program.actionMode of
                                         ProofMode _ ->
                                             ProofMode Interacting
 
@@ -93,14 +93,14 @@ handleDragDropMsg dndMsg model =
                                             EditMode { modeData | interaction = Operating }
 
                                         _ ->
-                                            goal.actionMode
+                                            program.actionMode
                             in
                             case drop of
                                 -- Dropping on target
                                 Just dest ->
                                     let
                                         newProgram =
-                                            case goal.actionMode of
+                                            case program.actionMode of
                                                 ProofMode Justifying ->
                                                     let
                                                         iterateVal =
@@ -111,7 +111,7 @@ handleDragDropMsg dndMsg model =
                                                                 , tgtName = Nothing
                                                                 }
                                                     in
-                                                    apply iterateVal goal
+                                                    apply iterateVal program
 
                                                 EditMode { interaction } ->
                                                     case interaction of
@@ -120,16 +120,16 @@ handleDragDropMsg dndMsg model =
                                                                 newFocus =
                                                                     fillZipper dest.content dest.target.zipper
                                                             in
-                                                            { goal | focus = newFocus }
+                                                            { program | focus = newFocus }
 
                                                         _ ->
-                                                            goal
+                                                            program
 
                                                 _ ->
-                                                    goal
+                                                    program
 
                                         newModel =
-                                            setProgram goal.location { newProgram | actionMode = defaultMode } model
+                                            setProgram program.location { newProgram | actionMode = defaultMode } model
                                     in
                                     { newModel | dragDrop = newDragDrop }
 
@@ -137,7 +137,7 @@ handleDragDropMsg dndMsg model =
                                 Nothing ->
                                     let
                                         newModel =
-                                            setProgram goal.location { goal | actionMode = defaultMode } model
+                                            setProgram program.location { program | actionMode = defaultMode } model
                                     in
                                     { newModel | dragDrop = newDragDrop }
 
@@ -166,19 +166,19 @@ update msg model =
             ( setProgramWithHistory location newProgram model, Cmd.none )
 
         ExecAll ->
-            ( { model | goal = execAll model.goal }, Cmd.none )
+            ( { model | program = execAll model.program }, Cmd.none )
 
         Step ->
             Debug.todo "Action stepping not implemented yet"
 
         ChangeActionMode mode ->
-            ( { model | goal = changeActionMode mode model.goal }, Cmd.none )
+            ( { model | program = changeActionMode mode model.program }, Cmd.none )
 
         ChangeExecMode mode ->
-            ( { model | goal = changeExecMode mode model.goal }, Cmd.none )
+            ( { model | program = changeExecMode mode model.program }, Cmd.none )
 
         ToggleRecording recording ->
-            ( { model | goal = toggleRecording recording model.goal }, Cmd.none )
+            ( { model | program = toggleRecording recording model.program }, Cmd.none )
 
         Undo ->
             ( undo model, Cmd.none )
@@ -190,7 +190,7 @@ update msg model =
             Debug.todo "Auto not implemented yet"
 
         UpdateNewAtomName name ->
-            ( { model | goal = updateNewAtomName name model.goal }, Cmd.none )
+            ( { model | program = updateNewAtomName name model.program }, Cmd.none )
 
         DragDropMsg dndMsg ->
             handleDragDropMsg dndMsg model

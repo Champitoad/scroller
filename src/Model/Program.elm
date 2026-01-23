@@ -2,7 +2,6 @@ module Model.Program exposing (..)
 
 import Dict exposing (Dict)
 import Iddict exposing (Iddict)
-import Model.Formula exposing (Formula)
 import Model.Scroll as Scroll exposing (..)
 import Queue exposing (Queue)
 import Utils.Maybe
@@ -22,12 +21,12 @@ type alias Selection =
 
 type ProofInteraction
     = Interacting
-    | Justifying
+    | Justifying -- Drag-and-Drop
 
 
 type EditInteraction
     = Operating
-    | Reordering
+    | Reordering -- Drag-and-Drop
 
 
 type ActionMode
@@ -35,6 +34,7 @@ type ActionMode
     | EditMode
         { interaction : EditInteraction
         , newAtomName : String
+        , insertions : Dict Id Int -- maps node IDs to corresponding insertion action IDs
         }
     | NavigationMode
 
@@ -46,16 +46,16 @@ type ExecMode
 
 
 -- Navigation
-{- A `Navigation` is a non-empty sequence of visited `Location`s.
+{- A `Navigation` is a non-empty sequence of visited `Context`s.
 
    It is used to keep track of the user's navigation history, i.e. the different
-   locations in a goal that she has visited.
+   contexts in a program that she has visited.
 -}
 
 
 type Navigation
-    = Initial Location
-    | Visit Location Navigation
+    = Initial Context
+    | Visit Context Navigation
 
 
 initialNavigation : Navigation
@@ -109,21 +109,21 @@ type Route
 
 {- A `Program` is made of the following data:
 
-   `net`: the whole net the user is working on
+   - `net`: the whole net the user is working on
 
-   `navigation`: the navigation history
+   - `navigation`: the navigation history
 
-   `route`: a unique identifier determining where the goal appears in the app
+   - `route`: a unique identifier determining where the program appears in the app
 
-   `actionMode`: the current mode determining which actions can be performed through direct manipulation
+   - `actionMode`: the current mode determining which actions can be performed through direct manipulation
 
-   `execMode`: the current mode determining in which direction actions are executed
+   - `execMode`: the current mode determining in which direction actions are executed
 
-   `recording`: a boolean determining whether actions are recorded
+   - `recording`: a boolean determining whether actions are recorded
 
-   `actions`: dictionary of all recorded actions pending for execution, accessed through unique IDs
+   - `actions`: dictionary of all recorded actions pending for execution, accessed through unique IDs
 
-   `actionsQueue`: queue of recorded actions IDs
+   - `actionsQueue`: queue of recorded actions IDs
 -}
 
 
@@ -153,22 +153,22 @@ fromNet net =
 
 
 map : (Net -> Net) -> Program -> Program
-map f goal =
-    { goal | net = f goal.net }
+map f program =
+    { program | net = f program.net }
 
 
 updateNewAtomName : String -> Program -> Program
-updateNewAtomName name goal =
+updateNewAtomName name program =
     let
-        newMode =
-            case goal.actionMode of
+        updatedMode =
+            case program.actionMode of
                 EditMode modeData ->
                     EditMode { modeData | newAtomName = name }
 
                 mode ->
                     mode
     in
-    { goal | actionMode = newMode }
+    { program | actionMode = updatedMode }
 
 
 
@@ -194,663 +194,300 @@ type
 
 
 type ActionError
-    = InvalidPolarity Polarity
-    | Erased Id
-    | InvalidBranchId Id Id
+    = InvalidPolarity
+    | Erased
     | NonEmptyOutloop Id
     | NonSingleInloop Id
-    | OutOfScope Id Id
+    | OutOfScope Id
     | IncompatibleBoundaries Id Id
 
 
-boundaryVal : ExecMode -> Polarity -> Node -> Struct
-boundaryVal execMode =
+boundary : Program -> Net
+boundary program =
     let
-        forwardBoundary pol =
-            case pol of
-                Pos ->
-                    conclusionNode
-
-                Neg ->
-                    premissNode
-    in
-    case execMode of
-        Forward ->
-            forwardBoundary
-
-        Backward ->
-            invert >> forwardBoundary
-
-
-boundary : ExecMode -> Polarity -> Net -> Struct
-boundary execMode =
-    let
-        forwardBoundary pol =
-            case pol of
-                Pos ->
+        boundaryFunc =
+            case program.execMode of
+                Forward ->
                     conclusion
 
-                Neg ->
+                Backward ->
                     premiss
     in
-    case execMode of
-        Forward ->
-            forwardBoundary
-
-        Backward ->
-            invert >> forwardBoundary
+    boundaryFunc program.net
 
 
 execAll : Program -> Program
-execAll goal =
-    { goal
-        | net = netFromStruct (boundary goal.execMode Pos goal.net)
+execAll program =
+    { program
+        | net = boundary program
         , actions = Iddict.empty
         , actionsQueue = Queue.empty
     }
 
 
 changeActionMode : ActionMode -> Program -> Program
-changeActionMode mode goal =
-    let
-        newFocus =
-            case mode of
-                ProofMode _ ->
-                    List.map commitVal goal.net
-
-                _ ->
-                    goal.net
-    in
-    { goal | actionMode = mode, net = newFocus }
+changeActionMode mode program =
+    { program | actionMode = mode }
 
 
 changeExecMode : ExecMode -> Program -> Program
-changeExecMode mode goal =
-    { goal | execMode = mode }
+changeExecMode mode program =
+    { program | execMode = mode }
 
 
 toggleRecording : Bool -> Program -> Program
-toggleRecording recording goal =
-    { goal | recording = recording }
+toggleRecording recording program =
+    { program | recording = recording }
 
 
-getSingleInloop : ExecMode -> Context -> ScrollVal -> Maybe ( Ident, Env )
-getSingleInloop execMode ctx scroll =
-    let
-        erasedEnv =
-            case execMode of
-                Forward ->
-                    eliminatedEnv
+flipExecMode : ExecMode -> ExecMode
+flipExecMode execMode =
+    case execMode of
+        Forward ->
+            Backward
 
-                Backward ->
-                    introducedEnv
+        Backward ->
+            Forward
 
-        nonErasedInloops =
-            scroll.data.inloops
-                |> Dict.filter (\id env -> not (erasedEnv ctx scroll id env))
-                |> Dict.toList
-    in
-    case nonErasedInloops of
-        [ inloop ] ->
-            Just inloop
 
-        _ ->
-            Nothing
+isErased : Id -> Program -> Bool
+isErased id program =
+    case program.execMode of
+        Forward ->
+            isEliminated id program.net
+
+        Backward ->
+            isIntroduced id program.net
+
+
+isErasedContext : Context -> Program -> Bool
+isErasedContext ctx program =
+    case program.execMode of
+        Forward ->
+            isEliminatedContext ctx program.net
+
+        Backward ->
+            isIntroducedContext ctx program.net
 
 
 applicable : Program -> Action -> Result ActionError ()
-applicable goal action =
+applicable program action =
     let
-        { erasedVal, erasedScrollVal, erasedEnv, erasedArea } =
-            case goal.execMode of
+        creationPolarity =
+            case program.execMode of
                 Forward ->
-                    { erasedVal = eliminatedVal
-                    , erasedScrollVal = eliminatedScrollVal
-                    , erasedEnv = eliminatedEnv
-                    , erasedArea = eliminatedArea
-                    }
+                    Neg
 
                 Backward ->
-                    { erasedVal = introducedVal
-                    , erasedScrollVal = introducedScrollVal
-                    , erasedEnv = introducedEnv
-                    , erasedArea = introducedArea
-                    }
+                    Pos
 
-        isPositive : Context -> Bool
-        isPositive ctx =
-            let
-                pol =
-                    case goal.execMode of
-                        Forward ->
-                            Pos
-
-                        Backward ->
-                            Neg
-            in
-            ctx.polarity == pol
-
-        isNegative =
-            not << isPositive
+        destructionPolarity =
+            invert creationPolarity
     in
     case action of
-        Open { ctx } ->
-            if erasedArea ctx then
-                Err (Erased ctx.zipper)
+        Open loc ->
+            if isErasedContext loc.ctx program then
+                Err Erased
 
             else
                 Ok ()
 
-        Close { ctx, scroll } ->
-            if erasedScrollVal ctx scroll then
-                Err (Erased ctx.zipper)
+        Close id ->
+            if isErased id program then
+                Err Erased
 
-            else if boundary goal.execMode (invert ctx.polarity) scroll.data.outloop /= [] then
-                Err (NonEmptyOutloop ctx.zipper)
+            else if getOutloop id (boundary program) /= Scroll.empty then
+                Err (NonEmptyOutloop id)
 
-            else
-                case getSingleInloop goal.execMode ctx scroll of
-                    Just _ ->
-                        Ok ()
-
-                    Nothing ->
-                        Err (NonSingleInloop ctx.zipper)
-
-        InsertVal { ctx } ->
-            if isPositive ctx then
-                Err (InvalidPolarity Pos)
-
-            else if erasedArea ctx then
-                Err (Erased ctx.zipper)
+            else if Dict.size (getInteractions id (boundary program)) /= 1 then
+                Err (NonSingleInloop id)
 
             else
                 Ok ()
 
-        InsertInloop { ctx, scroll, id } ->
-            if isNegative ctx then
-                Err (InvalidPolarity Pos)
+        Insert loc _ ->
+            if getPolarityContext loc.ctx program.net /= creationPolarity then
+                Err InvalidPolarity
 
-            else if erasedScrollVal ctx scroll then
-                Err (Erased ctx.zipper)
-
-            else if Dict.member id scroll.data.inloops then
-                Err (InvalidBranchId ctx.zipper id)
+            else if isErasedContext loc.ctx program then
+                Err Erased
 
             else
                 Ok ()
 
-        DeleteVal { ctx, val } ->
-            if isNegative ctx then
-                Err (InvalidPolarity Neg)
+        Delete id ->
+            if getPolarity id program.net /= destructionPolarity then
+                Err InvalidPolarity
 
-            else if erasedVal ctx val then
-                Err (Erased ctx.zipper)
-
-            else
-                Ok ()
-
-        DeleteEnv { ctx, scroll, id } ->
-            case Dict.get id scroll.data.inloops of
-                Nothing ->
-                    Err (InvalidBranchId ctx.zipper id)
-
-                Just env ->
-                    if isPositive ctx then
-                        Err (InvalidPolarity Neg)
-
-                    else if erasedEnv ctx scroll id env then
-                        Err (Erased ctx.zipper)
-
-                    else
-                        Ok ()
-
-        IterateVal { srcCtx, srcVal, tgtCtx } ->
-            if isNegative tgtCtx then
-                Err (InvalidPolarity Neg)
-
-            else if not (spans srcCtx.zipper tgtCtx.zipper) then
-                Err (OutOfScope srcCtx.zipper tgtCtx.zipper)
-
-            else if erasedVal srcCtx srcVal then
-                Err (Erased srcCtx.zipper)
-
-            else if erasedArea tgtCtx then
-                Err (Erased tgtCtx.zipper)
-
-            else if Utils.Maybe.isNothing srcVal.name then
-                Err (UnnamedSource srcCtx.zipper)
+            else if isErased id program then
+                Err Erased
 
             else
                 Ok ()
 
-        IterateEnv { ctx, scroll, srcId, tgtId } ->
-            case Dict.get srcId scroll.data.inloops of
-                Nothing ->
-                    Err (InvalidBranchId ctx.zipper srcId)
+        Iterate src dst ->
+            if getPolarityContext dst.ctx program.net /= creationPolarity then
+                Err InvalidPolarity
 
-                Just srcEnv ->
-                    if isPositive ctx then
-                        Err (InvalidPolarity Pos)
+            else if not (spans (getContext src program.net) dst.ctx program.net) then
+                Err (OutOfScope src)
 
-                    else if srcId == tgtId then
-                        Err (InvalidBranchId ctx.zipper tgtId)
-
-                    else if erasedEnv ctx scroll srcId srcEnv then
-                        let
-                            zScrollData =
-                                { metadata = scroll.metadata
-                                , name = scroll.name
-                                , justif = scroll.justif
-                                , interaction = scroll.data.interaction
-                                }
-
-                            zInloop =
-                                ZInloop
-                                    { scroll = zScrollData
-                                    , outloop = scroll.data.outloop
-                                    , neighbors = Dict.remove srcId scroll.data.inloops
-                                    , metadata = srcEnv.metadata
-                                    , justif = srcEnv.justif
-                                    , id = srcId
-                                    }
-                        in
-                        Err (Erased (zInloop :: ctx.zipper))
-
-                    else
-                        Ok ()
-
-        DeiterateVal { srcCtx, srcVal, tgtCtx, tgtVal } ->
-            if isPositive tgtCtx then
-                Err (InvalidPolarity Pos)
-
-            else if not (spans srcCtx.zipper tgtCtx.zipper) then
-                Err (OutOfScope srcCtx.zipper tgtCtx.zipper)
-
-            else if erasedVal srcCtx srcVal then
-                Err (Erased srcCtx.zipper)
-
-            else if erasedVal tgtCtx tgtVal then
-                Err (Erased tgtCtx.zipper)
-
-            else if
-                boundary goal.execMode srcCtx.polarity [ srcVal ]
-                    /= boundary goal.execMode tgtCtx.polarity [ tgtVal ]
-            then
-                Err (IncompatibleBoundaries srcCtx.zipper tgtCtx.zipper)
+            else if isErased src program || isErasedContext dst.ctx program then
+                Err Erased
 
             else
                 Ok ()
 
-        DeiterateEnv { ctx, scroll, srcId, tgtId } ->
-            case Dict.get srcId scroll.data.inloops of
-                Nothing ->
-                    Err (InvalidBranchId ctx.zipper srcId)
+        Deiterate src tgt ->
+            if getPolarity tgt program.net /= destructionPolarity then
+                Err InvalidPolarity
 
-                Just srcEnv ->
-                    case Dict.get tgtId scroll.data.inloops of
-                        Nothing ->
-                            Err (InvalidBranchId ctx.zipper tgtId)
+            else if not (spans (getContext src program.net) (getContext tgt program.net) program.net) then
+                Err (OutOfScope src)
 
-                        Just tgtEnv ->
-                            let
-                                zScrollData =
-                                    { metadata = scroll.metadata
-                                    , name = scroll.name
-                                    , justif = scroll.justif
-                                    , interaction = scroll.data.interaction
-                                    }
+            else if isErased src program || isErased tgt program then
+                Err Erased
 
-                                srcZInloop =
-                                    ZInloop
-                                        { scroll = zScrollData
-                                        , outloop = scroll.data.outloop
-                                        , neighbors = Dict.remove srcId scroll.data.inloops
-                                        , metadata = srcEnv.metadata
-                                        , justif = srcEnv.justif
-                                        , id = srcId
-                                        }
+            else if getSubnet src (boundary program) /= getSubnet tgt (boundary program) then
+                Err (IncompatibleBoundaries src tgt)
 
-                                tgtZInloop =
-                                    ZInloop
-                                        { scroll = zScrollData
-                                        , outloop = scroll.data.outloop
-                                        , neighbors = Dict.remove tgtId scroll.data.inloops
-                                        , metadata = tgtEnv.metadata
-                                        , justif = tgtEnv.justif
-                                        , id = tgtId
-                                        }
-
-                                srcZipper =
-                                    srcZInloop :: ctx.zipper
-
-                                tgtZipper =
-                                    tgtZInloop :: ctx.zipper
-                            in
-                            if isNegative ctx then
-                                Err (InvalidPolarity Pos)
-
-                            else if erasedEnv ctx scroll srcId srcEnv then
-                                Err (Erased srcZipper)
-
-                            else if erasedEnv ctx scroll tgtId tgtEnv then
-                                Err (Erased tgtZipper)
-
-                            else if
-                                boundary goal.execMode ctx.polarity srcEnv.content
-                                    /= boundary goal.execMode ctx.polarity tgtEnv.content
-                            then
-                                Err (IncompatibleBoundaries srcZipper tgtZipper)
-
-                            else
-                                Ok ()
+            else
+                Ok ()
 
         Decompose _ ->
             Ok ()
 
 
+annotateExpansion : ExecMode -> Interaction -> Interaction
+annotateExpansion execMode =
+    case execMode of
+        Forward ->
+            makeOpened
 
-{- `record action goal` records `action` in `goal` by:
-   - generating a new ID `id` and associating `action` to `id` in `goal.actions`
-   - pushing `id` in `goal.actionsQueue`
-   - decorating the scroll net `goal.net` with the argumentation/interaction corresponding to `action`
+        Backward ->
+            makeClosed
+
+
+
+{- `record action program` records `action` in `program` by:
+   - generating a new ID `id` and associating `action` to `id` in `program.actions`
+   - pushing `id` in `program.actionsQueue`
+   - decorating the scroll net `program.net` with the justification/interaction corresponding to `action`
    - returning `id` for later usage (typically with `Program.execute`)
 
-   This assumes that the action is indeed applicable in the goal.
-
-   **Note:** for now we assume that `goal.net` is always the top-level net, and thus the action's
-   paths are walked from the root of `goal.net`.
+   This assumes that the action is indeed applicable in the program.
 -}
 
 
 record : Action -> Program -> ( Int, Program )
-record action goal =
+record action program =
     let
         ( actionId, newActions ) =
-            Iddict.insert action goal.actions
+            Iddict.insert action program.actions
 
         newActionsQueue =
-            Queue.enqueue actionId goal.actionsQueue
+            Queue.enqueue actionId program.actionsQueue
 
-        newFocus : Net
-        newFocus =
+        updatedNet : Net
+        updatedNet =
             case action of
-                Open { ctx, name } ->
+                Open loc ->
                     let
-                        inloopId =
+                        inloopName =
                             "Return"
 
-                        interaction =
-                            case goal.execMode of
-                                Forward ->
-                                    { opened = Just inloopId, closed = Nothing }
-
-                                Backward ->
-                                    { opened = Nothing, closed = Just inloopId }
-
-                        emptyEnv =
-                            { metadata = { grown = False }
-                            , justif = assumption
-                            , content = []
-                            }
-
-                        emptyScroll : Val
-                        emptyScroll =
-                            { metadata = { grown = False }
-                            , name = name
-                            , justif = assumption
-                            , shape =
-                                Scroll
-                                    { interaction = interaction
-                                    , outloop = []
-                                    , inloops = Dict.fromList [ ( inloopId, emptyEnv ) ]
-                                    }
-                            }
+                        scrollNet =
+                            curl empty [ empty ]
+                                |> updateName (baseId 0) (\_ -> inloopName)
+                                |> updateInteraction (baseId 0) (annotateExpansion program.execMode)
                     in
-                    fillZipper [ emptyScroll ] ctx.zipper
+                    graft loc scrollNet program.net
 
-                Close { ctx, scroll, id } ->
+                Close id ->
+                    updateInteraction id (annotateExpansion (flipExecMode program.execMode)) program.net
+
+                Insert loc tok ->
+                    insert loc tok program.net
+
+                Delete id ->
+                    delete id program.net
+
+                Iterate src dst ->
+                    iterate src dst program.net
+
+                Deiterate src tgt ->
+                    deiterate src tgt program.net
+
+                Decompose id ->
                     let
-                        scrollData =
-                            scroll.data
+                        formNet =
+                            case getShape id program.net of
+                                Formula form ->
+                                    form |> structOfFormula |> netOfStruct
 
-                        interaction =
-                            scrollData.interaction
+                                _ ->
+                                    getSubnet id program.net
 
-                        newInteraction =
-                            case goal.execMode of
-                                Forward ->
-                                    { interaction | closed = Just id }
-
-                                Backward ->
-                                    { interaction | opened = Just id }
-
-                        newScrollData =
-                            { scrollData | interaction = newInteraction }
-
-                        newVal =
-                            valFromScroll { scroll | data = newScrollData }
+                        loc =
+                            getLocation id program.net
                     in
-                    fillZipper [ newVal ] ctx.zipper
-
-                InsertVal { ctx, val } ->
-                    let
-                        grown =
-                            isGrownZipper ctx.zipper
-                                || isGrownVal val
-
-                        newVal =
-                            { val
-                                | metadata = { grown = grown }
-                                , justif = { self = not grown, from = Nothing }
-                            }
-                    in
-                    fillZipper [ newVal ] ctx.zipper
-
-                InsertInloop { ctx, scroll, id, content } ->
-                    let
-                        grown =
-                            isGrownZipper ctx.zipper
-                                || scroll.metadata.grown
-
-                        newInloop =
-                            { metadata = { grown = grown }
-                            , justif = { self = not grown, from = Nothing }
-                            , content = content
-                            }
-
-                        scrollData =
-                            scroll.data
-
-                        newInloops =
-                            Dict.insert id newInloop scrollData.inloops
-
-                        newVal =
-                            valFromScroll { scroll | data = { scrollData | inloops = newInloops } }
-                    in
-                    fillZipper [ newVal ] ctx.zipper
-
-                DeleteVal { ctx, val } ->
-                    let
-                        oldJustif =
-                            val.justif
-
-                        newVal =
-                            { val | justif = { oldJustif | self = True } }
-                    in
-                    fillZipper [ newVal ] ctx.zipper
-
-                DeleteEnv { ctx, scroll, id, env } ->
-                    let
-                        oldJustif =
-                            env.justif
-
-                        newInloop =
-                            { env | justif = { oldJustif | self = True } }
-
-                        newInloops =
-                            Dict.insert id newInloop scroll.data.inloops
-
-                        oldScrollData =
-                            scroll.data
-
-                        newVal =
-                            valFromScroll { scroll | data = { oldScrollData | inloops = newInloops } }
-                    in
-                    fillZipper [ newVal ] ctx.zipper
-
-                IterateVal { srcCtx, srcVal, tgtCtx, tgtName } ->
-                    case boundaryVal goal.execMode srcCtx.polarity srcVal of
-                        [ node ] ->
-                            let
-                                copy =
-                                    valFromNode node
-
-                                tgtVal =
-                                    { copy
-                                        | name = tgtName
-                                        , justif = { self = False, from = srcVal.name }
-                                    }
-                            in
-                            fillZipper [ tgtVal ] tgtCtx.zipper
-
-                        _ ->
-                            -- should never happen
-                            Debug.log "Error: boundary of an iterated value should be a single node! Doing nothing."
-                                fillZipper
-                                []
-                                tgtCtx.zipper
-
-                IterateEnv { ctx, scroll, srcId, srcEnv, tgtId } ->
-                    let
-                        srcBoundary =
-                            boundary goal.execMode ctx.polarity srcEnv.content
-
-                        copy =
-                            netFromStruct srcBoundary
-
-                        tgtEnv =
-                            { srcEnv
-                                | justif = { self = False, from = Just srcId }
-                                , content = copy
-                            }
-
-                        newInloops =
-                            Dict.insert tgtId tgtEnv scroll.data.inloops
-
-                        oldScrollData =
-                            scroll.data
-
-                        newScroll =
-                            { scroll | data = { oldScrollData | inloops = newInloops } }
-
-                        newVal =
-                            valFromScroll newScroll
-                    in
-                    fillZipper [ newVal ] ctx.zipper
-
-                DeiterateVal { srcVal, tgtCtx, tgtVal } ->
-                    let
-                        oldJustif =
-                            tgtVal.justif
-
-                        newVal =
-                            { tgtVal | justif = { oldJustif | from = srcVal.name } }
-                    in
-                    fillZipper [ newVal ] tgtCtx.zipper
-
-                DeiterateEnv { ctx, scroll, srcId, tgtId, tgtEnv } ->
-                    let
-                        oldJustif =
-                            tgtEnv.justif
-
-                        newTgtEnv =
-                            { tgtEnv | justif = { oldJustif | from = Just srcId } }
-
-                        newInloops =
-                            Dict.insert tgtId newTgtEnv scroll.data.inloops
-
-                        oldScrollData =
-                            scroll.data
-
-                        newScroll =
-                            { scroll | data = { oldScrollData | inloops = newInloops } }
-
-                        newVal =
-                            valFromScroll newScroll
-                    in
-                    fillZipper [ newVal ] ctx.zipper
-
-                Decompose { ctx, formula } ->
-                    fillZipper (decompose formula) ctx.zipper
+                    program.net
+                        |> prune id
+                        |> graft loc formNet
     in
     ( actionId
-    , { goal
+    , { program
         | actions = newActions
         , actionsQueue = newActionsQueue
-        , net = newFocus
+        , net = updatedNet
       }
     )
 
 
 
-{- `execute actionId goal` executes the action with ID `actionId` in `goal` by:
-   - deleting the associated entry in `goal.actions`
-   - deleting `actionId` from `goal.actionsQueue` if not already done
-   - applying the semantics of the action in `goal.net`
-
-   **Note:** for now we assume that `goal.net` is always the top-level net, and thus the action's
-   paths are walked from the root of `goal.net`.
+{- `execute actionId program` executes the action with ID `actionId` in `program` by:
+   - deleting the associated entry in `program.actions`
+   - deleting `actionId` from `program.actionsQueue` if not already done
+   - applying the semantics of the action in `program.net`
 -}
 
 
 execute : Int -> Program -> Program
-execute actionId goal =
-    case Iddict.get actionId goal.actions of
+execute actionId program =
+    case Iddict.get actionId program.actions of
         Just action ->
             let
                 newActions =
-                    Iddict.remove actionId goal.actions
+                    Iddict.remove actionId program.actions
 
                 newActionsQueue =
-                    Queue.filter (\id -> id /= actionId) goal.actionsQueue
+                    Queue.filter (\id -> id /= actionId) program.actionsQueue
 
                 newFocus : Net
                 newFocus =
                     case action of
-                        Open { ctx, name } ->
+                        Open loc ->
                             Debug.todo "Open action execution not implemented yet."
 
-                        Close { ctx, scroll, id } ->
+                        Close id ->
                             Debug.todo "Close action execution not implemented yet."
 
-                        InsertVal { ctx, val } ->
-                            Debug.todo "InsertVal action execution not implemented yet."
+                        Insert loc tok ->
+                            Debug.todo "Insert action execution not implemented yet."
 
-                        InsertInloop { ctx, scroll, id, content } ->
-                            Debug.todo "InsertEnv action execution not implemented yet."
+                        Delete id ->
+                            Debug.todo "Delete action execution not implemented yet."
 
-                        DeleteVal { ctx, val } ->
-                            Debug.todo "DeleteVal action execution not implemented yet."
+                        Iterate src dst ->
+                            Debug.todo "Iterate action execution not implemented yet."
 
-                        DeleteEnv { ctx, scroll, id } ->
-                            Debug.todo "DeleteEnv action execution not implemented yet."
+                        Deiterate src tgt ->
+                            Debug.todo "Deiterate action execution not implemented yet."
 
-                        IterateVal { srcCtx, srcVal, tgtCtx, tgtName } ->
-                            Debug.todo "IterateVal action execution not implemented yet."
-
-                        IterateEnv { ctx, scroll, srcId, tgtId } ->
-                            Debug.todo "IterateEnv action execution not implemented yet."
-
-                        DeiterateVal { srcCtx, srcVal, tgtCtx, tgtVal } ->
-                            Debug.todo "DeiterateVal action execution not implemented yet."
-
-                        DeiterateEnv { ctx, scroll, srcId, tgtId } ->
-                            Debug.todo "DeiterateEnv action execution not implemented yet."
-
-                        Decompose { ctx, formula } ->
+                        Decompose id ->
                             Debug.todo "Decompose action execution not implemented yet."
             in
-            { goal
+            { program
                 | actions = newActions
                 , actionsQueue = newActionsQueue
                 , net = newFocus
@@ -858,21 +495,21 @@ execute actionId goal =
 
         Nothing ->
             Debug.log
-                "Error: trying to execute action with non-existing ID. Returning the goal unchanged."
-                goal
+                "Error: trying to execute action with non-existing ID. Returning the program unchanged."
+                program
 
 
 apply : Action -> Program -> Program
-apply action goal =
+apply action program =
     let
         ( actionId, newProgram ) =
-            record action goal
+            record action program
     in
-    if goal.recording then
+    if program.recording then
         newProgram
 
     else
-        execute actionId goal
+        execute actionId program
 
 
 
@@ -890,9 +527,9 @@ type alias Sandboxes =
 
 
 mkSandbox : Program -> Sandbox
-mkSandbox goal =
-    { initialProgram = goal
-    , currentProgram = goal
+mkSandbox program =
+    { initialProgram = program
+    , currentProgram = program
     }
 
 
@@ -904,14 +541,14 @@ getSandbox id sandboxes =
                 _ =
                     Debug.log "Warning" "trying to retrieve a non-existing sandbox; returning a dummy one."
             in
-            mkSandbox (fromNet [])
+            mkSandbox (fromNet empty)
 
         Just sandbox ->
             sandbox
 
 
 updateSandbox : SandboxID -> Program -> Sandboxes -> Sandboxes
-updateSandbox id goal sandboxes =
+updateSandbox id program sandboxes =
     case Dict.get id sandboxes of
         Nothing ->
             let
@@ -924,7 +561,7 @@ updateSandbox id goal sandboxes =
             let
                 updatedSandbox =
                     { initialProgram = sandbox.initialProgram
-                    , currentProgram = goal
+                    , currentProgram = program
                     }
             in
             Dict.insert id updatedSandbox sandboxes
@@ -966,16 +603,16 @@ manualExamples =
 
         examples : List ( SandboxID, ActionMode, Net )
         examples =
-            [ ( "Flower", ProofMode Interacting, [ s [ a "a", a "b" ] [ [ a "c" ], [ a "d" ] ] ] )
-            , ( "QED", ProofMode Interacting, [ s [ a "a" ] [ [] ] ] )
-            , ( "Justify", ProofMode Interacting, [ Scroll.identity ] )
-            , ( "Unlock", ProofMode Interacting, [ s [ s [] [ [ a "a" ] ] ] [ [ a "a" ] ] ] )
-            , ( "Import", ProofMode Interacting, [ Scroll.modusPonensCurryfied ] )
+            [ ( "Flower", ProofMode Interacting, curl (juxtaposeList [ a "a", a "b" ]) [ a "c", a "d" ] )
+            , ( "QED", ProofMode Interacting, curl (a "a") [ empty ] )
+            , ( "Justify", ProofMode Interacting, Scroll.identity )
+            , ( "Unlock", ProofMode Interacting, curl (curl empty [ a "a" ]) [ a "a" ] )
+            , ( "Import", ProofMode Interacting, Scroll.modusPonensCurryfied )
             , ( "Case"
               , ProofMode Interacting
-              , [ s [ s [] [ [ a "a" ], [ a "b" ] ], s [ a "a" ] [ [ a "c" ] ], s [ a "b" ] [ [ a "c" ] ] ] [ [ a "c" ] ] ]
+              , curl (juxtaposeList [ curl empty [ a "a", a "b" ], curl (a "a") [ a "c" ], curl (a "b") [ a "c" ] ]) [ a "c" ]
               )
-            , ( "Decompose", ProofMode Interacting, [ Scroll.orElim ] )
+            , ( "Decompose", ProofMode Interacting, Scroll.orElim )
             ]
     in
     examples

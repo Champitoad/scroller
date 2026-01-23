@@ -30,14 +30,14 @@ view model =
         Route.Playground ->
             let
                 shelf =
-                    viewShelf model.goal
+                    viewShelf model.program
 
-                goal =
+                program =
                     el
                         [ width fill
-                        , goalHeightAttr
+                        , programHeightAttr
                         ]
-                        (viewProgram model.dragDrop model.goal)
+                        (viewProgram model.dragDrop model.program)
 
                 toolbar =
                     el
@@ -48,7 +48,7 @@ view model =
                         (viewToolbar model)
 
                 app =
-                    column [ width fill, height fill ] [ goal, toolbar ]
+                    column [ width fill, height fill ] [ program, toolbar ]
                         |> layout []
             in
             { title = "Flower Prover"

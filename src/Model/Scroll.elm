@@ -122,19 +122,19 @@ attachment =
     { opened = False, closed = False }
 
 
-open : Interaction -> Interaction
-open interaction =
+makeOpened : Interaction -> Interaction
+makeOpened interaction =
     { interaction | opened = True }
 
 
-close : Interaction -> Interaction
-close interaction =
+makeClosed : Interaction -> Interaction
+makeClosed interaction =
     { interaction | closed = True }
 
 
 
 {- `Sep ids int` encodes a **sep node** with children identified and ordered in `ids`, having a
-   potential interaction with its parent `int`. That is, the sep is an *outloop* if `int = Nothing`,
+   potential interaction `int` with its parent. That is, the sep is an *outloop* if `int = Nothing`,
    and an *inloop* if `int = Just ...`.
 -}
 
@@ -229,13 +229,27 @@ getContext id net =
     (getNode id net).context
 
 
+getLocation : Id -> Net -> Location
+getLocation id net =
+    case getContext id net of
+        TopLevel ->
+            { ctx = TopLevel
+            , idx = Maybe.withDefault -1 (List.Extra.elemIndex id net.roots)
+            }
+
+        Inside parentId ->
+            { ctx = Inside parentId
+            , idx = Maybe.withDefault -1 (List.Extra.elemIndex id (getChildIds parentId net))
+            }
+
+
 getPolarity : Id -> Net -> Polarity
 getPolarity id net =
-    polarityOfContext (getContext id net) net
+    getPolarityContext (getContext id net) net
 
 
-polarityOfContext : Context -> Net -> Polarity
-polarityOfContext ctx net =
+getPolarityContext : Context -> Net -> Polarity
+getPolarityContext ctx net =
     case ctx of
         TopLevel ->
             Pos
@@ -275,6 +289,15 @@ getChildIds id net =
 
 
 
+{- Reflexive-transitive closure of `getChildIds`. -}
+
+
+getDescendentIds : Id -> Net -> List Id
+getDescendentIds id net =
+    id :: List.concatMap (\cid -> getDescendentIds cid net) (getChildIds id net)
+
+
+
 {- Returns the singleton subnet of `net` rooted at `id`. -}
 
 
@@ -284,7 +307,88 @@ getSubnet id =
 
 
 
+{- Returns the subnet of `net` whose roots are the (direct) children in context `ctx`. -}
+
+
+getSubnetContext : Context -> Net -> Net
+getSubnetContext ctx net =
+    case ctx of
+        TopLevel ->
+            net
+
+        Inside parentId ->
+            let
+                descendentIds =
+                    getDescendentIds parentId net
+            in
+            { nodes =
+                net.nodes
+                    |> Dict.remove parentId
+                    |> Dict.filter (\id _ -> List.member id descendentIds)
+            , roots =
+                getChildIds parentId net
+            }
+
+
+isOutloop : Id -> Net -> Bool
+isOutloop id net =
+    case getShape id net of
+        Sep _ Nothing ->
+            True
+
+        _ ->
+            False
+
+
+isInloop : Id -> Net -> Bool
+isInloop id net =
+    case getShape id net of
+        Sep _ (Just _) ->
+            True
+
+        _ ->
+            False
+
+
+getOutloop : Id -> Net -> Net
+getOutloop id net =
+    net
+        |> buildTree id
+        |> getTreeChildren
+        |> List.filter (\(TNode root) -> not (isInloop root.id net))
+        |> dehydrate
+
+
+
+{- Whether `src` spans `dst`, meaning that every node in `dst` is in scope of those in `src`. -}
+
+
+spans : Context -> Context -> Net -> Bool
+spans src dst net =
+    case ( src, dst ) of
+        ( TopLevel, _ ) ->
+            True
+
+        ( _, TopLevel ) ->
+            True
+
+        ( Inside srcId, Inside dstId ) ->
+            -- `dst` is equal to, or inside `src`
+            List.member dstId (getDescendentIds srcId net)
+
+
+
 -- Update
+
+
+updateInteractionShape : (Interaction -> Interaction) -> Shape -> Shape
+updateInteractionShape update shape =
+    case shape of
+        Sep childIds (Just interaction) ->
+            Sep childIds (Just (update interaction))
+
+        _ ->
+            shape
 
 
 updateShapeNode : (Shape -> Shape) -> Node -> Node
@@ -310,6 +414,11 @@ updateContextNode update node =
 updateNode : Id -> (Node -> Node) -> Net -> Net
 updateNode id update net =
     { net | nodes = Dict.update id (Maybe.map update) net.nodes }
+
+
+updateInteraction : Id -> (Interaction -> Interaction) -> Net -> Net
+updateInteraction id update net =
+    updateShape id (updateInteractionShape update) net
 
 
 updateShape : Id -> (Shape -> Shape) -> Net -> Net
@@ -453,7 +562,7 @@ merge s t =
 
 
 
--- Note that all operations other than `union` preserve uniqueness of identifiers
+-- Note that all operations other than `merge` preserve uniqueness of identifiers
 
 
 nodeOfShape : Shape -> Node
@@ -485,6 +594,52 @@ fo form =
     { nodes = Dict.fromList [ ( id, nodeOfShape (Formula form) ) ]
     , roots = [ id ]
     }
+
+
+
+{- The singleton net with atom named `name`. -}
+
+
+a : String -> Net
+a name =
+    fo (Atom (Name name))
+
+
+
+{- Interpreting a formula into the corresponding scroll structure -}
+
+
+structOfFormula : Formula -> Struct
+structOfFormula form =
+    case form of
+        Atom _ ->
+            [ OForm form ]
+
+        Truth ->
+            []
+
+        Falsity ->
+            [ OSep [] ]
+
+        And f1 f2 ->
+            structOfFormula f1 ++ structOfFormula f2
+
+        Or f1 f2 ->
+            [ OSep
+                [ ISep (f1 |> structOfFormula |> List.map ITok)
+                , ISep (f2 |> structOfFormula |> List.map ITok)
+                ]
+            ]
+
+        Implies f1 f2 ->
+            [ OSep
+                ((f1 |> structOfFormula |> List.map ITok)
+                    ++ [ ISep (f2 |> structOfFormula |> List.map ITok) ]
+                )
+            ]
+
+        Not f1 ->
+            [ OSep (f1 |> structOfFormula |> List.map ITok) ]
 
 
 
@@ -644,7 +799,7 @@ dehydrate trees =
 
 
 -- Implementation note: ultimately it would be better to have tail recursive implementations,
--- although I do not expect too many levels of `Sep` nesting in actual programs
+-- although I do not expect too many levels of `Sep` nesting in actual programs.
 
 
 hydrateFormula : Context -> Formula -> Tree
@@ -668,7 +823,7 @@ hydrateTokens context isAttached tokens =
             freshIdContext context
 
         children =
-            List.map (hydrateIToken (Inside id)) tokens
+            List.map (hydrateToken (Inside id)) tokens
 
         interaction =
             if isAttached then
@@ -699,8 +854,8 @@ hydrateOToken context token =
             hydrateTokens context False tokens
 
 
-hydrateIToken : Context -> IToken -> Tree
-hydrateIToken context token =
+hydrateToken : Context -> IToken -> Tree
+hydrateToken context token =
     case token of
         ITok otoken ->
             hydrateOToken context otoken
@@ -716,7 +871,7 @@ hydrateStruct struct =
 
 netOfTokens : Context -> List IToken -> Net
 netOfTokens context =
-    List.map (hydrateIToken context) >> dehydrate
+    List.map (hydrateToken context) >> dehydrate
 
 
 netOfStruct : Struct -> Net
@@ -741,10 +896,24 @@ removeSingleNode id net =
 
 prune : Id -> Net -> Net
 prune id net =
-    List.foldl
-        removeSingleNode
-        (removeSingleNode id net)
-        (getChildIds id net)
+    let
+        removeIdFromSep shape =
+            case shape of
+                Sep childIds int ->
+                    Sep (List.Extra.remove id childIds) int
+
+                _ ->
+                    shape
+
+        withoutParent =
+            case getContext id net of
+                TopLevel ->
+                    net
+
+                Inside parentId ->
+                    updateShape parentId removeIdFromSep net
+    in
+    List.foldl removeSingleNode withoutParent (getDescendentIds id net)
 
 
 
@@ -873,7 +1042,7 @@ insert : Location -> IToken -> Net -> Net
 insert loc tok net =
     let
         newTree =
-            hydrateIToken loc.ctx tok
+            hydrateToken loc.ctx tok
 
         newNet =
             dehydrateTree newTree
@@ -984,8 +1153,8 @@ isCreated id net =
     isCreation (getPolarity id net) (getJustif id net)
 
 
-isDestructed : Id -> Net -> Bool
-isDestructed id net =
+isDestroyed : Id -> Net -> Bool
+isDestroyed id net =
     isDestruction (getPolarity id net) (getJustif id net)
 
 
@@ -1001,6 +1170,40 @@ isCollapsed id net =
     getInteractions id net
         |> Dict.toList
         |> Utils.List.exists (\( _, int ) -> isCollapse (getPolarity id net) int)
+
+
+isIntroduced : Id -> Net -> Bool
+isIntroduced id net =
+    isCreated id net
+        || isExpanded id net
+        || isIntroducedContext (getContext id net) net
+
+
+isIntroducedContext : Context -> Net -> Bool
+isIntroducedContext ctx net =
+    case ctx of
+        TopLevel ->
+            False
+
+        Inside parentId ->
+            isIntroduced parentId net
+
+
+isEliminated : Id -> Net -> Bool
+isEliminated id net =
+    isDestroyed id net
+        || isCollapsed id net
+        || isEliminatedContext (getContext id net) net
+
+
+isEliminatedContext : Context -> Net -> Bool
+isEliminatedContext ctx net =
+    case ctx of
+        TopLevel ->
+            False
+
+        Inside parentId ->
+            isEliminated parentId net
 
 
 
@@ -1049,7 +1252,7 @@ conclusion : Net -> Net
 conclusion net =
     Dict.foldl
         (\id _ acc ->
-            if isDestructed id net then
+            if isDestroyed id net then
                 prune id acc
 
             else
@@ -1057,6 +1260,49 @@ conclusion net =
         )
         net
         net.nodes
+
+
+tokenOfTree : Tree -> IToken
+tokenOfTree (TNode root) =
+    case root.node.shape of
+        Formula form ->
+            ITok (OForm form)
+
+        Sep _ interaction ->
+            let
+                childrenTokens =
+                    List.map tokenOfTree root.children
+            in
+            case interaction of
+                Nothing ->
+                    ITok (OSep childrenTokens)
+
+                Just _ ->
+                    ISep childrenTokens
+
+
+structOfNet : Net -> Struct
+structOfNet =
+    hydrate
+        >> List.filterMap
+            (\tree ->
+                case tokenOfTree tree of
+                    ITok otoken ->
+                        Just otoken
+
+                    _ ->
+                        Nothing
+            )
+
+
+premissStruct : Net -> Struct
+premissStruct =
+    premiss >> structOfNet
+
+
+conclusionStruct : Net -> Struct
+conclusionStruct =
+    conclusion >> structOfNet
 
 
 
@@ -1149,3 +1395,22 @@ stringOfShape content shape =
 
                 Just _ ->
                     "(" ++ content ++ ")"
+
+
+
+-- Examples
+
+
+identity : Net
+identity =
+    Debug.todo ""
+
+
+modusPonensCurryfied : Net
+modusPonensCurryfied =
+    Debug.todo ""
+
+
+orElim : Net
+orElim =
+    Debug.todo ""

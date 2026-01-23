@@ -36,28 +36,28 @@ useColor =
 
 
 viewAction : Program -> Action -> ZoneStyle Msg -> String -> List (Attribute Msg)
-viewAction goal action actionableStyle titleText =
-    case applicable goal action of
+viewAction program action actionableStyle titleText =
+    case applicable program action of
         Err _ ->
             actionableStyle.inactive
 
         Ok _ ->
-            Utils.Events.onClick (Apply goal.location action)
+            Utils.Events.onClick (Apply program.location action)
                 :: (htmlAttribute <| title titleText)
                 :: actionableStyle.active
 
 
 deleteValAction : Program -> Context -> Val -> List (Attribute Msg)
-deleteValAction goal ctx val =
-    viewAction goal
+deleteValAction program ctx val =
+    viewAction program
         (DeleteVal { ctx = ctx, val = val })
         redActionable
         "Delete value"
 
 
 deleteEnvAction : Program -> Context -> ScrollVal -> Scroll.Ident -> Env -> List (Attribute Msg)
-deleteEnvAction goal ctx scroll id env =
-    viewAction goal
+deleteEnvAction program ctx scroll id env =
+    viewAction program
         (DeleteEnv { ctx = ctx, scroll = scroll, id = id, env = env })
         redActionable
         "Delete branch"
@@ -73,7 +73,7 @@ drawGrownBorder doit =
 
 
 introButton : Program -> Int -> String -> Element Msg -> Element Msg
-introButton goal actionId title content =
+introButton program actionId title content =
     let
         style =
             { width = Css.pct 100
@@ -84,7 +84,7 @@ introButton goal actionId title content =
             }
 
         params =
-            { action = Msg (Exec goal.location actionId)
+            { action = Msg (Exec program.location actionId)
             , title = title
             , content = content
             , enabled = True
@@ -129,7 +129,7 @@ viewStatement formula =
 
 
 viewFormula : ValDnD -> Program -> Context -> Metadata -> Maybe Scroll.Ident -> Justification -> Formula -> Element Msg
-viewFormula dnd goal ctx metadata name justif formula =
+viewFormula dnd program ctx metadata name justif formula =
     let
         val =
             { metadata = metadata
@@ -139,14 +139,14 @@ viewFormula dnd goal ctx metadata name justif formula =
             }
 
         clickAction =
-            case goal.actionMode of
+            case program.actionMode of
                 ProofMode Interacting ->
                     case formula of
                         Atom _ ->
                             []
 
                         _ ->
-                            viewAction goal
+                            viewAction program
                                 (Decompose { ctx = ctx, formula = formula })
                                 pinkActionable
                                 "Decompose"
@@ -154,7 +154,7 @@ viewFormula dnd goal ctx metadata name justif formula =
                 EditMode { interaction } ->
                     case interaction of
                         Operating ->
-                            deleteValAction goal ctx val
+                            deleteValAction program ctx val
 
                         _ ->
                             []
@@ -163,18 +163,18 @@ viewFormula dnd goal ctx metadata name justif formula =
                     []
 
         dragAction =
-            case goal.actionMode of
+            case program.actionMode of
                 ProofMode Interacting ->
-                    View.Events.dragAction useColor dnd goal.location ctx val
+                    View.Events.dragAction useColor dnd program.location ctx val
 
                 EditMode _ ->
-                    View.Events.dragAction reorderColor dnd goal.location ctx val
+                    View.Events.dragAction reorderColor dnd program.location ctx val
 
                 _ ->
                     []
 
         ( fontSize, paddingSize ) =
-            case goal.location of
+            case program.location of
                 Playground ->
                     ( 45, 10 )
 
@@ -197,7 +197,7 @@ viewFormula dnd goal ctx metadata name justif formula =
 
 
 viewOutloop : ValDnD -> Program -> Context -> ScrollVal -> Element Msg
-viewOutloop dnd goal ctx scroll =
+viewOutloop dnd program ctx scroll =
     let
         newCtx =
             let
@@ -215,14 +215,14 @@ viewOutloop dnd goal ctx scroll =
             }
 
         clickAction =
-            case goal.actionMode of
+            case program.actionMode of
                 ProofMode Interacting ->
-                    case getSingleInloop goal.execMode ctx scroll of
+                    case getSingleInloop program.execMode ctx scroll of
                         Nothing ->
                             []
 
                         Just ( id, _ ) ->
-                            viewAction goal
+                            viewAction program
                                 (Close { ctx = ctx, scroll = scroll, id = id })
                                 orangeActionable
                                 "Close"
@@ -230,7 +230,7 @@ viewOutloop dnd goal ctx scroll =
                 EditMode { interaction } ->
                     case interaction of
                         Operating ->
-                            deleteValAction goal ctx (valFromScroll scroll)
+                            deleteValAction program ctx (valFromScroll scroll)
 
                         _ ->
                             []
@@ -239,7 +239,7 @@ viewOutloop dnd goal ctx scroll =
                     (actionable Utils.Color.transparent).inactive
 
         paddingSize =
-            case goal.location of
+            case program.location of
                 Playground ->
                     10
 
@@ -258,12 +258,12 @@ viewOutloop dnd goal ctx scroll =
              ]
                 ++ clickAction
             )
-            (viewNet dnd goal newCtx scroll.data.outloop)
+            (viewNet dnd program newCtx scroll.data.outloop)
         )
 
 
 viewInloop : ValDnD -> Program -> Context -> ScrollVal -> ( Scroll.Ident, Env ) -> Element Msg
-viewInloop dnd goal ctx scroll ( id, env ) =
+viewInloop dnd program ctx scroll ( id, env ) =
     let
         newCtx =
             let
@@ -286,11 +286,11 @@ viewInloop dnd goal ctx scroll ( id, env ) =
             { ctx | zipper = ZInloop zInloop :: ctx.zipper }
 
         clickAction =
-            case goal.actionMode of
+            case program.actionMode of
                 EditMode { interaction } ->
                     case interaction of
                         Operating ->
-                            deleteEnvAction goal ctx scroll id env
+                            deleteEnvAction program ctx scroll id env
 
                         _ ->
                             []
@@ -299,7 +299,7 @@ viewInloop dnd goal ctx scroll ( id, env ) =
                     []
 
         paddingSize =
-            case goal.location of
+            case program.location of
                 Playground ->
                     10
 
@@ -319,7 +319,7 @@ viewInloop dnd goal ctx scroll ( id, env ) =
              ]
                 ++ clickAction
             )
-            (viewNet dnd goal newCtx env.content)
+            (viewNet dnd program newCtx env.content)
         )
 
 
@@ -338,7 +338,7 @@ addButton params =
 
 
 viewAddInloopZone : Program -> Context -> ScrollVal -> List (Element Msg)
-viewAddInloopZone goal ctx scroll =
+viewAddInloopZone program ctx scroll =
     let
         id =
             "Branch" ++ String.fromInt (Dict.size scroll.data.inloops + 1)
@@ -348,15 +348,15 @@ viewAddInloopZone goal ctx scroll =
 
         addInloopButton =
             addButton
-                { action = Msg (Apply goal.location insertEnvAction)
+                { action = Msg (Apply program.location insertEnvAction)
                 , title = "Insert new branch"
                 , icon = Icons.plusSquare
                 , enabled = True
                 }
     in
-    case goal.actionMode of
+    case program.actionMode of
         EditMode _ ->
-            case applicable goal insertEnvAction of
+            case applicable program insertEnvAction of
                 Ok _ ->
                     [ el
                         [ width shrink
@@ -444,10 +444,10 @@ viewAddValZone location ctx newAtomName =
 
 
 viewVal : ValDnD -> Program -> Context -> Val -> Element Msg
-viewVal dnd goal ctx val =
+viewVal dnd program ctx val =
     case val.shape of
         Formula formula ->
-            viewFormula dnd goal ctx val.metadata val.name val.justif formula
+            viewFormula dnd program ctx val.metadata val.name val.justif formula
 
         Scroll ({ inloops } as scrollData) ->
             let
@@ -459,10 +459,10 @@ viewVal dnd goal ctx val =
                     }
 
                 outloopEl =
-                    viewOutloop dnd goal ctx scroll
+                    viewOutloop dnd program ctx scroll
 
                 addInloopZone =
-                    viewAddInloopZone goal ctx scroll
+                    viewAddInloopZone program ctx scroll
 
                 inloopsEl =
                     row
@@ -472,13 +472,13 @@ viewVal dnd goal ctx val =
                         ]
                         ((inloops
                             |> Dict.toList
-                            |> List.map (viewInloop dnd goal ctx scroll)
+                            |> List.map (viewInloop dnd program ctx scroll)
                          )
                             ++ addInloopZone
                         )
 
                 color =
-                    case goal.actionMode of
+                    case program.actionMode of
                         ProofMode _ ->
                             useColor
 
@@ -489,7 +489,7 @@ viewVal dnd goal ctx val =
                             Utils.Color.transparent
 
                 { shadowOffset, shadowSize, shadowBlur, shadowAlpha } =
-                    case goal.location of
+                    case program.location of
                         Playground ->
                             { shadowOffset = ( 0, 5 )
                             , shadowSize = 0.25
@@ -510,7 +510,7 @@ viewVal dnd goal ctx val =
                  , Background.color (scrollForegroundColor ctx.polarity)
                  ]
                     ++ (List.map htmlAttribute <| DnD.droppable DragDropMsg Nothing)
-                    ++ View.Events.dragAction color dnd goal.location ctx val
+                    ++ View.Events.dragAction color dnd program.location ctx val
                     ++ onClick DoNothing
                     :: Border.solid
                     :: Border.width grownBorder.borderWidth
@@ -531,13 +531,13 @@ viewVal dnd goal ctx val =
 
 
 viewNet : ValDnD -> Program -> Context -> Net -> Element Msg
-viewNet dnd goal ctx net =
+viewNet dnd program ctx net =
     let
         newCtx ( left, right ) =
             { ctx | zipper = mkZNet left right :: ctx.zipper }
 
         valEl ( left, right ) =
-            viewVal dnd goal (newCtx ( left, right ))
+            viewVal dnd program (newCtx ( left, right ))
 
         dropAttrs ( left, right ) content =
             List.map htmlAttribute <|
@@ -548,12 +548,12 @@ viewNet dnd goal ctx net =
                             , polarity = ctx.polarity
                             }
                         , content = content
-                        , location = goal.location
+                        , location = program.location
                         }
                     )
 
         dropAction ( left, right ) =
-            case goal.actionMode of
+            case program.actionMode of
                 ProofMode Justifying ->
                     case DnD.getDragId dnd of
                         Nothing ->
@@ -569,7 +569,7 @@ viewNet dnd goal ctx net =
                                         , tgtName = Nothing
                                         }
                             in
-                            case applicable goal iterateValAction of
+                            case applicable program iterateValAction of
                                 Err _ ->
                                     []
 
@@ -651,7 +651,7 @@ viewNet dnd goal ctx net =
                     []
 
         spaceSize =
-            case goal.location of
+            case program.location of
                 Playground ->
                     30
 
@@ -717,15 +717,15 @@ viewNet dnd goal ctx net =
                     Utils.List.zipperMap sperse net
 
                 addValZone =
-                    case goal.actionMode of
+                    case program.actionMode of
                         EditMode { newAtomName } ->
                             let
                                 insertValAction =
                                     InsertVal { ctx = ctx, val = a "dummy" }
                             in
-                            case applicable goal insertValAction of
+                            case applicable program insertValAction of
                                 Ok _ ->
-                                    [ viewAddValZone goal.location ctx newAtomName ]
+                                    [ viewAddValZone program.location ctx newAtomName ]
 
                                 Err _ ->
                                     []
@@ -756,7 +756,7 @@ viewNet dnd goal ctx net =
             in
             wrappedRow attrs els
     in
-    case goal.actionMode of
+    case program.actionMode of
         EditMode _ ->
             intersticial ()
 
@@ -774,25 +774,25 @@ inEditMode { actionMode } =
             False
 
 
-goalHeightAttr : Attribute msg
-goalHeightAttr =
+programHeightAttr : Attribute msg
+programHeightAttr =
     styleAttr "height" ("calc(100vh - " ++ String.fromInt toolbarHeight ++ "px)")
 
 
 viewProgram : ValDnD -> Program -> Element Msg
-viewProgram dnd goal =
+viewProgram dnd program =
     let
         congratsFontSize =
-            case goal.location of
+            case program.location of
                 Playground ->
                     48
 
                 Manual _ ->
                     32
 
-        goalEl () =
-            if List.isEmpty goal.net && not (inEditMode goal) then
-                el [ width fill, goalHeightAttr ]
+        programEl () =
+            if List.isEmpty program.net && not (inEditMode program) then
+                el [ width fill, programHeightAttr ]
                     (el
                         [ centerX
                         , centerY
@@ -809,18 +809,18 @@ viewProgram dnd goal =
             else
                 el
                     [ width fill
-                    , goalHeightAttr
+                    , programHeightAttr
                     , styleAttr "overflow-x" "hidden"
                     , styleAttr "overflow-y" "auto"
                     ]
-                    (viewNet dnd goal emptyCtx goal.net)
+                    (viewNet dnd program emptyCtx program.net)
     in
-    case goal.actionMode of
+    case program.actionMode of
         ProofMode _ ->
-            goalEl ()
+            programEl ()
 
         EditMode _ ->
-            goalEl ()
+            programEl ()
 
         _ ->
-            el [ goalHeightAttr, centerX ] (Widgets.fullPageTextMessage "Working on it!")
+            el [ programHeightAttr, centerX ] (Widgets.fullPageTextMessage "Working on it!")

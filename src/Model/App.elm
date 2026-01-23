@@ -33,7 +33,7 @@ type alias ValDnDMsg =
 
 
 type alias Model =
-    { goal : Program
+    { program : Program
     , history : History
     , manualExamples : Sandboxes
     , dragDrop : ValDnD
@@ -44,9 +44,7 @@ type alias Model =
 
 init : Url.Url -> Browser.Navigation.Key -> Model
 init url key =
-    { goal = Program.fromNet mascarponeCreamRecipe
-
-    -- { goal = Program.fromNet []
+    { program = Program.fromNet mascarponeCreamRecipe
     , history = History { prev = Nothing, next = Nothing }
     , manualExamples = manualExamples
     , dragDrop = DnD.init
@@ -59,33 +57,33 @@ getProgram : Route -> Model -> Program
 getProgram route model =
     case route of
         Program.Playground ->
-            model.goal
+            model.program
 
         Program.Manual sandboxID ->
             (Program.getSandbox sandboxID model.manualExamples).currentProgram
 
 
 setProgram : Route -> Program -> Model -> Model
-setProgram route goal model =
+setProgram route program model =
     case route of
         Program.Playground ->
-            { model | goal = goal }
+            { model | program = program }
 
         Program.Manual sandboxID ->
-            { model | manualExamples = Program.updateSandbox sandboxID goal model.manualExamples }
+            { model | manualExamples = Program.updateSandbox sandboxID program model.manualExamples }
 
 
 setProgramWithHistory : Route -> Program -> Model -> Model
-setProgramWithHistory route goal model =
+setProgramWithHistory route program model =
     case route of
         Program.Playground ->
             { model
-                | goal = goal
+                | program = program
                 , history = History { prev = Just model, next = Nothing }
             }
 
         Program.Manual sandboxID ->
-            { model | manualExamples = Program.updateSandbox sandboxID goal model.manualExamples }
+            { model | manualExamples = Program.updateSandbox sandboxID program model.manualExamples }
 
 
 
