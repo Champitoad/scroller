@@ -1,10 +1,9 @@
-module Model.Program exposing (..)
+module Model.Session exposing (..)
 
 import Dict exposing (Dict)
 import Iddict exposing (Iddict)
 import Model.Scroll as Scroll exposing (..)
 import Queue exposing (Queue)
-import Utils.Maybe
 
 
 
@@ -49,7 +48,7 @@ type ExecMode
 {- A `Navigation` is a non-empty sequence of visited `Context`s.
 
    It is used to keep track of the user's navigation history, i.e. the different
-   contexts in a program that she has visited.
+   contexts in a session that she has visited.
 -}
 
 
@@ -94,7 +93,7 @@ backtrack navigation =
 
 
 
--- Programs
+-- Sessions
 
 
 type alias SandboxID =
@@ -107,13 +106,13 @@ type Route
 
 
 
-{- A `Program` is made of the following data:
+{- A `Session` is made of the following data:
 
    - `net`: the whole net the user is working on
 
    - `navigation`: the navigation history
 
-   - `route`: a unique identifier determining where the program appears in the app
+   - `route`: a unique identifier determining where the session appears in the app
 
    - `actionMode`: the current mode determining which actions can be performed through direct manipulation
 
@@ -127,7 +126,7 @@ type Route
 -}
 
 
-type alias Program =
+type alias Session =
     { net : Net
     , navigation : Navigation
     , route : Route
@@ -139,7 +138,7 @@ type alias Program =
     }
 
 
-fromNet : Net -> Program
+fromNet : Net -> Session
 fromNet net =
     { net = net
     , navigation = initialNavigation
@@ -152,23 +151,23 @@ fromNet net =
     }
 
 
-map : (Net -> Net) -> Program -> Program
-map f program =
-    { program | net = f program.net }
+map : (Net -> Net) -> Session -> Session
+map f session =
+    { session | net = f session.net }
 
 
-updateNewAtomName : String -> Program -> Program
-updateNewAtomName name program =
+updateNewAtomName : String -> Session -> Session
+updateNewAtomName name session =
     let
         updatedMode =
-            case program.actionMode of
+            case session.actionMode of
                 EditMode modeData ->
                     EditMode { modeData | newAtomName = name }
 
                 mode ->
                     mode
     in
-    { program | actionMode = updatedMode }
+    { session | actionMode = updatedMode }
 
 
 
@@ -204,42 +203,42 @@ type ActionError
     | IncompatibleBoundaries Id Id
 
 
-boundary : Program -> Net
-boundary program =
+boundary : Session -> Net
+boundary session =
     let
         boundaryFunc =
-            case program.execMode of
+            case session.execMode of
                 Forward ->
                     conclusion
 
                 Backward ->
                     premiss
     in
-    boundaryFunc program.net
+    boundaryFunc session.net
 
 
-execAll : Program -> Program
-execAll program =
-    { program
-        | net = boundary program
+execAll : Session -> Session
+execAll session =
+    { session
+        | net = boundary session
         , actions = Iddict.empty
         , actionsQueue = Queue.empty
     }
 
 
-changeActionMode : ActionMode -> Program -> Program
-changeActionMode mode program =
-    { program | actionMode = mode }
+changeActionMode : ActionMode -> Session -> Session
+changeActionMode mode session =
+    { session | actionMode = mode }
 
 
-changeExecMode : ExecMode -> Program -> Program
-changeExecMode mode program =
-    { program | execMode = mode }
+changeExecMode : ExecMode -> Session -> Session
+changeExecMode mode session =
+    { session | execMode = mode }
 
 
-toggleRecording : Bool -> Program -> Program
-toggleRecording recording program =
-    { program | recording = recording }
+toggleRecording : Bool -> Session -> Session
+toggleRecording recording session =
+    { session | recording = recording }
 
 
 flipExecMode : ExecMode -> ExecMode
@@ -252,31 +251,31 @@ flipExecMode execMode =
             Forward
 
 
-isErased : Id -> Program -> Bool
-isErased id program =
-    case program.execMode of
+isErased : Id -> Session -> Bool
+isErased id session =
+    case session.execMode of
         Forward ->
-            isEliminated id program.net
+            isEliminated id session.net
 
         Backward ->
-            isIntroduced id program.net
+            isIntroduced id session.net
 
 
-isErasedContext : Context -> Program -> Bool
-isErasedContext ctx program =
-    case program.execMode of
+isErasedContext : Context -> Session -> Bool
+isErasedContext ctx session =
+    case session.execMode of
         Forward ->
-            isEliminatedContext ctx program.net
+            isEliminatedContext ctx session.net
 
         Backward ->
-            isIntroducedContext ctx program.net
+            isIntroducedContext ctx session.net
 
 
-applicable : Program -> Action -> Result ActionError ()
-applicable program action =
+applicable : Session -> Action -> Result ActionError ()
+applicable session action =
     let
         creationPolarity =
-            case program.execMode of
+            case session.execMode of
                 Forward ->
                     Neg
 
@@ -288,69 +287,69 @@ applicable program action =
     in
     case action of
         Open loc ->
-            if isErasedContext loc.ctx program then
+            if isErasedContext loc.ctx session then
                 Err Erased
 
             else
                 Ok ()
 
         Close id ->
-            if isErased id program then
+            if isErased id session then
                 Err Erased
 
-            else if getOutloop id (boundary program) /= Scroll.empty then
+            else if getOutloop id (boundary session) /= Scroll.empty then
                 Err (NonEmptyOutloop id)
 
-            else if Dict.size (getInteractions id (boundary program)) /= 1 then
+            else if Dict.size (getInteractions id (boundary session)) /= 1 then
                 Err (NonSingleInloop id)
 
             else
                 Ok ()
 
         Insert loc _ ->
-            if getPolarityContext loc.ctx program.net /= creationPolarity then
+            if getPolarityContext loc.ctx session.net /= creationPolarity then
                 Err InvalidPolarity
 
-            else if isErasedContext loc.ctx program then
+            else if isErasedContext loc.ctx session then
                 Err Erased
 
             else
                 Ok ()
 
         Delete id ->
-            if getPolarity id program.net /= destructionPolarity then
+            if getPolarity id session.net /= destructionPolarity then
                 Err InvalidPolarity
 
-            else if isErased id program then
+            else if isErased id session then
                 Err Erased
 
             else
                 Ok ()
 
         Iterate src dst ->
-            if getPolarityContext dst.ctx program.net /= creationPolarity then
+            if getPolarityContext dst.ctx session.net /= creationPolarity then
                 Err InvalidPolarity
 
-            else if not (spans (getContext src program.net) dst.ctx program.net) then
+            else if not (spans (getContext src session.net) dst.ctx session.net) then
                 Err (OutOfScope src)
 
-            else if isErased src program || isErasedContext dst.ctx program then
+            else if isErased src session || isErasedContext dst.ctx session then
                 Err Erased
 
             else
                 Ok ()
 
         Deiterate src tgt ->
-            if getPolarity tgt program.net /= destructionPolarity then
+            if getPolarity tgt session.net /= destructionPolarity then
                 Err InvalidPolarity
 
-            else if not (spans (getContext src program.net) (getContext tgt program.net) program.net) then
+            else if not (spans (getContext src session.net) (getContext tgt session.net) session.net) then
                 Err (OutOfScope src)
 
-            else if isErased src program || isErased tgt program then
+            else if isErased src session || isErased tgt session then
                 Err Erased
 
-            else if getSubnet src (boundary program) /= getSubnet tgt (boundary program) then
+            else if getSubnet src (boundary session) /= getSubnet tgt (boundary session) then
                 Err (IncompatibleBoundaries src tgt)
 
             else
@@ -374,24 +373,24 @@ annotateExpansion execMode =
 
 
 
-{- `record action program` records `action` in `program` by:
-   - generating a new ID `id` and associating `action` to `id` in `program.actions`
-   - pushing `id` in `program.actionsQueue`
-   - decorating the scroll net `program.net` with the justification/interaction corresponding to `action`
-   - returning `id` for later usage (typically with `Program.execute`)
+{- `record action session` records `action` in `session` by:
+   - generating a new ID `id` and associating `action` to `id` in `session.actions`
+   - pushing `id` in `session.actionsQueue`
+   - decorating the scroll net `session.net` with the justification/interaction corresponding to `action`
+   - returning `id` for later usage (typically with `Session.execute`)
 
-   This assumes that the action is indeed applicable in the program.
+   This assumes that the action is indeed applicable in the session.
 -}
 
 
-record : Action -> Program -> ( Int, Program )
-record action program =
+record : Action -> Session -> ( Int, Session )
+record action session =
     let
         ( actionId, newActions ) =
-            Iddict.insert action program.actions
+            Iddict.insert action session.actions
 
         newActionsQueue =
-            Queue.enqueue actionId program.actionsQueue
+            Queue.enqueue actionId session.actionsQueue
 
         updatedNet : Net
         updatedNet =
@@ -404,24 +403,24 @@ record action program =
                         scrollNet =
                             curl empty [ empty ]
                                 |> updateName (baseId 0) (\_ -> inloopName)
-                                |> updateInteraction (baseId 0) (annotateExpansion program.execMode)
+                                |> updateInteraction (baseId 0) (annotateExpansion session.execMode)
                     in
-                    graft loc scrollNet program.net
+                    graft loc scrollNet session.net
 
                 Close id ->
-                    updateInteraction id (annotateExpansion (flipExecMode program.execMode)) program.net
+                    updateInteraction id (annotateExpansion (flipExecMode session.execMode)) session.net
 
                 Insert loc tok ->
-                    insert loc tok program.net
+                    insert loc tok session.net
 
                 Delete id ->
-                    delete id program.net
+                    delete id session.net
 
                 Iterate src dst ->
-                    iterate src dst program.net
+                    iterate src dst session.net
 
                 Deiterate src tgt ->
-                    deiterate src tgt program.net
+                    deiterate src tgt session.net
 
                 Reorder id pos ->
                     Debug.todo "Reorder action not implemented yet"
@@ -429,22 +428,22 @@ record action program =
                 Decompose id ->
                     let
                         formNet =
-                            case getShape id program.net of
+                            case getShape id session.net of
                                 Formula form ->
                                     form |> structOfFormula |> netOfStruct
 
                                 _ ->
-                                    getSubnet id program.net
+                                    getSubnet id session.net
 
                         loc =
-                            getLocation id program.net
+                            getLocation id session.net
                     in
-                    program.net
+                    session.net
                         |> prune id
                         |> graft loc formNet
     in
     ( actionId
-    , { program
+    , { session
         | actions = newActions
         , actionsQueue = newActionsQueue
         , net = updatedNet
@@ -453,23 +452,23 @@ record action program =
 
 
 
-{- `execute actionId program` executes the action with ID `actionId` in `program` by:
-   - deleting the associated entry in `program.actions`
-   - deleting `actionId` from `program.actionsQueue` if not already done
-   - applying the semantics of the action in `program.net`
+{- `execute actionId session` executes the action with ID `actionId` in `session` by:
+   - deleting the associated entry in `session.actions`
+   - deleting `actionId` from `session.actionsQueue` if not already done
+   - applying the semantics of the action in `session.net`
 -}
 
 
-execute : Int -> Program -> Program
-execute actionId program =
-    case Iddict.get actionId program.actions of
+execute : Int -> Session -> Session
+execute actionId session =
+    case Iddict.get actionId session.actions of
         Just action ->
             let
                 newActions =
-                    Iddict.remove actionId program.actions
+                    Iddict.remove actionId session.actions
 
                 newActionsQueue =
-                    Queue.filter (\id -> id /= actionId) program.actionsQueue
+                    Queue.filter (\id -> id /= actionId) session.actionsQueue
 
                 newFocus : Net
                 newFocus =
@@ -498,7 +497,7 @@ execute actionId program =
                         Decompose id ->
                             Debug.todo "Decompose action execution not implemented yet."
             in
-            { program
+            { session
                 | actions = newActions
                 , actionsQueue = newActionsQueue
                 , net = newFocus
@@ -506,30 +505,30 @@ execute actionId program =
 
         Nothing ->
             Debug.log
-                "Error: trying to execute action with non-existing ID. Returning the program unchanged."
-                program
+                "Error: trying to execute action with non-existing ID. Returning the session unchanged."
+                session
 
 
-apply : Action -> Program -> Program
-apply action program =
+apply : Action -> Session -> Session
+apply action session =
     let
-        ( actionId, newProgram ) =
-            record action program
+        ( actionId, newSession ) =
+            record action session
     in
-    if program.recording then
-        newProgram
+    if session.recording then
+        newSession
 
     else
-        execute actionId program
+        execute actionId session
 
 
 
--- A Sandbox is a Program that can be reset
+-- A Sandbox is a Session that can be reset
 
 
 type alias Sandbox =
-    { initialProgram : Program
-    , currentProgram : Program
+    { initialSession : Session
+    , currentSession : Session
     }
 
 
@@ -537,10 +536,10 @@ type alias Sandboxes =
     Dict SandboxID Sandbox
 
 
-mkSandbox : Program -> Sandbox
-mkSandbox program =
-    { initialProgram = program
-    , currentProgram = program
+mkSandbox : Session -> Sandbox
+mkSandbox session =
+    { initialSession = session
+    , currentSession = session
     }
 
 
@@ -558,8 +557,8 @@ getSandbox id sandboxes =
             sandbox
 
 
-updateSandbox : SandboxID -> Program -> Sandboxes -> Sandboxes
-updateSandbox id program sandboxes =
+updateSandbox : SandboxID -> Session -> Sandboxes -> Sandboxes
+updateSandbox id session sandboxes =
     case Dict.get id sandboxes of
         Nothing ->
             let
@@ -571,8 +570,8 @@ updateSandbox id program sandboxes =
         Just sandbox ->
             let
                 updatedSandbox =
-                    { initialProgram = sandbox.initialProgram
-                    , currentProgram = program
+                    { initialSession = sandbox.initialSession
+                    , currentSession = session
                     }
             in
             Dict.insert id updatedSandbox sandboxes
@@ -589,12 +588,12 @@ resetSandbox id sandboxes =
             sandboxes
 
         Just sandbox ->
-            updateSandbox id sandbox.initialProgram sandboxes
+            updateSandbox id sandbox.initialSession sandboxes
 
 
 resetAllSandboxes : Sandboxes -> Sandboxes
 resetAllSandboxes sandboxes =
-    Dict.map (\_ sb -> { sb | currentProgram = sb.initialProgram }) sandboxes
+    Dict.map (\_ sb -> { sb | currentSession = sb.initialSession }) sandboxes
 
 
 manualExamples : Sandboxes

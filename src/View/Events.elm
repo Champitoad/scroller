@@ -5,8 +5,8 @@ import Element exposing (..)
 import Html.Attributes exposing (..)
 import Html5.DragDrop as DnD
 import Model.App exposing (..)
-import Model.Program exposing (..)
 import Model.Scroll exposing (..)
+import Model.Session exposing (..)
 import Update.App exposing (..)
 import Utils.Events exposing (..)
 import View.Style

@@ -8,14 +8,14 @@ import Element.Input as Input
 import FeatherIcons as Icons
 import Html.Attributes
 import Model.App exposing (..)
-import Model.Program exposing (..)
+import Model.Session exposing (..)
 import Queue
 import Update.App exposing (..)
 import Utils.Color
 import Utils.Events exposing (..)
 import Utils.Maybe exposing (..)
 import View.Style exposing (..)
-import View.Widgets as Widgets exposing (..)
+import View.Widgets exposing (..)
 
 
 type ModeSelectorPosition
@@ -301,7 +301,7 @@ viewRecordToggle recording =
         recording
 
 
-viewExecButtons : Program -> Element Msg
+viewExecButtons : Session -> Element Msg
 viewExecButtons { actionsQueue } =
     let
         stepEnabled =
@@ -339,12 +339,12 @@ toolbarHeight =
 viewToolbar : Model -> Element Msg
 viewToolbar model =
     let
-        -- autoButton = viewAutoButton model.program.actionMode
+        -- autoButton = viewAutoButton model.session.actionMode
         helpButton =
             viewHelpButton
 
         actionModeSelector =
-            viewActionModeSelector model.program.actionMode
+            viewActionModeSelector model.session.actionMode
 
         undoRedo =
             viewUndoRedo model.history
@@ -355,7 +355,7 @@ viewToolbar model =
                 , spacing 10
                 , centerX
                 ]
-                (case model.program.actionMode of
+                (case model.session.actionMode of
                     EditMode { newAtomName } ->
                         [ el
                             [ width (fill |> maximum 200)
@@ -374,9 +374,9 @@ viewToolbar model =
                 , spacing 20
                 , centerX
                 ]
-                [ viewRecordToggle model.program.recording
-                , viewExecModeSelector model.program.execMode
-                , viewExecButtons model.program
+                [ viewRecordToggle model.session.recording
+                , viewExecModeSelector model.session.execMode
+                , viewExecButtons model.session
                 ]
     in
     row

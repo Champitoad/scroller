@@ -11,8 +11,8 @@ import Keyboard.Event exposing (decodeKeyboardEvent)
 import Model.App exposing (Model)
 import Update.App exposing (..)
 import View.Manual as Manual
-import View.Program exposing (..)
 import View.Route as Route
+import View.Session exposing (..)
 import View.Shelf exposing (..)
 import View.Style exposing (centered, fillXY, styleAttr)
 import View.Toolbar exposing (..)
@@ -30,14 +30,14 @@ view model =
         Route.Playground ->
             let
                 shelf =
-                    viewShelf model.program
+                    viewShelf model.session
 
-                program =
+                session =
                     el
                         [ width fill
-                        , programHeightAttr
+                        , sessionHeightAttr
                         ]
-                        (viewProgram model.dragDrop model.program)
+                        (viewSession model.dragDrop model.session)
 
                 toolbar =
                     el
@@ -48,7 +48,7 @@ view model =
                         (viewToolbar model)
 
                 app =
-                    column [ width fill, height fill ] [ program, toolbar ]
+                    column [ width fill, height fill ] [ session, toolbar ]
                         |> layout []
             in
             { title = "Flower Prover"

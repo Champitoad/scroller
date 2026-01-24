@@ -3,13 +3,13 @@ module View.Shelf exposing (..)
 import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
-import Model.Program exposing (..)
+import Model.Session exposing (..)
 import Update.App exposing (..)
-import View.Program exposing (..)
+import View.Session exposing (..)
 
 
-viewShelf : Program -> Element Msg
-viewShelf program =
+viewShelf : Session -> Element Msg
+viewShelf session =
     row
         [ width fill
         , height (fillPortion 1)

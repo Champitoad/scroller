@@ -799,7 +799,7 @@ dehydrate trees =
 
 
 -- Implementation note: ultimately it would be better to have tail recursive implementations,
--- although I do not expect too many levels of `Sep` nesting in actual programs.
+-- although I do not expect too many levels of `Sep` nesting in actual nets.
 
 
 hydrateFormula : Context -> Formula -> Tree

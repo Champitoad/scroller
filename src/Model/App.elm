@@ -3,8 +3,8 @@ module Model.App exposing (..)
 import Browser.Navigation
 import Html5.DragDrop as DnD
 import Model.Mascarpone exposing (..)
-import Model.Program as Program exposing (Program, Route, Sandboxes, manualExamples)
 import Model.Scroll exposing (..)
+import Model.Session as Session exposing (..)
 import Url
 
 
@@ -42,7 +42,7 @@ type alias DnDMsg =
 
 
 type alias Model =
-    { program : Program
+    { session : Session
     , history : History
     , manualExamples : Sandboxes
     , dragDrop : DnD
@@ -53,7 +53,7 @@ type alias Model =
 
 init : Url.Url -> Browser.Navigation.Key -> Model
 init url key =
-    { program = Program.fromNet mascarponeCreamRecipe
+    { session = Session.fromNet mascarponeCreamRecipe
     , history = History { prev = Nothing, next = Nothing }
     , manualExamples = manualExamples
     , dragDrop = DnD.init
@@ -62,37 +62,37 @@ init url key =
     }
 
 
-getProgram : Route -> Model -> Program
-getProgram route model =
+getSession : Route -> Model -> Session
+getSession route model =
     case route of
-        Program.Playground ->
-            model.program
+        Session.Playground ->
+            model.session
 
-        Program.Manual sandboxID ->
-            (Program.getSandbox sandboxID model.manualExamples).currentProgram
+        Session.Manual sandboxID ->
+            (Session.getSandbox sandboxID model.manualExamples).currentSession
 
 
-setProgram : Route -> Program -> Model -> Model
-setProgram route program model =
+setSession : Route -> Session -> Model -> Model
+setSession route session model =
     case route of
-        Program.Playground ->
-            { model | program = program }
+        Session.Playground ->
+            { model | session = session }
 
-        Program.Manual sandboxID ->
-            { model | manualExamples = Program.updateSandbox sandboxID program model.manualExamples }
+        Session.Manual sandboxID ->
+            { model | manualExamples = Session.updateSandbox sandboxID session model.manualExamples }
 
 
-setProgramWithHistory : Route -> Program -> Model -> Model
-setProgramWithHistory route program model =
+setSessionWithHistory : Route -> Session -> Model -> Model
+setSessionWithHistory route session model =
     case route of
-        Program.Playground ->
+        Session.Playground ->
             { model
-                | program = program
+                | session = session
                 , history = History { prev = Just model, next = Nothing }
             }
 
-        Program.Manual sandboxID ->
-            { model | manualExamples = Program.updateSandbox sandboxID program model.manualExamples }
+        Session.Manual sandboxID ->
+            { model | manualExamples = Session.updateSandbox sandboxID session model.manualExamples }
 
 
 

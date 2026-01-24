@@ -6,10 +6,10 @@ import Element.Font as Font
 import Element.Input as Input
 import FeatherIcons as Icons
 import Model.App exposing (..)
-import Model.Program exposing (..)
 import Model.Scroll exposing (..)
+import Model.Session exposing (..)
 import Update.App exposing (..)
-import View.Program exposing (..)
+import View.Session exposing (..)
 import View.Style exposing (..)
 
 
@@ -62,13 +62,13 @@ resetButton id =
 
 
 viewSandbox : DnD -> Sandbox -> String -> Element Msg
-viewSandbox dnd { currentProgram } id =
+viewSandbox dnd { currentSession } id =
     row
         [ width fill
         , spacing 20
         , padding 5
         ]
-        [ viewProgram dnd currentProgram
+        [ viewSession dnd currentSession
         , resetButton id
         ]
 

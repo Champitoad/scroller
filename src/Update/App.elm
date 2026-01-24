@@ -7,8 +7,8 @@ import Json.Decode exposing (Value)
 import Keyboard.Event exposing (KeyboardEvent)
 import Model.App exposing (..)
 import Model.Formula exposing (..)
-import Model.Program exposing (..)
 import Model.Scroll exposing (..)
+import Model.Session exposing (..)
 import Url
 import View.Route as Route
 
@@ -55,11 +55,11 @@ handleDragDropMsg dndMsg model =
             case dragStart of
                 Just { dragId } ->
                     let
-                        program =
-                            getProgram dragId.route model
+                        session =
+                            getSession dragId.route model
 
                         newMode =
-                            case program.actionMode of
+                            case session.actionMode of
                                 ProofMode Interacting ->
                                     ProofMode Justifying
 
@@ -67,15 +67,15 @@ handleDragDropMsg dndMsg model =
                                     EditMode { modeData | interaction = Reordering }
 
                                 _ ->
-                                    program.actionMode
+                                    session.actionMode
 
-                        newProgram =
-                            { program | actionMode = newMode }
+                        newSession =
+                            { session | actionMode = newMode }
 
                         newModel =
                             { model | dragDrop = newDragDrop }
                     in
-                    setProgram dragId.route newProgram newModel
+                    setSession dragId.route newSession newModel
 
                 Nothing ->
                     case result of
@@ -84,11 +84,11 @@ handleDragDropMsg dndMsg model =
                                 (DragNode source) =
                                     drag.source
 
-                                program =
-                                    getProgram drag.route model
+                                session =
+                                    getSession drag.route model
 
                                 defaultMode =
-                                    case program.actionMode of
+                                    case session.actionMode of
                                         ProofMode _ ->
                                             ProofMode Interacting
 
@@ -96,28 +96,28 @@ handleDragDropMsg dndMsg model =
                                             EditMode { modeData | interaction = Operating }
 
                                         _ ->
-                                            program.actionMode
+                                            session.actionMode
                             in
                             case drop of
                                 -- Dropping on valid destination
                                 Just { destination } ->
                                     let
-                                        newProgram =
-                                            case ( program.actionMode, destination ) of
+                                        newSession =
+                                            case ( session.actionMode, destination ) of
                                                 ( ProofMode Justifying, DropNode target ) ->
-                                                    apply (Deiterate source target) program
+                                                    apply (Deiterate source target) session
 
                                                 ( ProofMode Justifying, DropLocation location ) ->
-                                                    apply (Iterate source location) program
+                                                    apply (Iterate source location) session
 
                                                 ( EditMode _, DropLocation location ) ->
-                                                    apply (Reorder source location.pos) program
+                                                    apply (Reorder source location.pos) session
 
                                                 _ ->
-                                                    program
+                                                    session
 
                                         newModel =
-                                            setProgram program.route { newProgram | actionMode = defaultMode } model
+                                            setSession session.route { newSession | actionMode = defaultMode } model
                                     in
                                     { newModel | dragDrop = newDragDrop }
 
@@ -125,7 +125,7 @@ handleDragDropMsg dndMsg model =
                                 Nothing ->
                                     let
                                         newModel =
-                                            setProgram program.route { program | actionMode = defaultMode } model
+                                            setSession session.route { session | actionMode = defaultMode } model
                                     in
                                     { newModel | dragDrop = newDragDrop }
 
@@ -141,32 +141,32 @@ update msg model =
     case msg of
         Apply location action ->
             let
-                newProgram =
-                    apply action (getProgram location model)
+                newSession =
+                    apply action (getSession location model)
             in
-            ( setProgramWithHistory location newProgram model, Cmd.none )
+            ( setSessionWithHistory location newSession model, Cmd.none )
 
         Exec location actionId ->
             let
-                newProgram =
-                    execute actionId (getProgram location model)
+                newSession =
+                    execute actionId (getSession location model)
             in
-            ( setProgramWithHistory location newProgram model, Cmd.none )
+            ( setSessionWithHistory location newSession model, Cmd.none )
 
         ExecAll ->
-            ( { model | program = execAll model.program }, Cmd.none )
+            ( { model | session = execAll model.session }, Cmd.none )
 
         Step ->
             Debug.todo "Action stepping not implemented yet"
 
         ChangeActionMode mode ->
-            ( { model | program = changeActionMode mode model.program }, Cmd.none )
+            ( { model | session = changeActionMode mode model.session }, Cmd.none )
 
         ChangeExecMode mode ->
-            ( { model | program = changeExecMode mode model.program }, Cmd.none )
+            ( { model | session = changeExecMode mode model.session }, Cmd.none )
 
         ToggleRecording recording ->
-            ( { model | program = toggleRecording recording model.program }, Cmd.none )
+            ( { model | session = toggleRecording recording model.session }, Cmd.none )
 
         Undo ->
             ( undo model, Cmd.none )
@@ -178,7 +178,7 @@ update msg model =
             Debug.todo "Auto not implemented yet"
 
         UpdateNewAtomName name ->
-            ( { model | program = updateNewAtomName name model.program }, Cmd.none )
+            ( { model | session = updateNewAtomName name model.session }, Cmd.none )
 
         DragDropMsg dndMsg ->
             handleDragDropMsg dndMsg model
