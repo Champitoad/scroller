@@ -150,7 +150,7 @@ type Context
 
 
 type alias Location =
-    { ctx : Context, idx : Int }
+    { ctx : Context, pos : Int }
 
 
 type alias Node =
@@ -234,12 +234,12 @@ getLocation id net =
     case getContext id net of
         TopLevel ->
             { ctx = TopLevel
-            , idx = Maybe.withDefault -1 (List.Extra.elemIndex id net.roots)
+            , pos = Maybe.withDefault -1 (List.Extra.elemIndex id net.roots)
             }
 
         Inside parentId ->
             { ctx = Inside parentId
-            , idx = Maybe.withDefault -1 (List.Extra.elemIndex id (getChildIds parentId net))
+            , pos = Maybe.withDefault -1 (List.Extra.elemIndex id (getChildIds parentId net))
             }
 
 
@@ -601,8 +601,8 @@ fo form =
 
 
 a : String -> Net
-a name =
-    fo (Atom (Name name))
+a =
+    fo << atom
 
 
 
@@ -958,7 +958,7 @@ graft loc src tgt =
                                                 case ( parent.shape, srcRootIdx ) of
                                                     --
                                                     ( Sep childIds int, Just i ) ->
-                                                        Sep (Utils.List.insert (loc.idx + i) [ srcNodeId ] childIds) int
+                                                        Sep (Utils.List.insert (loc.pos + i) [ srcNodeId ] childIds) int
 
                                                     ( shape, _ ) ->
                                                         shape
@@ -972,7 +972,7 @@ graft loc src tgt =
     , roots =
         case loc.ctx of
             TopLevel ->
-                Utils.List.insert loc.idx srcFresh.roots tgt.roots
+                Utils.List.insert loc.pos srcFresh.roots tgt.roots
 
             _ ->
                 tgt.roots

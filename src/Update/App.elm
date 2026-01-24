@@ -28,7 +28,7 @@ type Msg
     | Redo
     | Auto
     | UpdateNewAtomName String
-    | DragDropMsg ValDnDMsg
+    | DragDropMsg DnDMsg
     | ResetSandbox SandboxID
     | HandleKeyboardEvent KeyboardEvent
     | ConsoleLog String String
@@ -37,7 +37,7 @@ type Msg
     | LinkClicked Browser.UrlRequest
 
 
-handleDragDropMsg : ValDnDMsg -> Model -> ( Model, Cmd Msg )
+handleDragDropMsg : DnDMsg -> Model -> ( Model, Cmd Msg )
 handleDragDropMsg dndMsg model =
     let
         dragStart =
@@ -56,7 +56,7 @@ handleDragDropMsg dndMsg model =
                 Just { dragId } ->
                     let
                         program =
-                            getProgram dragId.location model
+                            getProgram dragId.route model
 
                         newMode =
                             case program.actionMode of
@@ -75,14 +75,17 @@ handleDragDropMsg dndMsg model =
                         newModel =
                             { model | dragDrop = newDragDrop }
                     in
-                    setProgram dragId.location newProgram newModel
+                    setProgram dragId.route newProgram newModel
 
                 Nothing ->
                     case result of
                         Just ( drag, drop, _ ) ->
                             let
+                                (DragNode source) =
+                                    drag.source
+
                                 program =
-                                    getProgram drag.location model
+                                    getProgram drag.route model
 
                                 defaultMode =
                                     case program.actionMode of
@@ -96,48 +99,33 @@ handleDragDropMsg dndMsg model =
                                             program.actionMode
                             in
                             case drop of
-                                -- Dropping on target
-                                Just dest ->
+                                -- Dropping on valid destination
+                                Just { destination } ->
                                     let
                                         newProgram =
-                                            case program.actionMode of
-                                                ProofMode Justifying ->
-                                                    let
-                                                        iterateVal =
-                                                            IterateVal
-                                                                { srcCtx = drag.source
-                                                                , srcVal = drag.content
-                                                                , tgtCtx = dest.target
-                                                                , tgtName = Nothing
-                                                                }
-                                                    in
-                                                    apply iterateVal program
+                                            case ( program.actionMode, destination ) of
+                                                ( ProofMode Justifying, DropNode target ) ->
+                                                    apply (Deiterate source target) program
 
-                                                EditMode { interaction } ->
-                                                    case interaction of
-                                                        Reordering ->
-                                                            let
-                                                                newFocus =
-                                                                    fillZipper dest.content dest.target.zipper
-                                                            in
-                                                            { program | focus = newFocus }
+                                                ( ProofMode Justifying, DropLocation location ) ->
+                                                    apply (Iterate source location) program
 
-                                                        _ ->
-                                                            program
+                                                ( EditMode _, DropLocation location ) ->
+                                                    apply (Reorder source location.pos) program
 
                                                 _ ->
                                                     program
 
                                         newModel =
-                                            setProgram program.location { newProgram | actionMode = defaultMode } model
+                                            setProgram program.route { newProgram | actionMode = defaultMode } model
                                     in
                                     { newModel | dragDrop = newDragDrop }
 
-                                -- Dropping on non-target
+                                -- Dropping on invalid destination
                                 Nothing ->
                                     let
                                         newModel =
-                                            setProgram program.location { program | actionMode = defaultMode } model
+                                            setProgram program.route { program | actionMode = defaultMode } model
                                     in
                                     { newModel | dragDrop = newDragDrop }
 

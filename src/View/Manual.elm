@@ -61,7 +61,7 @@ resetButton id =
         }
 
 
-viewSandbox : ValDnD -> Sandbox -> String -> Element Msg
+viewSandbox : DnD -> Sandbox -> String -> Element Msg
 viewSandbox dnd { currentProgram } id =
     row
         [ width fill

@@ -12,20 +12,29 @@ import Url
 -- Drag-and-Drop
 
 
-type alias ValDragId =
-    { route : Route, source : Context, content : Val }
+type DragSource
+    = DragNode Id
 
 
-type alias ValDropId =
-    Maybe { route : Route, target : Context, content : Net }
+type DropDestination
+    = DropNode Id
+    | DropLocation Location
 
 
-type alias ValDnD =
-    DnD.Model ValDragId ValDropId
+type alias DragId =
+    { route : Route, source : DragSource }
 
 
-type alias ValDnDMsg =
-    DnD.Msg ValDragId ValDropId
+type alias DropId =
+    Maybe { route : Route, destination : DropDestination }
+
+
+type alias DnD =
+    DnD.Model DragId DropId
+
+
+type alias DnDMsg =
+    DnD.Msg DragId DropId
 
 
 
@@ -36,7 +45,7 @@ type alias Model =
     { program : Program
     , history : History
     , manualExamples : Sandboxes
-    , dragDrop : ValDnD
+    , dragDrop : DnD
     , url : Url.Url
     , key : Browser.Navigation.Key
     }

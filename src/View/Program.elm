@@ -128,7 +128,7 @@ viewStatement formula =
             row [] [ text "¬ (", viewStatement f1, text ")" ]
 
 
-viewFormula : ValDnD -> Program -> Context -> Metadata -> Maybe Scroll.Ident -> Justification -> Formula -> Element Msg
+viewFormula : DnD -> Program -> Context -> Metadata -> Maybe Scroll.Ident -> Justification -> Formula -> Element Msg
 viewFormula dnd program ctx metadata name justif formula =
     let
         val =
@@ -196,7 +196,7 @@ viewFormula dnd program ctx metadata name justif formula =
         (viewStatement formula)
 
 
-viewOutloop : ValDnD -> Program -> Context -> ScrollVal -> Element Msg
+viewOutloop : DnD -> Program -> Context -> ScrollVal -> Element Msg
 viewOutloop dnd program ctx scroll =
     let
         newCtx =
@@ -262,7 +262,7 @@ viewOutloop dnd program ctx scroll =
         )
 
 
-viewInloop : ValDnD -> Program -> Context -> ScrollVal -> ( Scroll.Ident, Env ) -> Element Msg
+viewInloop : DnD -> Program -> Context -> ScrollVal -> ( Scroll.Ident, Env ) -> Element Msg
 viewInloop dnd program ctx scroll ( id, env ) =
     let
         newCtx =
@@ -443,7 +443,7 @@ viewAddValZone location ctx newAtomName =
         [ addValButton ]
 
 
-viewVal : ValDnD -> Program -> Context -> Val -> Element Msg
+viewVal : DnD -> Program -> Context -> Val -> Element Msg
 viewVal dnd program ctx val =
     case val.shape of
         Formula formula ->
@@ -530,7 +530,7 @@ viewVal dnd program ctx val =
                 [ outloopEl, inloopsEl ]
 
 
-viewNet : ValDnD -> Program -> Context -> Net -> Element Msg
+viewNet : DnD -> Program -> Context -> Net -> Element Msg
 viewNet dnd program ctx net =
     let
         newCtx ( left, right ) =
@@ -779,7 +779,7 @@ programHeightAttr =
     styleAttr "height" ("calc(100vh - " ++ String.fromInt toolbarHeight ++ "px)")
 
 
-viewProgram : ValDnD -> Program -> Element Msg
+viewProgram : DnD -> Program -> Element Msg
 viewProgram dnd program =
     let
         congratsFontSize =

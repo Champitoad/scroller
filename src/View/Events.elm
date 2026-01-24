@@ -19,7 +19,7 @@ stopPropagation =
     ]
 
 
-dragAction : Color.Color -> ValDnD -> Route -> Context -> Val -> List (Attribute Msg)
+dragAction : Color.Color -> DnD -> Route -> Context -> Val -> List (Attribute Msg)
 dragAction color dnd location ctx val =
     if List.length ctx.zipper <= 1 then
         []

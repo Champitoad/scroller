@@ -189,6 +189,8 @@ type
     | Iterate Id Location
       -- Deiterate a node
     | Deiterate Id Id
+      -- Reposition a node in the same area
+    | Reorder Id Int
       -- Decompose a symbolic formula into the corresponding scroll structure
     | Decompose Id
 
@@ -354,6 +356,9 @@ applicable program action =
             else
                 Ok ()
 
+        Reorder id pos ->
+            Debug.todo "Reorder action not implemented yet"
+
         Decompose _ ->
             Ok ()
 
@@ -417,6 +422,9 @@ record action program =
 
                 Deiterate src tgt ->
                     deiterate src tgt program.net
+
+                Reorder id pos ->
+                    Debug.todo "Reorder action not implemented yet"
 
                 Decompose id ->
                     let
@@ -483,6 +491,9 @@ execute actionId program =
 
                         Deiterate src tgt ->
                             Debug.todo "Deiterate action execution not implemented yet."
+
+                        Reorder id pos ->
+                            Debug.todo "Reorder action execution not implemented yet"
 
                         Decompose id ->
                             Debug.todo "Decompose action execution not implemented yet."
