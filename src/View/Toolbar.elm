@@ -1,5 +1,6 @@
 module View.Toolbar exposing (..)
 
+import Dict
 import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
@@ -182,8 +183,8 @@ viewActionModeSelector currentMode =
         , item
             (EditMode
                 { interaction = Operating
-                , surgery = initialSurgery
                 , newAtomName = ""
+                , insertions = Dict.empty
                 }
             )
             Middle

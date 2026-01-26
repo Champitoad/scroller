@@ -19,30 +19,30 @@ stopPropagation =
     ]
 
 
-dragAction : Color.Color -> DnD -> Route -> Context -> Val -> List (Attribute Msg)
-dragAction color dnd location ctx val =
-    if List.length ctx.zipper <= 1 then
-        []
+dragAction : Color.Color -> DnD -> Route -> Id -> List (Attribute Msg)
+dragAction color dnd route id =
+    let
+        draggableStyle =
+            View.Style.draggable color
 
-    else
-        let
-            draggableStyle =
-                View.Style.draggable color
+        style =
+            case DnD.getDragId dnd of
+                Just { source } ->
+                    let
+                        (DragNode sourceId) =
+                            source
+                    in
+                    if sourceId == id then
+                        draggableStyle.active
 
-            style =
-                case DnD.getDragId dnd of
-                    Just { source, content } ->
-                        if source.zipper == ctx.zipper && content == val then
-                            draggableStyle.active
-
-                        else
-                            draggableStyle.inactive
-
-                    Nothing ->
+                    else
                         draggableStyle.inactive
-        in
-        style
-            ++ (List.map htmlAttribute <|
-                    DnD.draggable DragDropMsg
-                        { location = location, source = ctx, content = val }
-               )
+
+                Nothing ->
+                    draggableStyle.inactive
+    in
+    style
+        ++ (List.map htmlAttribute <|
+                DnD.draggable DragDropMsg
+                    { route = route, source = DragNode id }
+           )

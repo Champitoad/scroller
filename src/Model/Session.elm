@@ -271,8 +271,66 @@ isErasedContext ctx session =
             isIntroducedContext ctx session.net
 
 
-applicable : Session -> Action -> Result ActionError ()
-applicable session action =
+isInserted : Id -> Session -> Bool
+isInserted id { net, execMode } =
+    let
+        polarity =
+            getPolarity id net
+
+        justif =
+            getJustif id net
+    in
+    case execMode of
+        Forward ->
+            isInsertion polarity justif
+
+        Backward ->
+            isDeletion polarity justif
+
+
+subInsert : Id -> Location -> IToken -> Session -> Session
+subInsert ancId loc tok session =
+    let
+        updatedNet =
+            insert False loc tok session.net
+
+        updatedActions =
+            case session.actionMode of
+                EditMode { insertions } ->
+                    let
+                        insertionActionId =
+                            insertions
+                                |> Dict.get ancId
+                                -- Dummy ID, should never happen
+                                |> Maybe.withDefault -1
+
+                        newToken =
+                            session.net
+                                |> buildTree ancId
+                                |> tokenOfTree
+                    in
+                    Iddict.update
+                        insertionActionId
+                        (Maybe.map
+                            (\action ->
+                                case action of
+                                    Insert ancLoc _ ->
+                                        Insert ancLoc newToken
+
+                                    _ ->
+                                        action
+                            )
+                        )
+                        session.actions
+
+                _ ->
+                    session.actions
+    in
+    { session | net = updatedNet, actions = updatedActions }
+
+
+applicable : Action -> Session -> Result ActionError ()
+applicable action session =
     let
         creationPolarity =
             case session.execMode of
@@ -300,7 +358,7 @@ applicable session action =
             else if getOutloop id (boundary session) /= Scroll.empty then
                 Err (NonEmptyOutloop id)
 
-            else if Dict.size (getInteractions id (boundary session)) /= 1 then
+            else if Dict.size (getOutloopInteractions id (boundary session)) /= 1 then
                 Err (NonSingleInloop id)
 
             else
@@ -372,6 +430,49 @@ annotateExpansion execMode =
             makeClosed
 
 
+actionTransform : ExecMode -> Action -> Net -> Net
+actionTransform execMode action =
+    case action of
+        Open loc ->
+            graft loc (emptyScrollNet (makeOpened attachment))
+
+        Close id ->
+            updateInteraction id (annotateExpansion (flipExecMode execMode))
+
+        Insert loc tok ->
+            insert True loc tok
+
+        Delete id ->
+            delete id
+
+        Iterate src dst ->
+            iterate src dst
+
+        Deiterate src tgt ->
+            deiterate src tgt
+
+        Reorder id pos ->
+            Debug.todo "Reorder action not implemented yet"
+
+        Decompose id ->
+            \net ->
+                let
+                    formNet =
+                        case getShape id net of
+                            Formula form ->
+                                form |> structOfFormula |> netOfStruct
+
+                            _ ->
+                                getSubnet id net
+
+                    loc =
+                        getLocation id net
+                in
+                net
+                    |> prune id
+                    |> graft loc formNet
+
+
 
 {- `record action session` records `action` in `session` by:
    - generating a new ID `id` and associating `action` to `id` in `session.actions`
@@ -389,64 +490,30 @@ record action session =
         ( actionId, newActions ) =
             Iddict.insert action session.actions
 
-        newActionsQueue =
+        updatedActionsQueue =
             Queue.enqueue actionId session.actionsQueue
 
-        updatedNet : Net
-        updatedNet =
-            case action of
-                Open loc ->
-                    let
-                        inloopName =
-                            "Return"
+        transformedNet =
+            actionTransform session.execMode action session.net
 
-                        scrollNet =
-                            curl empty [ empty ]
-                                |> updateName (baseId 0) (\_ -> inloopName)
-                                |> updateInteraction (baseId 0) (annotateExpansion session.execMode)
-                    in
-                    graft loc scrollNet session.net
+        updatedActionMode =
+            case ( session.actionMode, action ) of
+                ( EditMode editInteraction, Insert loc _ ) ->
+                    EditMode
+                        { editInteraction
+                            | insertions =
+                                Dict.insert (getNodeIdAtLocation loc session.net) actionId editInteraction.insertions
+                        }
 
-                Close id ->
-                    updateInteraction id (annotateExpansion (flipExecMode session.execMode)) session.net
-
-                Insert loc tok ->
-                    insert loc tok session.net
-
-                Delete id ->
-                    delete id session.net
-
-                Iterate src dst ->
-                    iterate src dst session.net
-
-                Deiterate src tgt ->
-                    deiterate src tgt session.net
-
-                Reorder id pos ->
-                    Debug.todo "Reorder action not implemented yet"
-
-                Decompose id ->
-                    let
-                        formNet =
-                            case getShape id session.net of
-                                Formula form ->
-                                    form |> structOfFormula |> netOfStruct
-
-                                _ ->
-                                    getSubnet id session.net
-
-                        loc =
-                            getLocation id session.net
-                    in
-                    session.net
-                        |> prune id
-                        |> graft loc formNet
+                _ ->
+                    session.actionMode
     in
     ( actionId
     , { session
         | actions = newActions
-        , actionsQueue = newActionsQueue
-        , net = updatedNet
+        , actionsQueue = updatedActionsQueue
+        , actionMode = updatedActionMode
+        , net = transformedNet
       }
     )
 

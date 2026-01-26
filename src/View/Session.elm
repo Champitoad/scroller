@@ -13,10 +13,10 @@ import Html5.DragDrop as DnD
 import Model.App exposing (..)
 import Model.Formula as Formula exposing (..)
 import Model.Mascarpone exposing (..)
-import Model.Scroll as Scroll exposing (..)
-import Model.Session exposing (..)
+import Model.Scroll exposing (..)
+import Model.Session as Session exposing (..)
 import Update.App exposing (..)
-import Utils.Color
+import Utils.Color exposing (fromElement)
 import Utils.Events exposing (onClick)
 import Utils.List
 import View.Events
@@ -25,42 +25,24 @@ import View.Toolbar exposing (toolbarHeight)
 import View.Widgets as Widgets exposing (..)
 
 
-reorderColor : Color.Color
-reorderColor =
-    Utils.Color.fromRgb { red = 0.7, green = 0.7, blue = 0.7 }
-
-
-useColor : Color.Color
-useColor =
-    Utils.Color.fromRgb { red = 1, green = 0.8, blue = 0 }
-
-
-viewAction : Session -> Action -> ZoneStyle Msg -> String -> List (Attribute Msg)
-viewAction session action actionableStyle titleText =
-    case applicable session action of
+viewClickAction : Session -> Action -> ZoneStyle Msg -> String -> List (Attribute Msg)
+viewClickAction session action actionableStyle titleText =
+    case applicable action session of
         Err _ ->
             actionableStyle.inactive
 
         Ok _ ->
-            Utils.Events.onClick (Apply session.location action)
+            Utils.Events.onClick (Apply session.route action)
                 :: (htmlAttribute <| title titleText)
                 :: actionableStyle.active
 
 
-deleteValAction : Session -> Context -> Val -> List (Attribute Msg)
-deleteValAction session ctx val =
-    viewAction session
-        (DeleteVal { ctx = ctx, val = val })
+deleteAction : Session -> Id -> List (Attribute Msg)
+deleteAction session id =
+    viewClickAction session
+        (Delete id)
         redActionable
-        "Delete value"
-
-
-deleteEnvAction : Session -> Context -> ScrollVal -> Scroll.Ident -> Env -> List (Attribute Msg)
-deleteEnvAction session ctx scroll id env =
-    viewAction session
-        (DeleteEnv { ctx = ctx, scroll = scroll, id = id, env = env })
-        redActionable
-        "Delete branch"
+        "Delete"
 
 
 drawGrownBorder : Bool -> List (Attribute msg)
@@ -72,25 +54,69 @@ drawGrownBorder doit =
         grownBorder.inactive
 
 
-introButton : Session -> Int -> String -> Element Msg -> Element Msg
-introButton session actionId title content =
+viewNode : DnD -> Session -> Tree -> Element Msg
+viewNode dnd session (TNode { id, node, children }) =
     let
-        style =
-            { width = Css.pct 100
-            , height = Css.px 30
-            , color = Color.rgb255 58 134 255
-            , iconColorEnabled = Color.white
-            , iconColorDisabled = Color.darkGray
-            }
+        statusBar =
+            let
+                nameEl =
+                    text node.name
 
-        params =
-            { action = Msg (Exec session.location actionId)
-            , title = title
-            , content = content
-            , enabled = True
-            }
+                polarity =
+                    getPolarity id session.net
+
+                originName =
+                    case node.justif.from of
+                        Just origin ->
+                            getName (originSourceId origin) session.net
+
+                        _ ->
+                            ""
+
+                introIndicator =
+                    if isInsertion polarity node.justif then
+                        insertionIndicator
+
+                    else if isIteration polarity node.justif then
+                        iterationIndicator originName
+
+                    else if isExpandedInloop id session.net then
+                        expansionIndicator
+
+                    else
+                        none
+
+                elimIndicator =
+                    if isDeletion polarity node.justif then
+                        deletionIndicator
+
+                    else if isDeiteration polarity node.justif then
+                        deiterationIndicator originName
+
+                    else if isCollapsedInloop id session.net then
+                        collapseIndicator
+
+                    else
+                        none
+            in
+            row
+                [ width fill ]
+                [ el [ alignLeft ] introIndicator
+                , el [ centerX ] nameEl
+                , el [ alignRight ] elimIndicator
+                ]
+
+        nodeShapeEl =
+            case node.shape of
+                Formula form ->
+                    viewFormula dnd session id form
+
+                Sep _ interaction ->
+                    viewSep dnd session id interaction children
     in
-    button style params
+    column
+        [ width shrink, height shrink ]
+        [ statusBar, nodeShapeEl ]
 
 
 viewAtom : Formula.Ident -> Element Msg
@@ -128,16 +154,9 @@ viewStatement formula =
             row [] [ text "¬ (", viewStatement f1, text ")" ]
 
 
-viewFormula : DnD -> Session -> Context -> Metadata -> Maybe Scroll.Ident -> Justification -> Formula -> Element Msg
-viewFormula dnd session ctx metadata name justif formula =
+viewFormula : DnD -> Session -> Id -> Formula -> Element Msg
+viewFormula dnd session id formula =
     let
-        val =
-            { metadata = metadata
-            , name = name
-            , justif = justif
-            , shape = Formula formula
-            }
-
         clickAction =
             case session.actionMode of
                 ProofMode Interacting ->
@@ -146,15 +165,15 @@ viewFormula dnd session ctx metadata name justif formula =
                             []
 
                         _ ->
-                            viewAction session
-                                (Decompose { ctx = ctx, formula = formula })
+                            viewClickAction session
+                                (Decompose id)
                                 pinkActionable
                                 "Decompose"
 
                 EditMode { interaction } ->
                     case interaction of
                         Operating ->
-                            deleteValAction session ctx val
+                            deleteAction session id
 
                         _ ->
                             []
@@ -165,16 +184,16 @@ viewFormula dnd session ctx metadata name justif formula =
         dragAction =
             case session.actionMode of
                 ProofMode Interacting ->
-                    View.Events.dragAction useColor dnd session.location ctx val
+                    View.Events.dragAction useColor dnd session.route id
 
                 EditMode _ ->
-                    View.Events.dragAction reorderColor dnd session.location ctx val
+                    View.Events.dragAction reorderColor dnd session.route id
 
                 _ ->
                     []
 
         ( fontSize, paddingSize ) =
-            case session.location of
+            case session.route of
                 Playground ->
                     ( 45, 10 )
 
@@ -185,52 +204,27 @@ viewFormula dnd session ctx metadata name justif formula =
         ([ centerX
          , centerY
          , padding paddingSize
-         , Font.color (scrollForegroundColor ctx.polarity)
+         , Font.color (scrollForegroundColor (getPolarity id session.net))
          , Font.size fontSize
-         , nonSelectable
          ]
             ++ dragAction
             ++ clickAction
-            ++ drawGrownBorder metadata.grown
         )
         (viewStatement formula)
 
 
-viewOutloop : DnD -> Session -> Context -> ScrollVal -> Element Msg
-viewOutloop dnd session ctx scroll =
+viewOutloop : DnD -> Session -> Id -> List Tree -> Element Msg
+viewOutloop dnd session id content =
     let
-        newCtx =
-            let
-                zOutloop =
-                    mkZOutloop
-                        { metadata = scroll.metadata
-                        , name = scroll.name
-                        , justif = scroll.justif
-                        , interaction = scroll.data.interaction
-                        }
-                        scroll.data.inloops
-            in
-            { zipper = zOutloop :: ctx.zipper
-            , polarity = invert ctx.polarity
-            }
-
         clickAction =
             case session.actionMode of
                 ProofMode Interacting ->
-                    case getSingleInloop session.execMode ctx scroll of
-                        Nothing ->
-                            []
-
-                        Just ( id, _ ) ->
-                            viewAction session
-                                (Close { ctx = ctx, scroll = scroll, id = id })
-                                orangeActionable
-                                "Close"
+                    viewClickAction session (Close id) orangeActionable "Close"
 
                 EditMode { interaction } ->
                     case interaction of
                         Operating ->
-                            deleteValAction session ctx (valFromScroll scroll)
+                            deleteAction session id
 
                         _ ->
                             []
@@ -239,7 +233,7 @@ viewOutloop dnd session ctx scroll =
                     (actionable Utils.Color.transparent).inactive
 
         paddingSize =
-            case session.location of
+            case session.route of
                 Playground ->
                     10
 
@@ -258,39 +252,19 @@ viewOutloop dnd session ctx scroll =
              ]
                 ++ clickAction
             )
-            (viewNet dnd session newCtx scroll.data.outloop)
+            (viewTrees dnd session (Inside id) content)
         )
 
 
-viewInloop : DnD -> Session -> Context -> ScrollVal -> ( Scroll.Ident, Env ) -> Element Msg
-viewInloop dnd session ctx scroll ( id, env ) =
+viewInloop : DnD -> Session -> Id -> List Tree -> Element Msg
+viewInloop dnd session id content =
     let
-        newCtx =
-            let
-                zScrollData =
-                    { metadata = scroll.metadata
-                    , name = scroll.name
-                    , justif = scroll.justif
-                    , interaction = scroll.data.interaction
-                    }
-
-                zInloop =
-                    { scroll = zScrollData
-                    , outloop = scroll.data.outloop
-                    , neighbors = Dict.remove id scroll.data.inloops
-                    , metadata = env.metadata
-                    , justif = env.justif
-                    , id = id
-                    }
-            in
-            { ctx | zipper = ZInloop zInloop :: ctx.zipper }
-
         clickAction =
             case session.actionMode of
                 EditMode { interaction } ->
                     case interaction of
                         Operating ->
-                            deleteEnvAction session ctx scroll id env
+                            deleteAction session id
 
                         _ ->
                             []
@@ -299,7 +273,7 @@ viewInloop dnd session ctx scroll ( id, env ) =
                     []
 
         paddingSize =
-            case session.location of
+            case session.route of
                 Playground ->
                     10
 
@@ -310,7 +284,7 @@ viewInloop dnd session ctx scroll ( id, env ) =
         [ width fill
         , height fill
         , Border.rounded scrollBorderRound
-        , Background.color (scrollBackgroundColor ctx.polarity)
+        , Background.color (scrollBackgroundColor (getPolarity id session.net))
         ]
         (el
             ([ width fill
@@ -319,7 +293,7 @@ viewInloop dnd session ctx scroll ( id, env ) =
              ]
                 ++ clickAction
             )
-            (viewNet dnd session newCtx env.content)
+            (viewTrees dnd session (Inside id) content)
         )
 
 
@@ -329,7 +303,7 @@ addButton params =
         style =
             { width = Css.pct 100
             , height = Css.pct 100
-            , color = Color.rgb255 58 134 255
+            , color = introColor |> fromElement
             , iconColorEnabled = Color.white
             , iconColorDisabled = Color.darkGray
             }
@@ -337,18 +311,32 @@ addButton params =
     iconButton style params
 
 
-viewAddInloopZone : Session -> Context -> ScrollVal -> List (Element Msg)
-viewAddInloopZone session ctx scroll =
+viewAddInloopZone : Session -> Id -> List (Element Msg)
+viewAddInloopZone session id =
     let
-        id =
-            "Branch" ++ String.fromInt (Dict.size scroll.data.inloops + 1)
+        pos =
+            Dict.size (getOutloopInteractions id session.net) + 1
 
-        insertEnvAction =
-            InsertEnv { ctx = ctx, scroll = scroll, id = id, content = [] }
+        loc =
+            { ctx = Inside id, pos = pos }
+
+        tok =
+            ISep []
+
+        insertAction =
+            Insert loc tok
+
+        insertEvent =
+            case findAncestor (\id_ _ -> Session.isInserted id_ session) id session.net of
+                Just ancId ->
+                    Transform session.route (subInsert ancId loc tok)
+
+                Nothing ->
+                    Apply session.route insertAction
 
         addInloopButton =
             addButton
-                { action = Msg (Apply session.location insertEnvAction)
+                { action = Msg insertEvent
                 , title = "Insert new branch"
                 , icon = Icons.plusSquare
                 , enabled = True
@@ -356,14 +344,14 @@ viewAddInloopZone session ctx scroll =
     in
     case session.actionMode of
         EditMode _ ->
-            case applicable session insertEnvAction of
+            case applicable insertAction session of
                 Ok _ ->
                     [ el
                         [ width shrink
                         , height fill
                         , padding 10
                         , Border.rounded scrollBorderRound
-                        , Background.color (scrollBackgroundColor (invert ctx.polarity))
+                        , Background.color (scrollBackgroundColor (invert (getPolarity id session.net)))
                         ]
                         addInloopButton
                     ]
@@ -443,95 +431,90 @@ viewAddValZone location ctx newAtomName =
         [ addValButton ]
 
 
-viewVal : DnD -> Session -> Context -> Val -> Element Msg
-viewVal dnd session ctx val =
-    case val.shape of
-        Formula formula ->
-            viewFormula dnd session ctx val.metadata val.name val.justif formula
+viewSep : DnD -> Session -> Id -> Maybe Interaction -> List Tree -> Element Msg
+viewSep dnd session id interaction children =
+    let
+        scroll =
+            { metadata = val.metadata
+            , name = val.name
+            , justif = val.justif
+            , data = scrollData
+            }
 
-        Scroll ({ inloops } as scrollData) ->
-            let
-                scroll =
-                    { metadata = val.metadata
-                    , name = val.name
-                    , justif = val.justif
-                    , data = scrollData
+        outloopEl =
+            viewOutloop dnd session ctx scroll
+
+        addInloopZone =
+            viewAddInloopZone session ctx scroll
+
+        inloopsEl =
+            row
+                [ width fill
+                , height fill
+                , spacing scrollBorderWidth
+                ]
+                ((inloops
+                    |> Dict.toList
+                    |> List.map (viewInloop dnd session ctx scroll)
+                 )
+                    ++ addInloopZone
+                )
+
+        color =
+            case session.actionMode of
+                ProofMode _ ->
+                    useColor
+
+                EditMode _ ->
+                    reorderColor
+
+                _ ->
+                    Utils.Color.transparent
+
+        { shadowOffset, shadowSize, shadowBlur, shadowAlpha } =
+            case session.route of
+                Playground ->
+                    { shadowOffset = ( 0, 5 )
+                    , shadowSize = 0.25
+                    , shadowBlur = 15
+                    , shadowAlpha = 1
                     }
 
-                outloopEl =
-                    viewOutloop dnd session ctx scroll
-
-                addInloopZone =
-                    viewAddInloopZone session ctx scroll
-
-                inloopsEl =
-                    row
-                        [ width fill
-                        , height fill
-                        , spacing scrollBorderWidth
-                        ]
-                        ((inloops
-                            |> Dict.toList
-                            |> List.map (viewInloop dnd session ctx scroll)
-                         )
-                            ++ addInloopZone
-                        )
-
-                color =
-                    case session.actionMode of
-                        ProofMode _ ->
-                            useColor
-
-                        EditMode _ ->
-                            reorderColor
-
-                        _ ->
-                            Utils.Color.transparent
-
-                { shadowOffset, shadowSize, shadowBlur, shadowAlpha } =
-                    case session.location of
-                        Playground ->
-                            { shadowOffset = ( 0, 5 )
-                            , shadowSize = 0.25
-                            , shadowBlur = 15
-                            , shadowAlpha = 1
-                            }
-
-                        Manual _ ->
-                            { shadowOffset = ( 0, 3 )
-                            , shadowSize = 0.25
-                            , shadowBlur = 10
-                            , shadowAlpha = 0.7
-                            }
-            in
-            column
-                ([ width fill
-                 , height fill
-                 , Background.color (scrollForegroundColor ctx.polarity)
-                 ]
-                    ++ (List.map htmlAttribute <| DnD.droppable DragDropMsg Nothing)
-                    ++ View.Events.dragAction color dnd session.location ctx val
-                    ++ onClick DoNothing
-                    :: Border.solid
-                    :: Border.width grownBorder.borderWidth
-                    :: drawGrownBorder val.metadata.grown
-                    ++ [ Border.shadow
-                            { offset = shadowOffset
-                            , size = shadowSize
-                            , blur = shadowBlur
-                            , color =
-                                scrollForegroundColor ctx.polarity
-                                    |> Utils.Color.fromElement
-                                    |> Utils.Color.withAlpha shadowAlpha
-                                    |> Utils.Color.toElement
-                            }
-                       ]
-                )
-                [ outloopEl, inloopsEl ]
+                Manual _ ->
+                    { shadowOffset = ( 0, 3 )
+                    , shadowSize = 0.25
+                    , shadowBlur = 10
+                    , shadowAlpha = 0.7
+                    }
+    in
+    column
+        ([ width fill
+         , height fill
+         , Background.color (scrollForegroundColor ctx.polarity)
+         ]
+            ++ (List.map htmlAttribute <| DnD.droppable DragDropMsg Nothing)
+            ++ View.Events.dragAction color dnd session.route ctx val
+            ++ onClick DoNothing
+            :: Border.solid
+            :: Border.width grownBorder.borderWidth
+            :: drawGrownBorder val.metadata.grown
+            ++ [ Border.shadow
+                    { offset = shadowOffset
+                    , size = shadowSize
+                    , blur = shadowBlur
+                    , color =
+                        scrollForegroundColor ctx.polarity
+                            |> Utils.Color.fromElement
+                            |> Utils.Color.withAlpha shadowAlpha
+                            |> Utils.Color.toElement
+                    }
+               ]
+        )
+        [ outloopEl, inloopsEl ]
 
 
-viewNet : DnD -> Session -> Context -> Net -> Element Msg
-viewNet dnd session ctx net =
+viewTrees : DnD -> Session -> Context -> List Tree -> Element Msg
+viewTrees dnd session ctx trees =
     let
         newCtx ( left, right ) =
             { ctx | zipper = mkZNet left right :: ctx.zipper }
@@ -548,7 +531,7 @@ viewNet dnd session ctx net =
                             , polarity = ctx.polarity
                             }
                         , content = content
-                        , location = session.location
+                        , location = session.route
                         }
                     )
 
@@ -651,7 +634,7 @@ viewNet dnd session ctx net =
                     []
 
         spaceSize =
-            case session.location of
+            case session.route of
                 Playground ->
                     30
 
@@ -725,7 +708,7 @@ viewNet dnd session ctx net =
                             in
                             case applicable session insertValAction of
                                 Ok _ ->
-                                    [ viewAddValZone session.location ctx newAtomName ]
+                                    [ viewAddValZone session.route ctx newAtomName ]
 
                                 Err _ ->
                                     []
@@ -783,7 +766,7 @@ viewSession : DnD -> Session -> Element Msg
 viewSession dnd session =
     let
         congratsFontSize =
-            case session.location of
+            case session.route of
                 Playground ->
                     48
 

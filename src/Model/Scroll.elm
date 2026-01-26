@@ -90,6 +90,16 @@ type Origin
     | Indirect { anc : Id, src : Id }
 
 
+originSourceId : Origin -> Id
+originSourceId origin =
+    case origin of
+        Direct id ->
+            id
+
+        Indirect { src } ->
+            src
+
+
 type alias Justification =
     { self : Bool
     , from : Maybe Origin
@@ -190,6 +200,35 @@ invert polarity =
 -- Query
 
 
+findAncestor : (Id -> Net -> Bool) -> Id -> Net -> Maybe Id
+findAncestor pred id net =
+    case getContext id net of
+        TopLevel ->
+            Nothing
+
+        Inside parentId ->
+            if pred parentId net then
+                Just parentId
+
+            else
+                findAncestor pred parentId net
+
+
+foldAncestors : (Id -> Net -> a -> a) -> a -> Id -> Net -> a
+foldAncestors func acc id net =
+    case getContext id net of
+        TopLevel ->
+            acc
+
+        Inside parentId ->
+            foldAncestors func (func parentId net acc) parentId net
+
+
+existsAncestor : (Id -> Net -> Bool) -> Id -> Net -> Bool
+existsAncestor pred =
+    foldAncestors (\id_ net_ acc -> pred id_ net_ || acc) False
+
+
 getNode : Id -> Net -> Node
 getNode id net =
     Dict.get id net.nodes
@@ -243,9 +282,25 @@ getLocation id net =
             }
 
 
+getNodeIdAtLocation : Location -> Net -> Id
+getNodeIdAtLocation loc net =
+    net.nodes
+        |> Dict.toList
+        |> List.Extra.findMap
+            (\( id, _ ) ->
+                if getLocation id net == loc then
+                    Just id
+
+                else
+                    Nothing
+            )
+        -- Dummy ID, should never happen
+        |> Maybe.withDefault (baseId -1)
+
+
 getPolarity : Id -> Net -> Polarity
-getPolarity id net =
-    getPolarityContext (getContext id net) net
+getPolarity =
+    foldAncestors (\_ _ -> invert) Pos
 
 
 getPolarityContext : Context -> Net -> Polarity
@@ -258,8 +313,8 @@ getPolarityContext ctx net =
             invert (getPolarity parentId net)
 
 
-getInteractions : Id -> Net -> Dict Id Interaction
-getInteractions id net =
+getOutloopInteractions : Id -> Net -> Dict Id Interaction
+getOutloopInteractions id net =
     case getShape id net of
         Sep childIds _ ->
             List.foldl
@@ -276,6 +331,16 @@ getInteractions id net =
 
         _ ->
             Dict.empty
+
+
+getInloopInteraction : Id -> Net -> Maybe Interaction
+getInloopInteraction id net =
+    case getShape id net of
+        Sep _ interaction ->
+            interaction
+
+        _ ->
+            Nothing
 
 
 getChildIds : Id -> Net -> List Id
@@ -548,6 +613,14 @@ freshify s t =
 
 
 -- Constructors and combinators
+
+
+emptyScrollToken : IToken
+emptyScrollToken =
+    ITok (OSep [ ISep [] ])
+
+
+
 {- Updates the content of `t.nodes` with that of `s.nodes`, assuming the IDs of `s` form a subset of
    those of `t`. If this assumption is false, the result will be a non-sensical union with the roots
    of `t`.
@@ -720,6 +793,13 @@ curl outloop inloops =
     , roots =
         [ baseId 0 ]
     }
+
+
+emptyScrollNet : Interaction -> Net
+emptyScrollNet interaction =
+    curl empty [ empty ]
+        |> updateName (baseId 0) (\_ -> "Return")
+        |> updateInteraction (baseId 0) (\_ -> interaction)
 
 
 
@@ -1033,22 +1113,65 @@ deepcopy net =
 
 
 -- Illative transformations
+{- Generates a fresh name that does not appear in `net` from `basename`. -}
+
+
+freshName : String -> Net -> String
+freshName basename net =
+    let
+        generateName str num =
+            str ++ " " ++ String.fromInt num
+
+        number =
+            Dict.foldl
+                (\_ { name } acc ->
+                    if name == generateName basename acc then
+                        acc + 1
+
+                    else
+                        acc
+                )
+                0
+                net.nodes
+    in
+    generateName basename number
+
+
+
 {- Inserts token `tok` at location `loc` in `net`, by properly "dehydrating" it into a
-   self-justified node with fresh IDs for its subnodes, as well as the correct attachment structure.
+   (self-justified if `self == True`) node with fresh IDs for its subnodes, as well as the correct
+   attachment structure.
 -}
 
 
-insert : Location -> IToken -> Net -> Net
-insert loc tok net =
+insert : Bool -> Location -> IToken -> Net -> Net
+insert self loc tok net =
     let
         newTree =
             hydrateToken loc.ctx tok
 
-        newNet =
-            dehydrateTree newTree
+        newId =
+            getTreeId newTree
+
+        basename =
+            case tok of
+                ITok _ ->
+                    "Value"
+
+                ISep _ ->
+                    "Branch"
 
         ins =
-            updateJustif (getTreeId newTree) selfJustify newNet
+            dehydrateTree newTree
+                |> updateName newId (\_ -> freshName basename net)
+                |> updateJustif newId
+                    (\j ->
+                        if self then
+                            selfJustify j
+
+                        else
+                            j
+                    )
     in
     graft loc ins net
 
@@ -1074,6 +1197,7 @@ iterate id loc net =
                 |> getSubnet id
                 |> conclusion
                 |> deepcopy
+                |> updateName id (\name -> freshName ("Copy of " ++ name) net)
     in
     graft loc copy net
 
@@ -1158,25 +1282,40 @@ isDestroyed id net =
     isDestruction (getPolarity id net) (getJustif id net)
 
 
-isExpanded : Id -> Net -> Bool
-isExpanded id net =
-    getInteractions id net
+isExpandedOutloop : Id -> Net -> Bool
+isExpandedOutloop id net =
+    getOutloopInteractions id net
         |> Dict.toList
         |> Utils.List.exists (\( _, int ) -> isExpansion (getPolarity id net) int)
 
 
-isCollapsed : Id -> Net -> Bool
-isCollapsed id net =
-    getInteractions id net
+isCollapsedOutloop : Id -> Net -> Bool
+isCollapsedOutloop id net =
+    getOutloopInteractions id net
         |> Dict.toList
         |> Utils.List.exists (\( _, int ) -> isCollapse (getPolarity id net) int)
+
+
+isExpandedInloop : Id -> Net -> Bool
+isExpandedInloop id net =
+    getInloopInteraction id net
+        |> Maybe.map (isExpansion (getPolarity id net))
+        |> Maybe.withDefault False
+
+
+isCollapsedInloop : Id -> Net -> Bool
+isCollapsedInloop id net =
+    getInloopInteraction id net
+        |> Maybe.map (isCollapse (getPolarity id net))
+        |> Maybe.withDefault False
 
 
 isIntroduced : Id -> Net -> Bool
 isIntroduced id net =
     isCreated id net
-        || isExpanded id net
-        || isIntroducedContext (getContext id net) net
+        || isExpandedOutloop id net
+        || isExpandedInloop id net
+        || existsAncestor isCreated id net
 
 
 isIntroducedContext : Context -> Net -> Bool
@@ -1192,8 +1331,9 @@ isIntroducedContext ctx net =
 isEliminated : Id -> Net -> Bool
 isEliminated id net =
     isDestroyed id net
-        || isCollapsed id net
-        || isEliminatedContext (getContext id net) net
+        || isCollapsedOutloop id net
+        || isCollapsedInloop id net
+        || existsAncestor isDestroyed id net
 
 
 isEliminatedContext : Context -> Net -> Bool
@@ -1216,7 +1356,7 @@ isDetour id net =
         ( pol, justif ) =
             ( getPolarity id net, getJustif id net )
     in
-    (isCreation pol justif && isDestruction pol justif) || (isExpanded id net && isCollapsed id net)
+    (isCreation pol justif && isDestruction pol justif) || (isExpandedOutloop id net && isCollapsedOutloop id net)
 
 
 
@@ -1403,14 +1543,14 @@ stringOfShape content shape =
 
 identity : Net
 identity =
-    Debug.todo ""
+    Debug.todo "Identity example not implemented yet"
 
 
 modusPonensCurryfied : Net
 modusPonensCurryfied =
-    Debug.todo ""
+    Debug.todo "Curryfied modus ponens example not implemented yet"
 
 
 orElim : Net
 orElim =
-    Debug.todo ""
+    Debug.todo "Or elimination example not implemented yet"

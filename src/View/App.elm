@@ -51,7 +51,7 @@ view model =
                     column [ width fill, height fill ] [ session, toolbar ]
                         |> layout []
             in
-            { title = "Flower Prover"
+            { title = "Scroller Editor"
             , body =
                 [ div
                     [ keyboardListener
@@ -62,7 +62,7 @@ view model =
             }
 
         Route.Manual ->
-            { title = "Manual · Flower Prover"
+            { title = "Manual · Scroller"
             , body = [ layout [] (Manual.page model) ]
             }
 

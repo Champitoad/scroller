@@ -18,6 +18,7 @@ port dragstart : Value -> Cmd msg
 
 type Msg
     = Apply Route Action
+    | Transform Route (Session -> Session)
     | Exec Route Int
     | ExecAll
     | Step
@@ -139,19 +140,26 @@ handleDragDropMsg dndMsg model =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        Apply location action ->
+        Apply route action ->
             let
                 newSession =
-                    apply action (getSession location model)
+                    apply action (getSession route model)
             in
-            ( setSessionWithHistory location newSession model, Cmd.none )
+            ( setSessionWithHistory route newSession model, Cmd.none )
 
-        Exec location actionId ->
+        Transform route transform ->
             let
                 newSession =
-                    execute actionId (getSession location model)
+                    transform (getSession route model)
             in
-            ( setSessionWithHistory location newSession model, Cmd.none )
+            ( setSessionWithHistory route newSession model, Cmd.none )
+
+        Exec route actionId ->
+            let
+                newSession =
+                    execute actionId (getSession route model)
+            in
+            ( setSessionWithHistory route newSession model, Cmd.none )
 
         ExecAll ->
             ( { model | session = execAll model.session }, Cmd.none )
