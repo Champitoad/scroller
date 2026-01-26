@@ -5,6 +5,7 @@ import List.Extra
 import Model.Formula as Formula exposing (..)
 import Set
 import Utils.List
+import Utils.Maybe
 
 
 
@@ -225,8 +226,19 @@ foldAncestors func acc id net =
 
 
 existsAncestor : (Id -> Net -> Bool) -> Id -> Net -> Bool
-existsAncestor pred =
-    foldAncestors (\id_ net_ acc -> pred id_ net_ || acc) False
+existsAncestor pred id net =
+    Utils.Maybe.isSomething (findAncestor pred id net)
+
+
+existsAncestorContext : (Id -> Net -> Bool) -> Context -> Net -> Bool
+existsAncestorContext pred ctx net =
+    case ctx of
+        TopLevel ->
+            False
+
+        Inside parentId ->
+            pred parentId net
+                || Utils.Maybe.isSomething (findAncestor pred parentId net)
 
 
 getNode : Id -> Net -> Node
@@ -415,13 +427,12 @@ isInloop id net =
             False
 
 
-getOutloop : Id -> Net -> Net
+getOutloop : Id -> Net -> List Tree
 getOutloop id net =
     net
         |> buildTree id
         |> getTreeChildren
         |> List.filter (\(TNode root) -> not (isInloop root.id net))
-        |> dehydrate
 
 
 

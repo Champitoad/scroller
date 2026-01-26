@@ -228,7 +228,16 @@ execAll session =
 
 changeActionMode : ActionMode -> Session -> Session
 changeActionMode mode session =
-    { session | actionMode = mode }
+    let
+        newSession =
+            case session.actionMode of
+                EditMode _ ->
+                    commitInsertions session
+
+                _ ->
+                    session
+    in
+    { newSession | actionMode = mode }
 
 
 changeExecMode : ExecMode -> Session -> Session
@@ -273,76 +282,62 @@ isErasedContext ctx session =
 
 isInserted : Id -> Session -> Bool
 isInserted id { net, execMode } =
-    let
-        polarity =
-            getPolarity id net
-
-        justif =
-            getJustif id net
-    in
-    case execMode of
-        Forward ->
-            isInsertion polarity justif
-
-        Backward ->
-            isDeletion polarity justif
+    getPolarity id net == creationPolarity execMode && (getJustif id net).self
 
 
-subInsert : Id -> Location -> IToken -> Session -> Session
-subInsert ancId loc tok session =
-    let
-        updatedNet =
-            insert False loc tok session.net
-
-        updatedActions =
+commitInsertions : Session -> Session
+commitInsertions session =
+    { session
+        | actions =
             case session.actionMode of
                 EditMode { insertions } ->
-                    let
-                        insertionActionId =
-                            insertions
-                                |> Dict.get ancId
-                                -- Dummy ID, should never happen
-                                |> Maybe.withDefault -1
+                    Dict.foldl
+                        (\ancId insertionActionId acc ->
+                            let
+                                newToken =
+                                    boundary session
+                                        |> buildTree ancId
+                                        |> tokenOfTree
+                            in
+                            Iddict.update
+                                insertionActionId
+                                (Maybe.map
+                                    (\action ->
+                                        case action of
+                                            Insert ancLoc _ ->
+                                                Insert ancLoc newToken
 
-                        newToken =
-                            session.net
-                                |> buildTree ancId
-                                |> tokenOfTree
-                    in
-                    Iddict.update
-                        insertionActionId
-                        (Maybe.map
-                            (\action ->
-                                case action of
-                                    Insert ancLoc _ ->
-                                        Insert ancLoc newToken
-
-                                    _ ->
-                                        action
-                            )
+                                            _ ->
+                                                action
+                                    )
+                                )
+                                acc
                         )
                         session.actions
+                        insertions
 
                 _ ->
                     session.actions
-    in
-    { session | net = updatedNet, actions = updatedActions }
+    }
+
+
+creationPolarity : ExecMode -> Polarity
+creationPolarity execMode =
+    case execMode of
+        Forward ->
+            Neg
+
+        Backward ->
+            Pos
+
+
+destructionPolarity : ExecMode -> Polarity
+destructionPolarity =
+    invert << creationPolarity
 
 
 applicable : Action -> Session -> Result ActionError ()
 applicable action session =
-    let
-        creationPolarity =
-            case session.execMode of
-                Forward ->
-                    Neg
-
-                Backward ->
-                    Pos
-
-        destructionPolarity =
-            invert creationPolarity
-    in
     case action of
         Open loc ->
             if isErasedContext loc.ctx session then
@@ -355,7 +350,7 @@ applicable action session =
             if isErased id session then
                 Err Erased
 
-            else if getOutloop id (boundary session) /= Scroll.empty then
+            else if getOutloop id (boundary session) /= [] then
                 Err (NonEmptyOutloop id)
 
             else if Dict.size (getOutloopInteractions id (boundary session)) /= 1 then
@@ -365,7 +360,7 @@ applicable action session =
                 Ok ()
 
         Insert loc _ ->
-            if getPolarityContext loc.ctx session.net /= creationPolarity then
+            if getPolarityContext loc.ctx session.net /= creationPolarity session.execMode then
                 Err InvalidPolarity
 
             else if isErasedContext loc.ctx session then
@@ -375,7 +370,7 @@ applicable action session =
                 Ok ()
 
         Delete id ->
-            if getPolarity id session.net /= destructionPolarity then
+            if getPolarity id session.net /= destructionPolarity session.execMode then
                 Err InvalidPolarity
 
             else if isErased id session then
@@ -385,7 +380,7 @@ applicable action session =
                 Ok ()
 
         Iterate src dst ->
-            if getPolarityContext dst.ctx session.net /= creationPolarity then
+            if getPolarityContext dst.ctx session.net /= creationPolarity session.execMode then
                 Err InvalidPolarity
 
             else if not (spans (getContext src session.net) dst.ctx session.net) then
@@ -398,7 +393,7 @@ applicable action session =
                 Ok ()
 
         Deiterate src tgt ->
-            if getPolarity tgt session.net /= destructionPolarity then
+            if getPolarity tgt session.net /= destructionPolarity session.execMode then
                 Err InvalidPolarity
 
             else if not (spans (getContext src session.net) (getContext tgt session.net) session.net) then

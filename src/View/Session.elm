@@ -2,7 +2,7 @@ module View.Session exposing (..)
 
 import Color
 import Css
-import Dict
+import Dict exposing (Dict)
 import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
@@ -63,7 +63,12 @@ viewNode dnd session (TNode { id, node, children }) =
                     text node.name
 
                 polarity =
-                    getPolarity id session.net
+                    case session.execMode of
+                        Forward ->
+                            getPolarity id session.net
+
+                        Backward ->
+                            invert (getPolarity id session.net)
 
                 originName =
                     case node.justif.from of
@@ -80,7 +85,11 @@ viewNode dnd session (TNode { id, node, children }) =
                     else if isIteration polarity node.justif then
                         iterationIndicator originName
 
-                    else if isExpandedInloop id session.net then
+                    else if
+                        getInloopInteraction id session.net
+                            |> Maybe.map (isExpansion polarity)
+                            |> Maybe.withDefault False
+                    then
                         expansionIndicator
 
                     else
@@ -93,7 +102,11 @@ viewNode dnd session (TNode { id, node, children }) =
                     else if isDeiteration polarity node.justif then
                         deiterationIndicator originName
 
-                    else if isCollapsedInloop id session.net then
+                    else if
+                        getInloopInteraction id session.net
+                            |> Maybe.map (isCollapse polarity)
+                            |> Maybe.withDefault False
+                    then
                         collapseIndicator
 
                     else
@@ -111,8 +124,8 @@ viewNode dnd session (TNode { id, node, children }) =
                 Formula form ->
                     viewFormula dnd session id form
 
-                Sep _ interaction ->
-                    viewSep dnd session id interaction children
+                Sep _ _ ->
+                    viewSep dnd session id children
     in
     column
         [ width shrink, height shrink ]
@@ -311,49 +324,47 @@ addButton params =
     iconButton style params
 
 
+insertMsg : Session -> Location -> IToken -> Dict Id Int -> Msg
+insertMsg session loc tok insertions =
+    if existsAncestorContext (\ancId _ -> Dict.member ancId insertions) loc.ctx session.net then
+        Transform session.route (Session.map (insert False loc tok))
+
+    else
+        Apply session.route (Insert loc tok)
+
+
 viewAddInloopZone : Session -> Id -> List (Element Msg)
-viewAddInloopZone session id =
+viewAddInloopZone session outloopId =
     let
         pos =
-            Dict.size (getOutloopInteractions id session.net) + 1
+            Dict.size (getOutloopInteractions outloopId session.net) + 1
 
         loc =
-            { ctx = Inside id, pos = pos }
+            { ctx = Inside outloopId, pos = pos }
 
         tok =
             ISep []
 
-        insertAction =
-            Insert loc tok
-
-        insertEvent =
-            case findAncestor (\id_ _ -> Session.isInserted id_ session) id session.net of
-                Just ancId ->
-                    Transform session.route (subInsert ancId loc tok)
-
-                Nothing ->
-                    Apply session.route insertAction
-
-        addInloopButton =
+        addInloopButton insertions =
             addButton
-                { action = Msg insertEvent
+                { action = Msg (insertMsg session loc tok insertions)
                 , title = "Insert new branch"
                 , icon = Icons.plusSquare
                 , enabled = True
                 }
     in
     case session.actionMode of
-        EditMode _ ->
-            case applicable insertAction session of
+        EditMode { insertions } ->
+            case applicable (Insert loc tok) session of
                 Ok _ ->
                     [ el
                         [ width shrink
                         , height fill
                         , padding 10
                         , Border.rounded scrollBorderRound
-                        , Background.color (scrollBackgroundColor (invert (getPolarity id session.net)))
+                        , Background.color (scrollBackgroundColor (invert (getPolarity outloopId session.net)))
                         ]
-                        addInloopButton
+                        (addInloopButton insertions)
                     ]
 
                 Err _ ->
@@ -363,89 +374,107 @@ viewAddInloopZone session id =
             []
 
 
-viewAddValZone : Location -> Context -> String -> Element Msg
-viewAddValZone location ctx newAtomName =
+viewAddOTokenZone : Session -> Context -> String -> Element Msg
+viewAddOTokenZone session ctx newAtomName =
     let
-        newVal =
+        neighbors =
+            case ctx of
+                TopLevel ->
+                    session.net.roots
+
+                Inside parentId ->
+                    getChildIds parentId session.net
+
+        loc =
+            { ctx = ctx, pos = List.length neighbors + 1 }
+
+        otoken =
             if String.isEmpty newAtomName then
-                mkFakeScroll [] [ ( "Return", [] ) ]
+                OSep []
 
             else
                 case newAtomName of
                     "sugar" ->
-                        mkFakeFormula sugar
+                        OForm sugar
 
                     "mascarpone" ->
-                        mkFakeFormula mascarpone
+                        OForm mascarpone
 
                     "egg" ->
-                        mkFakeFormula egg
+                        OForm egg
 
                     "white" ->
-                        mkFakeFormula white
+                        OForm white
 
                     "yolk" ->
-                        mkFakeFormula yolk
+                        OForm yolk
 
                     "whisked whites" ->
-                        mkFakeFormula whiskedWhites
+                        OForm whiskedWhites
 
                     "yolky paste" ->
-                        mkFakeFormula yolkPaste
+                        OForm yolkPaste
 
                     "thick paste" ->
-                        mkFakeFormula thickPaste
+                        OForm thickPaste
 
                     "mascarpone cream" ->
-                        mkFakeFormula mascarponeCream
+                        OForm mascarponeCream
 
                     _ ->
-                        mkFakeFormula (Formula.atom newAtomName)
+                        OForm (Formula.atom newAtomName)
 
-        insertValAction =
-            InsertVal
-                { ctx = ctx
-                , val = newVal
-                }
+        tok =
+            ITok otoken
 
-        addValButton =
+        addOTokenButton insertions =
             el
                 [ width fill
                 , height fill
                 ]
                 (addButton
-                    { action = Msg (Apply location insertValAction)
+                    { action = Msg (insertMsg session loc tok insertions)
                     , title = "Insert new value"
                     , icon = Icons.plus
                     , enabled = True
                     }
                 )
     in
-    column
-        [ width shrink
-        , height fill
-        , centerX
-        , Border.rounded scrollBorderRound
-        , Background.color Style.transparent
-        ]
-        [ addValButton ]
+    case ( session.actionMode, applicable (Insert loc tok) session ) of
+        ( EditMode { insertions }, Ok _ ) ->
+            column
+                [ width shrink
+                , height fill
+                , centerX
+                , Border.rounded scrollBorderRound
+                , Background.color Style.transparent
+                ]
+                [ addOTokenButton insertions ]
+
+        _ ->
+            none
 
 
-viewSep : DnD -> Session -> Id -> Maybe Interaction -> List Tree -> Element Msg
-viewSep dnd session id interaction children =
+viewSep : DnD -> Session -> Id -> List Tree -> Element Msg
+viewSep dnd session id children =
     let
-        scroll =
-            { metadata = val.metadata
-            , name = val.name
-            , justif = val.justif
-            , data = scrollData
-            }
+        outloopContent =
+            List.filter
+                (\(TNode { node }) ->
+                    case node.shape of
+                        Sep _ (Just _) ->
+                            False
+
+                        _ ->
+                            True
+                )
+                children
 
         outloopEl =
-            viewOutloop dnd session ctx scroll
+            viewOutloop dnd session id outloopContent
 
         addInloopZone =
-            viewAddInloopZone session ctx scroll
+            viewAddInloopZone session id
 
         inloopsEl =
             row
@@ -453,9 +482,9 @@ viewSep dnd session id interaction children =
                 , height fill
                 , spacing scrollBorderWidth
                 ]
-                ((inloops
-                    |> Dict.toList
-                    |> List.map (viewInloop dnd session ctx scroll)
+                ((children
+                    |> List.filter (\(TNode child) -> isInloop child.id session.net)
+                    |> List.map (\(TNode inloop) -> viewInloop dnd session inloop.id inloop.children)
                  )
                     ++ addInloopZone
                 )
@@ -490,20 +519,20 @@ viewSep dnd session id interaction children =
     column
         ([ width fill
          , height fill
-         , Background.color (scrollForegroundColor ctx.polarity)
+         , Background.color (scrollForegroundColor (getPolarity id session.net))
          ]
             ++ (List.map htmlAttribute <| DnD.droppable DragDropMsg Nothing)
-            ++ View.Events.dragAction color dnd session.route ctx val
+            ++ View.Events.dragAction color dnd session.route id
             ++ onClick DoNothing
             :: Border.solid
             :: Border.width grownBorder.borderWidth
-            :: drawGrownBorder val.metadata.grown
+            :: drawGrownBorder (isInserted id session)
             ++ [ Border.shadow
                     { offset = shadowOffset
                     , size = shadowSize
                     , blur = shadowBlur
                     , color =
-                        scrollForegroundColor ctx.polarity
+                        scrollForegroundColor (getPolarity id session.net)
                             |> Utils.Color.fromElement
                             |> Utils.Color.withAlpha shadowAlpha
                             |> Utils.Color.toElement
@@ -516,22 +545,15 @@ viewSep dnd session id interaction children =
 viewTrees : DnD -> Session -> Context -> List Tree -> Element Msg
 viewTrees dnd session ctx trees =
     let
-        newCtx ( left, right ) =
-            { ctx | zipper = mkZNet left right :: ctx.zipper }
-
-        valEl ( left, right ) =
-            viewVal dnd session (newCtx ( left, right ))
+        nodeEl tree =
+            viewNode dnd session tree
 
         dropAttrs ( left, right ) content =
             List.map htmlAttribute <|
                 DnD.droppable DragDropMsg
                     (Just
-                        { target =
-                            { zipper = (newCtx ( left, right )).zipper
-                            , polarity = ctx.polarity
-                            }
-                        , content = content
-                        , location = session.route
+                        { route = session.route
+                        , destination = Debug.todo "" content
                         }
                     )
 
@@ -694,7 +716,7 @@ viewTrees dnd session ctx trees =
                          ]
                             ++ lastDropzone
                         )
-                        (valEl lr val)
+                        (nodeEl lr val)
 
                 els =
                     Utils.List.zipperMap sperse net
@@ -708,7 +730,7 @@ viewTrees dnd session ctx trees =
                             in
                             case applicable session insertValAction of
                                 Ok _ ->
-                                    [ viewAddValZone session.route ctx newAtomName ]
+                                    [ viewAddOTokenZone session.route ctx newAtomName ]
 
                                 Err _ ->
                                     []
@@ -732,7 +754,7 @@ viewTrees dnd session ctx trees =
                         , centerX
                         , centerY
                         ]
-                        (valEl lr flower)
+                        (nodeEl lr flower)
 
                 els =
                     Utils.List.zipperMap sperse net
