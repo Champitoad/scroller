@@ -4,6 +4,7 @@ import Dict exposing (Dict)
 import Iddict exposing (Iddict)
 import Model.Scroll as Scroll exposing (..)
 import Queue exposing (Queue)
+import Utils.List
 
 
 
@@ -408,8 +409,8 @@ applicable action session =
             else
                 Ok ()
 
-        Reorder id pos ->
-            Debug.todo "Reorder action not implemented yet"
+        Reorder _ _ ->
+            Ok ()
 
         Decompose _ ->
             Ok ()
@@ -446,8 +447,32 @@ actionTransform execMode action =
         Deiterate src tgt ->
             deiterate src tgt
 
-        Reorder id pos ->
-            Debug.todo "Reorder action not implemented yet"
+        Reorder id tgtPos ->
+            \net ->
+                let
+                    srcPos =
+                        getPosition id net
+
+                    reorder =
+                        Utils.List.move srcPos tgtPos
+                in
+                case getContext id net of
+                    TopLevel ->
+                        { nodes = net.nodes
+                        , roots = reorder net.roots
+                        }
+
+                    Inside parentId ->
+                        updateShape parentId
+                            (\shape ->
+                                case shape of
+                                    Sep children interaction ->
+                                        Sep (reorder children) interaction
+
+                                    _ ->
+                                        shape
+                            )
+                            net
 
         Decompose id ->
             \net ->

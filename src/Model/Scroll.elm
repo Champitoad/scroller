@@ -3,7 +3,6 @@ module Model.Scroll exposing (..)
 import Dict exposing (Dict)
 import List.Extra
 import Model.Formula as Formula exposing (..)
-import Set
 import Utils.List
 import Utils.Maybe
 
@@ -363,6 +362,27 @@ getChildIds id net =
 
         _ ->
             []
+
+
+getChildIdsContext : Context -> Net -> List Id
+getChildIdsContext ctx net =
+    case ctx of
+        TopLevel ->
+            net.roots
+
+        Inside parentId ->
+            getChildIds parentId net
+
+
+getPosition : Id -> Net -> Int
+getPosition id net =
+    let
+        neighbors =
+            getChildIdsContext (getContext id net) net
+    in
+    List.Extra.elemIndex id neighbors
+        -- Dummy position, should never happen
+        |> Maybe.withDefault -1
 
 
 
@@ -1554,14 +1574,14 @@ stringOfShape content shape =
 
 identity : Net
 identity =
-    Debug.todo "Identity example not implemented yet"
+    curl (a "a") [ a "a" ]
 
 
 modusPonensCurryfied : Net
 modusPonensCurryfied =
-    Debug.todo "Curryfied modus ponens example not implemented yet"
+    curl (juxtaposeList [ a "a", curl (a "a") [ a "b" ] ]) [ a "b" ]
 
 
 orElim : Net
 orElim =
-    Debug.todo "Or elimination example not implemented yet"
+    curl (juxtaposeList [ curl empty [ a "a", a "b" ], curl (a "a") [ a "c" ], curl (a "b") [ a "c" ] ]) [ a "c" ]

@@ -18,6 +18,7 @@ type DragSource
 
 type DropDestination
     = DropNode Id
+    | DropContext Context
     | DropLocation Location
 
 

@@ -2,6 +2,7 @@ module View.Session exposing (..)
 
 import Color
 import Css
+import Css.Global exposing (children)
 import Dict exposing (Dict)
 import Element exposing (..)
 import Element.Background as Background
@@ -337,7 +338,7 @@ viewAddInloopZone : Session -> Id -> List (Element Msg)
 viewAddInloopZone session outloopId =
     let
         pos =
-            Dict.size (getOutloopInteractions outloopId session.net) + 1
+            Dict.size (getOutloopInteractions outloopId session.net)
 
         loc =
             { ctx = Inside outloopId, pos = pos }
@@ -378,15 +379,10 @@ viewAddOTokenZone : Session -> Context -> String -> Element Msg
 viewAddOTokenZone session ctx newAtomName =
     let
         neighbors =
-            case ctx of
-                TopLevel ->
-                    session.net.roots
-
-                Inside parentId ->
-                    getChildIds parentId session.net
+            getChildIdsContext ctx session.net
 
         loc =
-            { ctx = ctx, pos = List.length neighbors + 1 }
+            { ctx = ctx, pos = List.length neighbors }
 
         otoken =
             if String.isEmpty newAtomName then
@@ -545,36 +541,37 @@ viewSep dnd session id children =
 viewTrees : DnD -> Session -> Context -> List Tree -> Element Msg
 viewTrees dnd session ctx trees =
     let
-        nodeEl tree =
+        treeEl tree =
             viewNode dnd session tree
 
-        dropAttrs ( left, right ) content =
+        neighbors =
+            getChildIdsContext ctx session.net
+
+        dropAttrs dest =
             List.map htmlAttribute <|
                 DnD.droppable DragDropMsg
                     (Just
                         { route = session.route
-                        , destination = Debug.todo "" content
+                        , destination = dest
                         }
                     )
 
-        dropAction ( left, right ) =
+        dropAction pos =
             case session.actionMode of
                 ProofMode Justifying ->
                     case DnD.getDragId dnd of
                         Nothing ->
                             []
 
-                        Just { source, content } ->
+                        Just { source } ->
                             let
-                                iterateValAction =
-                                    IterateVal
-                                        { srcCtx = source
-                                        , srcVal = content
-                                        , tgtCtx = ctx
-                                        , tgtName = Nothing
-                                        }
+                                (DragNode src) =
+                                    source
+
+                                iterateAction =
+                                    Iterate src { ctx = ctx, pos = List.length neighbors }
                             in
-                            case applicable session iterateValAction of
+                            case applicable iterateAction session of
                                 Err _ ->
                                     []
 
@@ -585,51 +582,62 @@ viewTrees dnd session ctx trees =
 
                                         dropTargetStyle =
                                             case DnD.getDropId dnd of
-                                                Just (Just { target }) ->
-                                                    if (newCtx ( left, right )).zipper == target.zipper then
-                                                        dropStyle.active
+                                                -- Hovering some droppable destination
+                                                Just (Just { destination }) ->
+                                                    case destination of
+                                                        DropContext dropCtx ->
+                                                            -- We only highlight when it's an (iterable) area
+                                                            if dropCtx == ctx then
+                                                                dropStyle.active
 
-                                                    else
-                                                        dropStyle.inactive
+                                                            else
+                                                                dropStyle.inactive
+
+                                                        _ ->
+                                                            dropStyle.inactive
 
                                                 _ ->
                                                     dropStyle.inactive
                                     in
-                                    dropTargetStyle ++ dropAttrs ( left, right ) []
+                                    dropTargetStyle ++ dropAttrs (DropContext ctx)
 
                 EditMode { interaction } ->
                     case interaction of
                         Reordering ->
                             case DnD.getDragId dnd of
-                                Just { source, content } ->
-                                    case source.zipper of
-                                        (ZNet srcNet) :: srcParent ->
-                                            if srcParent == ctx.zipper then
-                                                let
-                                                    srcIdx =
-                                                        List.length srcNet.left
+                                Just { source } ->
+                                    let
+                                        (DragNode src) =
+                                            source
 
-                                                    tgtIdx =
-                                                        List.length left
-                                                in
-                                                if tgtIdx == srcIdx || tgtIdx == srcIdx + 1 then
-                                                    []
+                                        srcCtx =
+                                            getContext src session.net
+                                    in
+                                    if srcCtx == ctx then
+                                        let
+                                            srcPos =
+                                                getPosition src session.net
 
-                                                else
-                                                    let
-                                                        whole =
-                                                            srcNet.left ++ content :: srcNet.right
+                                            tgtPos =
+                                                pos
+                                        in
+                                        if tgtPos == srcPos || tgtPos == srcPos + 1 then
+                                            []
 
-                                                        newNet =
-                                                            Utils.List.move srcIdx tgtIdx whole
+                                        else
+                                            let
+                                                loc =
+                                                    { ctx = ctx, pos = pos }
 
-                                                        dropStyle =
-                                                            droppable reorderColor
+                                                dropStyle =
+                                                    droppable reorderColor
 
-                                                        dropTargetStyle =
-                                                            case DnD.getDropId dnd of
-                                                                Just (Just { target }) ->
-                                                                    if (newCtx ( left, right )).zipper == target.zipper then
+                                                dropTargetStyle =
+                                                    case DnD.getDropId dnd of
+                                                        Just (Just { destination }) ->
+                                                            case destination of
+                                                                DropLocation dropLoc ->
+                                                                    if dropLoc == loc then
                                                                         dropStyle.active
 
                                                                     else
@@ -637,14 +645,14 @@ viewTrees dnd session ctx trees =
 
                                                                 _ ->
                                                                     dropStyle.inactive
-                                                    in
-                                                    dropTargetStyle ++ dropAttrs ( left, right ) newNet
 
-                                            else
-                                                []
+                                                        _ ->
+                                                            dropStyle.inactive
+                                            in
+                                            dropTargetStyle ++ dropAttrs (DropLocation loc)
 
-                                        _ ->
-                                            []
+                                    else
+                                        []
 
                                 _ ->
                                     []
@@ -675,12 +683,12 @@ viewTrees dnd session ctx trees =
             , Border.color Style.transparent
             ]
 
-        length val =
-            case val.shape of
+        elemLength node =
+            case node.shape of
                 Formula _ ->
                     shrink
 
-                Scroll _ ->
+                Sep _ _ ->
                     fill
 
         intersticial () =
@@ -688,49 +696,51 @@ viewTrees dnd session ctx trees =
                 attrs =
                     layoutAttrs
 
-                dropZone lr =
+                dropZone pos =
                     el
                         ([ width (spaceSize |> px)
                          , height (fill |> minimum spaceSize)
                          ]
                             ++ borderAttrs
-                            ++ dropAction lr
+                            ++ dropAction pos
                         )
                         none
 
-                sperse (( left, right ) as lr) val =
+                sperse pos ((TNode { node }) as tree) =
                     let
                         lastDropzone =
-                            if List.isEmpty right then
-                                [ onRight (dropZone ( left ++ [ val ], right )) ]
+                            if pos >= List.length neighbors then
+                                [ onRight (dropZone pos) ]
 
                             else
                                 []
                     in
                     el
-                        ([ width (length val)
+                        ([ width (elemLength node)
                          , height fill
                          , centerX
                          , centerY
-                         , onLeft (dropZone ( left, val :: right ))
+                         , onLeft (dropZone pos)
                          ]
                             ++ lastDropzone
                         )
-                        (nodeEl lr val)
+                        (treeEl tree)
 
                 els =
-                    Utils.List.zipperMap sperse net
+                    List.indexedMap sperse trees
 
-                addValZone =
+                addOTokenZone =
                     case session.actionMode of
                         EditMode { newAtomName } ->
                             let
-                                insertValAction =
-                                    InsertVal { ctx = ctx, val = a "dummy" }
+                                insertAction =
+                                    Insert
+                                        { ctx = ctx, pos = List.length neighbors }
+                                        (ITok (OForm (Formula.atom newAtomName)))
                             in
-                            case applicable session insertValAction of
+                            case applicable insertAction session of
                                 Ok _ ->
-                                    [ viewAddOTokenZone session.route ctx newAtomName ]
+                                    [ viewAddOTokenZone session ctx newAtomName ]
 
                                 Err _ ->
                                     []
@@ -738,26 +748,26 @@ viewTrees dnd session ctx trees =
                         _ ->
                             []
             in
-            wrappedRow attrs (els ++ addValZone)
+            wrappedRow attrs (els ++ addOTokenZone)
 
         normal () =
             let
                 attrs =
                     layoutAttrs
                         ++ borderAttrs
-                        ++ dropAction ( net, [] )
+                        ++ dropAction (List.length neighbors)
 
-                sperse lr flower =
+                sperse ((TNode { node }) as tree) =
                     el
-                        [ width (length flower)
+                        [ width (elemLength node)
                         , height fill
                         , centerX
                         , centerY
                         ]
-                        (nodeEl lr flower)
+                        (treeEl tree)
 
                 els =
-                    Utils.List.zipperMap sperse net
+                    List.map sperse trees
             in
             wrappedRow attrs els
     in
@@ -796,7 +806,7 @@ viewSession dnd session =
                     32
 
         sessionEl () =
-            if List.isEmpty session.net && not (inEditMode session) then
+            if session.net == empty && not (inEditMode session) then
                 el [ width fill, sessionHeightAttr ]
                     (el
                         [ centerX
@@ -818,7 +828,7 @@ viewSession dnd session =
                     , styleAttr "overflow-x" "hidden"
                     , styleAttr "overflow-y" "auto"
                     ]
-                    (viewNet dnd session emptyCtx session.net)
+                    (viewTrees dnd session TopLevel (hydrate session.net))
     in
     case session.actionMode of
         ProofMode _ ->
