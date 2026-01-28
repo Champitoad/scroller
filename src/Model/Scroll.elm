@@ -250,7 +250,7 @@ juxtapose s t =
 
 juxtaposeList : List Net -> Net
 juxtaposeList nets =
-    List.foldl juxtapose empty nets
+    List.foldr juxtapose empty nets
 
 
 
