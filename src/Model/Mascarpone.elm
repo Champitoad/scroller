@@ -94,31 +94,31 @@ mascarponeCream =
         )
 
 
-crack : Net
+crack : OToken
 crack =
-    curl (fo egg) [ fo yolk, fo white ]
+    curl [ fo egg ] [ [ fo yolk ], [ fo white ] ]
 
 
-whisk : Net
+whisk : OToken
 whisk =
-    curl (fo white) [ fo whiskedWhites ]
+    curl [ fo white ] [ [ fo whiskedWhites ] ]
 
 
-beat : Net
+beat : OToken
 beat =
-    curl (juxtaposeList [ fo yolk, fo sugar ]) [ fo yolkPaste ]
+    curl [ fo yolk, fo sugar ] [ [ fo yolkPaste ] ]
 
 
-stir : Net
+stir : OToken
 stir =
-    curl (juxtaposeList [ fo yolkPaste, fo mascarpone ]) [ fo thickPaste ]
+    curl [ fo yolkPaste, fo mascarpone ] [ [ fo thickPaste ] ]
 
 
-fold : Net
+fold : OToken
 fold =
-    curl (juxtaposeList [ fo whiskedWhites, fo thickPaste ]) [ fo mascarponeCream ]
+    curl [ fo whiskedWhites, fo thickPaste ] [ [ fo mascarponeCream ] ]
 
 
 mascarponeCreamRecipe : Net
 mascarponeCreamRecipe =
-    curl (juxtaposeList [ crack, whisk, beat, stir, fold ]) [ curl (juxtaposeList [ fo egg, fo sugar, fo mascarpone ]) [ fo mascarponeCream ] ]
+    netOfStruct [ curl [ crack, whisk, beat, stir, fold ] [ [ curl [ fo egg, fo sugar, fo mascarpone ] [ [ fo mascarponeCream ] ] ] ] ]

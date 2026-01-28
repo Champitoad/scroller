@@ -3,7 +3,7 @@ module Model.App exposing (..)
 import Browser.Navigation
 import Html5.DragDrop as DnD
 import Model.Mascarpone exposing (..)
-import Model.Scroll exposing (..)
+import Model.Scroll as Scroll exposing (..)
 import Model.Session as Session exposing (..)
 import Url
 
@@ -54,7 +54,7 @@ type alias Model =
 
 init : Url.Url -> Browser.Navigation.Key -> Model
 init url key =
-    { session = Session.fromNet mascarponeCreamRecipe
+    { session = Session.fromNet (netOfStruct [ Scroll.identity ])
     , history = History { prev = Nothing, next = Nothing }
     , manualExamples = manualExamples
     , dragDrop = DnD.init

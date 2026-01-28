@@ -21,6 +21,7 @@ routeParser =
     in
     oneOf
         [ map Playground top
+        , map Playground (top </> s "src" </> s "Main.elm") -- For use with elm reactor
         , map Playground (top </> s "index.html")
         , map Playground lix
         , map Playground (lix </> s "index.html")

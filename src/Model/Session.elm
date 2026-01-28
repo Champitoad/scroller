@@ -430,7 +430,14 @@ actionTransform : ExecMode -> Action -> Net -> Net
 actionTransform execMode action =
     case action of
         Open loc ->
-            graft loc (emptyScrollNet (makeOpened attachment))
+            let
+                (TNode unopenedScroll) =
+                    emptyScroll |> hydrateOToken 0 TopLevel Pos
+
+                openedScrollTree =
+                    TNode { unopenedScroll | node = updateInteractionNode makeOpened unopenedScroll.node }
+            in
+            graft loc (dehydrateTree openedScrollTree)
 
         Close id ->
             updateInteraction id (annotateExpansion (flipExecMode execMode))
@@ -480,7 +487,7 @@ actionTransform execMode action =
                     formNet =
                         case getShape id net of
                             Formula form ->
-                                form |> structOfFormula |> netOfStruct
+                                form |> interpretFormula |> netOfStruct
 
                             _ ->
                                 getSubnet id net
@@ -700,16 +707,16 @@ manualExamples =
 
         examples : List ( SandboxID, ActionMode, Net )
         examples =
-            [ ( "Flower", ProofMode Interacting, curl (juxtaposeList [ a "a", a "b" ]) [ a "c", a "d" ] )
-            , ( "QED", ProofMode Interacting, curl (a "a") [ empty ] )
-            , ( "Justify", ProofMode Interacting, Scroll.identity )
-            , ( "Unlock", ProofMode Interacting, curl (curl empty [ a "a" ]) [ a "a" ] )
-            , ( "Import", ProofMode Interacting, Scroll.modusPonensCurryfied )
+            [ ( "Flower", ProofMode Interacting, netOfStruct [ curl [ a "a", a "b" ] [ [ a "c", a "d" ] ] ] )
+            , ( "QED", ProofMode Interacting, netOfStruct [ curl [ a "a" ] [ [ emptyScroll ] ] ] )
+            , ( "Justify", ProofMode Interacting, netOfStruct [ Scroll.identity ] )
+            , ( "Unlock", ProofMode Interacting, netOfStruct [ curl [ curl [] [ [ a "a" ] ] ] [ [ a "a" ] ] ] )
+            , ( "Import", ProofMode Interacting, netOfStruct [ Scroll.modusPonensCurryfied ] )
             , ( "Case"
               , ProofMode Interacting
-              , curl (juxtaposeList [ curl empty [ a "a", a "b" ], curl (a "a") [ a "c" ], curl (a "b") [ a "c" ] ]) [ a "c" ]
+              , netOfStruct [ curl [ curl [] [ [ a "a", a "b" ] ], curl [ a "a" ] [ [ a "c" ] ], curl [ a "b" ] [ [ a "c" ] ] ] [ [ a "c" ] ] ]
               )
-            , ( "Decompose", ProofMode Interacting, Scroll.orElim )
+            , ( "Decompose", ProofMode Interacting, netOfStruct [ Scroll.orElim ] )
             ]
     in
     examples

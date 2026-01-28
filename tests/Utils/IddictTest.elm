@@ -1,7 +1,7 @@
 module Utils.IddictTest exposing (..)
 
 import Expect
-import Iddict exposing (Iddict)
+import Iddict
 import Test exposing (..)
 import Utils.Iddict exposing (dunion)
 

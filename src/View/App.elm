@@ -4,7 +4,7 @@ import Browser exposing (Document)
 import Element exposing (..)
 import Element.Font as Font
 import Html exposing (div)
-import Html.Attributes exposing (style, tabindex)
+import Html.Attributes exposing (tabindex)
 import Html.Events exposing (on)
 import Json.Decode
 import Keyboard.Event exposing (decodeKeyboardEvent)

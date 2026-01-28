@@ -73,8 +73,8 @@ positiveColor =
     rgb 1 1 1
 
 
-scrollForegroundColor : Polarity -> Color
-scrollForegroundColor polarity =
+foregroundColor : Polarity -> Color
+foregroundColor polarity =
     case polarity of
         Pos ->
             negativeColor
@@ -83,8 +83,8 @@ scrollForegroundColor polarity =
             positiveColor
 
 
-scrollBackgroundColor : Polarity -> Color
-scrollBackgroundColor polarity =
+backgroundColor : Polarity -> Color
+backgroundColor polarity =
     case polarity of
         Pos ->
             positiveColor

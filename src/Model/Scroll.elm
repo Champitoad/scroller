@@ -1,5 +1,6 @@
 module Model.Scroll exposing (..)
 
+import Css exposing (text_)
 import Dict exposing (Dict)
 import List.Extra
 import Model.Formula as Formula exposing (..)
@@ -8,6 +9,7 @@ import Utils.Maybe
 
 
 
+-- Scroll structures
 {- Outer (unattached) token -}
 
 
@@ -33,52 +35,87 @@ type alias Struct =
     List OToken
 
 
+fo : Formula -> OToken
+fo form =
+    OForm form
+
+
+a : String -> OToken
+a name =
+    fo (Formula.atom name)
+
+
+curl : Struct -> List Struct -> OToken
+curl outloop inloops =
+    OSep
+        ((outloop |> List.map ITok)
+            ++ (inloops |> List.map (List.map ITok) |> List.map ISep)
+        )
+
+
+emptyScroll : OToken
+emptyScroll =
+    curl [] [ [] ]
+
+
+identity : OToken
+identity =
+    curl [ a "a" ] [ [ a "a" ] ]
+
+
+modusPonensCurryfied : OToken
+modusPonensCurryfied =
+    curl [ a "a", curl [ a "a" ] [ [ a "b" ] ] ] [ [ a "b" ] ]
+
+
+orElim : OToken
+orElim =
+    curl [ curl [] [ [ a "a" ], [ a "b" ] ], curl [ a "a" ] [ [ a "c" ] ], curl [ a "b" ] [ [ a "c" ] ] ] [ [ a "c" ] ]
+
+
+
+{- Interpreting a formula into the corresponding scroll structure -}
+
+
+interpretFormula : Formula -> Struct
+interpretFormula form =
+    case form of
+        Atom _ ->
+            [ OForm form ]
+
+        Truth ->
+            []
+
+        Falsity ->
+            [ OSep [] ]
+
+        And f1 f2 ->
+            interpretFormula f1 ++ interpretFormula f2
+
+        Or f1 f2 ->
+            [ OSep
+                [ ISep (f1 |> interpretFormula |> List.map ITok)
+                , ISep (f2 |> interpretFormula |> List.map ITok)
+                ]
+            ]
+
+        Implies f1 f2 ->
+            [ OSep
+                ((f1 |> interpretFormula |> List.map ITok)
+                    ++ [ ISep (f2 |> interpretFormula |> List.map ITok) ]
+                )
+            ]
+
+        Not f1 ->
+            [ OSep (f1 |> interpretFormula |> List.map ITok) ]
+
+
 
 -- Identifiers for nodes
 
 
 type alias Id =
-    ( List Int, Int )
-
-
-baseId : Int -> Id
-baseId i =
-    ( [], i )
-
-
-copyId : Id -> Id
-copyId ( p, i ) =
-    ( 0 :: p, i )
-
-
-originalId : Id -> Id
-originalId ( p, i ) =
-    case p of
-        0 :: p_ ->
-            ( p_, i )
-
-        _ ->
-            ( p, i )
-
-
-
-{- Whether `c == copyId o`. -}
-
-
-isCopyId : Id -> Id -> Bool
-isCopyId c o =
-    (Tuple.first c == 0 :: Tuple.first o)
-        && (Tuple.second c == Tuple.second o)
-
-
-leftId : Id -> Id
-leftId ( p, i ) =
-    ( -1 :: p, i )
-
-
-rightId : Id -> Id
-rightId ( p, i ) =
-    ( 1 :: p, i )
+    Int
 
 
 
@@ -117,8 +154,8 @@ selfJustify justif =
 
 
 justifyFrom : Origin -> Justification -> Justification
-justifyFrom copy justif =
-    { justif | from = Just copy }
+justifyFrom origin justif =
+    { justif | from = Just origin }
 
 
 type alias Interaction =
@@ -163,24 +200,6 @@ type alias Location =
     { ctx : Context, pos : Int }
 
 
-type alias Node =
-    { shape : Shape
-    , name : String
-    , justif : Justification
-    , context : Context
-    }
-
-
-type alias Net =
-    { nodes : Dict Id Node
-    , roots : List Id
-    }
-
-
-
--- Polarity
-
-
 type Polarity
     = Pos
     | Neg
@@ -194,6 +213,44 @@ invert polarity =
 
         Neg ->
             Pos
+
+
+type alias Node =
+    { shape : Shape
+    , name : String
+    , justif : Justification
+    , context : Context
+    , polarity : Polarity
+    }
+
+
+type alias Net =
+    { nodes : Dict Id Node
+    , roots : List Id
+    }
+
+
+empty : Net
+empty =
+    { nodes = Dict.empty
+    , roots = []
+    }
+
+
+juxtapose : Net -> Net -> Net
+juxtapose s t =
+    let
+        t_ =
+            freshify s t
+    in
+    { nodes = Dict.union s.nodes t_.nodes
+    , roots = List.append s.roots t_.roots
+    }
+
+
+juxtaposeList : List Net -> Net
+juxtaposeList nets =
+    List.foldl juxtapose empty nets
 
 
 
@@ -237,7 +294,7 @@ existsAncestorContext pred ctx net =
 
         Inside parentId ->
             pred parentId net
-                || Utils.Maybe.isSomething (findAncestor pred parentId net)
+                || existsAncestor pred parentId net
 
 
 getNode : Id -> Net -> Node
@@ -248,7 +305,7 @@ getNode id net =
                 Formula
                     (Atom
                         (Image
-                            { src = "node-not-found.png"
+                            { src = "../../public/assets/img/node-not-found.png"
                             , description = "Node " ++ stringOfId id ++ " not found!"
                             }
                         )
@@ -256,6 +313,7 @@ getNode id net =
             , name = "Error 404"
             , justif = assumption
             , context = TopLevel
+            , polarity = Pos
             }
 
 
@@ -277,6 +335,22 @@ getJustif id net =
 getContext : Id -> Net -> Context
 getContext id net =
     (getNode id net).context
+
+
+getPolarity : Id -> Net -> Polarity
+getPolarity id net =
+    -- foldAncestors (\_ _ -> invert) Pos
+    (getNode id net).polarity
+
+
+getPolarityContext : Context -> Net -> Polarity
+getPolarityContext ctx net =
+    case ctx of
+        TopLevel ->
+            Pos
+
+        Inside parentId ->
+            invert (getPolarity parentId net)
 
 
 getLocation : Id -> Net -> Location
@@ -306,22 +380,7 @@ getNodeIdAtLocation loc net =
                     Nothing
             )
         -- Dummy ID, should never happen
-        |> Maybe.withDefault (baseId -1)
-
-
-getPolarity : Id -> Net -> Polarity
-getPolarity =
-    foldAncestors (\_ _ -> invert) Pos
-
-
-getPolarityContext : Context -> Net -> Polarity
-getPolarityContext ctx net =
-    case ctx of
-        TopLevel ->
-            Pos
-
-        Inside parentId ->
-            invert (getPolarity parentId net)
+        |> Maybe.withDefault -1
 
 
 getOutloopInteractions : Id -> Net -> Dict Id Interaction
@@ -502,6 +561,11 @@ updateJustifNode update node =
     { node | justif = update node.justif }
 
 
+updateInteractionNode : (Interaction -> Interaction) -> Node -> Node
+updateInteractionNode update node =
+    updateShapeNode (updateInteractionShape update) node
+
+
 updateContextNode : (Context -> Context) -> Node -> Node
 updateContextNode update node =
     { node | context = update node.context }
@@ -602,33 +666,13 @@ idMapNet f net =
     }
 
 
-freshIdContext : Context -> Id
-freshIdContext context =
-    case context of
-        TopLevel ->
-            ( [], 0 )
-
-        Inside parentId ->
-            Tuple.mapSecond (\x -> x + 1) parentId
-
-
 freshId : Net -> Id
 freshId net =
     let
         maxId nodeDict =
-            Dict.foldl
-                (\id _ acc ->
-                    case id of
-                        ( [], i ) ->
-                            max i acc
-
-                        _ ->
-                            acc
-                )
-                -1
-                nodeDict
+            nodeDict |> Dict.keys |> List.foldl max -1
     in
-    ( [], maxId net.nodes + 1 )
+    maxId net.nodes + 1
 
 
 
@@ -639,198 +683,11 @@ freshId net =
 
 freshify : Net -> Net -> Net
 freshify s t =
-    idMapNet (Tuple.mapSecond (\i -> i + Tuple.second (freshId s))) t
-
-
-
--- Constructors and combinators
-
-
-emptyScrollToken : IToken
-emptyScrollToken =
-    ITok (OSep [ ISep [] ])
-
-
-
-{- Updates the content of `t.nodes` with that of `s.nodes`, assuming the IDs of `s` form a subset of
-   those of `t`. If this assumption is false, the result will be a non-sensical union with the roots
-   of `t`.
--}
-
-
-merge : Net -> Net -> Net
-merge s t =
-    { nodes = Dict.union s.nodes t.nodes
-    , roots = t.roots
-    }
-
-
-
--- Note that all operations other than `merge` preserve uniqueness of identifiers
-
-
-nodeOfShape : Shape -> Node
-nodeOfShape shape =
-    { shape = shape, name = "", justif = assumption, context = TopLevel }
-
-
-
-{- The empty scroll net. -}
-
-
-empty : Net
-empty =
-    { nodes = Dict.empty
-    , roots = []
-    }
-
-
-
-{- The singleton net with formula `form`. -}
-
-
-fo : Formula -> Net
-fo form =
     let
-        id =
-            baseId 0
+        fId =
+            freshId s
     in
-    { nodes = Dict.fromList [ ( id, nodeOfShape (Formula form) ) ]
-    , roots = [ id ]
-    }
-
-
-
-{- The singleton net with atom named `name`. -}
-
-
-a : String -> Net
-a =
-    fo << atom
-
-
-
-{- Interpreting a formula into the corresponding scroll structure -}
-
-
-structOfFormula : Formula -> Struct
-structOfFormula form =
-    case form of
-        Atom _ ->
-            [ OForm form ]
-
-        Truth ->
-            []
-
-        Falsity ->
-            [ OSep [] ]
-
-        And f1 f2 ->
-            structOfFormula f1 ++ structOfFormula f2
-
-        Or f1 f2 ->
-            [ OSep
-                [ ISep (f1 |> structOfFormula |> List.map ITok)
-                , ISep (f2 |> structOfFormula |> List.map ITok)
-                ]
-            ]
-
-        Implies f1 f2 ->
-            [ OSep
-                ((f1 |> structOfFormula |> List.map ITok)
-                    ++ [ ISep (f2 |> structOfFormula |> List.map ITok) ]
-                )
-            ]
-
-        Not f1 ->
-            [ OSep (f1 |> structOfFormula |> List.map ITok) ]
-
-
-
-{- The juxtaposition `s ⊗ t` of nets `s` and `t`.
-
-   This is implemented as the disjoint union `◅s ∪ ▻t`, where `◅s` is obtained by turning every `Id`
-   `x` occurring in `s` (including references in `justif` fields) into `leftId x`, and symmetrically
-   `▻t` is obtained by turning every `Id` `y` occurring in `t` into `rightId y`.
--}
-
-
-juxtapose : Net -> Net -> Net
-juxtapose s t =
-    { nodes =
-        Dict.union
-            (idMapDict idMapNode leftId s.nodes)
-            (idMapDict idMapNode rightId t.nodes)
-    , roots =
-        List.append
-            (List.map leftId s.roots)
-            (List.map rightId t.roots)
-    }
-
-
-juxtaposeList : List Net -> Net
-juxtaposeList nets =
-    List.foldl juxtapose empty nets
-
-
-
-{- The curl (or n-ary scroll) `s ⫐ t1; ...; tn` with outloop `s` and inloops `t1`, ..., `tn`.
-
-   This is implemented as the disjoint union `◅s ∪ ▻t1 ∪ ... ∪ ▻(...(▻tn))` where right injection is
-   iterated `i` times for `ti`, to which we add appropriate `Sep`s for the outloop (ID `0`)
-   and inloops (IDs `1` to `n`).
--}
-
-
-curl : Net -> List Net -> Net
-curl outloop inloops =
-    { nodes =
-        let
-            outloopContent =
-                idMapDict idMapNode leftId outloop.nodes
-
-            inloopsContents =
-                List.foldl
-                    (\inloop ( acc, inj ) ->
-                        let
-                            inloopNodes =
-                                idMapDict idMapNode inj inloop.nodes
-                        in
-                        ( Dict.union acc inloopNodes, inj >> rightId )
-                    )
-                    ( Dict.empty, rightId )
-                    inloops
-                    |> Tuple.first
-
-            inloopsNodes =
-                List.foldl
-                    (\inloop ( acc, ( idx, inj ) ) ->
-                        ( Dict.insert (baseId idx) (nodeOfShape (Sep inloop.roots (Just attachment))) acc
-                        , ( idx + 1, inj >> rightId )
-                        )
-                    )
-                    ( Dict.empty, ( 1, rightId ) )
-                    inloops
-                    |> Tuple.first
-
-            outloopNode =
-                let
-                    childIds =
-                        List.map leftId outloop.roots
-                in
-                Dict.insert (baseId 0) (nodeOfShape (Sep childIds Nothing)) Dict.empty
-        in
-        List.foldl Dict.union Dict.empty [ outloopContent, inloopsContents, outloopNode, inloopsNodes ]
-    , roots =
-        [ baseId 0 ]
-    }
-
-
-emptyScrollNet : Interaction -> Net
-emptyScrollNet interaction =
-    curl empty [ empty ]
-        |> updateName (baseId 0) (\_ -> "Return")
-        |> updateInteraction (baseId 0) (\_ -> interaction)
+    idMapNet (\id -> id + fId) t
 
 
 
@@ -891,21 +748,23 @@ buildTree id net =
 dehydrateTree : Tree -> Net
 dehydrateTree ((TNode root) as tree) =
     let
-        dehydrateNodes (TNode node) acc =
+        dehydrateNodes acc (TNode node) =
             acc
                 |> Dict.insert node.id node.node
-                |> Dict.union (dehydrate node.children).nodes
+                |> Dict.union
+                    (node.children
+                        |> List.map (dehydrateNodes Dict.empty)
+                        |> List.foldl Dict.union Dict.empty
+                    )
     in
-    { nodes = dehydrateNodes tree Dict.empty
+    { nodes = dehydrateNodes Dict.empty tree
     , roots = [ root.id ]
     }
 
 
 dehydrate : List Tree -> Net
 dehydrate trees =
-    trees
-        |> List.map dehydrateTree
-        |> List.foldl juxtapose empty
+    trees |> List.map dehydrateTree |> juxtaposeList
 
 
 
@@ -913,28 +772,26 @@ dehydrate trees =
 -- although I do not expect too many levels of `Sep` nesting in actual nets.
 
 
-hydrateFormula : Context -> Formula -> Tree
-hydrateFormula context form =
+hydrateFormula : Id -> Context -> Polarity -> Formula -> Tree
+hydrateFormula id context polarity form =
     TNode
-        { id = freshIdContext context
+        { id = id
         , node =
             { shape = Formula form
             , name = ""
             , justif = assumption
             , context = context
+            , polarity = polarity
             }
         , children = []
         }
 
 
-hydrateTokens : Context -> Bool -> List IToken -> Tree
-hydrateTokens context isAttached tokens =
+hydrateITokens : Id -> Context -> Polarity -> Bool -> List IToken -> Tree
+hydrateITokens id context polarity isAttached tokens =
     let
-        id =
-            freshIdContext context
-
         children =
-            List.map (hydrateToken (Inside id)) tokens
+            List.indexedMap (\i tok -> hydrateIToken (id + i + 1) (Inside id) (invert polarity) tok) tokens
 
         interaction =
             if isAttached then
@@ -950,39 +807,40 @@ hydrateTokens context isAttached tokens =
             , name = ""
             , justif = assumption
             , context = context
+            , polarity = polarity
             }
         , children = children
         }
 
 
-hydrateOToken : Context -> OToken -> Tree
-hydrateOToken context token =
+hydrateOToken : Id -> Context -> Polarity -> OToken -> Tree
+hydrateOToken id context polarity token =
     case token of
         OForm form ->
-            hydrateFormula context form
+            hydrateFormula id context polarity form
 
         OSep tokens ->
-            hydrateTokens context False tokens
+            hydrateITokens id context polarity False tokens
 
 
-hydrateToken : Context -> IToken -> Tree
-hydrateToken context token =
+hydrateIToken : Id -> Context -> Polarity -> IToken -> Tree
+hydrateIToken id context polarity token =
     case token of
         ITok otoken ->
-            hydrateOToken context otoken
+            hydrateOToken id context polarity otoken
 
         ISep tokens ->
-            hydrateTokens context True tokens
+            hydrateITokens id context polarity True tokens
 
 
 hydrateStruct : Struct -> List Tree
 hydrateStruct struct =
-    List.map (hydrateOToken TopLevel) struct
+    List.indexedMap (\i tok -> hydrateOToken i TopLevel Pos tok) struct
 
 
-netOfTokens : Context -> List IToken -> Net
-netOfTokens context =
-    List.map (hydrateToken context) >> dehydrate
+netOfITokens : Context -> Polarity -> List IToken -> Net
+netOfITokens context polarity =
+    List.indexedMap (\i tok -> hydrateIToken i context polarity tok) >> dehydrate
 
 
 netOfStruct : Struct -> Net
@@ -1139,7 +997,7 @@ deeplink source target =
 
 deepcopy : Net -> Net
 deepcopy net =
-    net |> deeplink net |> idMapNet copyId
+    net |> deeplink net |> freshify net
 
 
 
@@ -1179,7 +1037,7 @@ insert : Bool -> Location -> IToken -> Net -> Net
 insert self loc tok net =
     let
         newTree =
-            hydrateToken loc.ctx tok
+            hydrateIToken 0 loc.ctx (getPolarityContext loc.ctx net) tok
 
         newId =
             getTreeId newTree
@@ -1231,6 +1089,20 @@ iterate id loc net =
                 |> updateName id (\name -> freshName ("Copy of " ++ name) net)
     in
     graft loc copy net
+
+
+
+{- Updates the content of `t.nodes` with that of `s.nodes`, assuming the IDs of `s` form a subset of
+   those of `t`. If this assumption is false, the result will be a non-sensical union with the roots
+   of `t`.
+-}
+
+
+merge : Net -> Net -> Net
+merge s t =
+    { nodes = Dict.union s.nodes t.nodes
+    , roots = t.roots
+    }
 
 
 
@@ -1481,15 +1353,8 @@ conclusionStruct =
 
 
 stringOfId : Id -> String
-stringOfId ( p, i ) =
-    let
-        prefix =
-            p
-                |> List.map String.fromInt
-                |> List.intersperse "."
-                |> List.foldl String.append ""
-    in
-    prefix ++ "::" ++ String.fromInt i
+stringOfId =
+    String.fromInt
 
 
 stringOfNet : Net -> String
@@ -1518,7 +1383,12 @@ stringOfNode : Net -> String -> Node -> String
 stringOfNode net content node =
     stringOfJustification net node.justif
         ++ node.name
-        ++ ":"
+        ++ (if String.isEmpty node.name then
+                ""
+
+            else
+                ":"
+           )
         ++ stringOfShape content node.shape
 
 
@@ -1566,22 +1436,3 @@ stringOfShape content shape =
 
                 Just _ ->
                     "(" ++ content ++ ")"
-
-
-
--- Examples
-
-
-identity : Net
-identity =
-    curl (a "a") [ a "a" ]
-
-
-modusPonensCurryfied : Net
-modusPonensCurryfied =
-    curl (juxtaposeList [ a "a", curl (a "a") [ a "b" ] ]) [ a "b" ]
-
-
-orElim : Net
-orElim =
-    curl (juxtaposeList [ curl empty [ a "a", a "b" ], curl (a "a") [ a "c" ], curl (a "b") [ a "c" ] ]) [ a "c" ]

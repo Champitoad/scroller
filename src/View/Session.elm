@@ -19,7 +19,6 @@ import Model.Session as Session exposing (..)
 import Update.App exposing (..)
 import Utils.Color exposing (fromElement)
 import Utils.Events exposing (onClick)
-import Utils.List
 import View.Events
 import View.Style as Style exposing (..)
 import View.Toolbar exposing (toolbarHeight)
@@ -61,15 +60,17 @@ viewNode dnd session (TNode { id, node, children }) =
         statusBar =
             let
                 nameEl =
-                    text node.name
+                    el
+                        [ Font.color (foregroundColor node.polarity) ]
+                        (text node.name)
 
                 polarity =
                     case session.execMode of
                         Forward ->
-                            getPolarity id session.net
+                            node.polarity
 
                         Backward ->
-                            invert (getPolarity id session.net)
+                            invert node.polarity
 
                 originName =
                     case node.justif.from of
@@ -218,7 +219,7 @@ viewFormula dnd session id formula =
         ([ centerX
          , centerY
          , padding paddingSize
-         , Font.color (scrollForegroundColor (getPolarity id session.net))
+         , Font.color (foregroundColor (getPolarity id session.net))
          , Font.size fontSize
          ]
             ++ dragAction
@@ -298,7 +299,7 @@ viewInloop dnd session id content =
         [ width fill
         , height fill
         , Border.rounded scrollBorderRound
-        , Background.color (scrollBackgroundColor (getPolarity id session.net))
+        , Background.color (backgroundColor (getPolarity id session.net))
         ]
         (el
             ([ width fill
@@ -363,7 +364,7 @@ viewAddInloopZone session outloopId =
                         , height fill
                         , padding 10
                         , Border.rounded scrollBorderRound
-                        , Background.color (scrollBackgroundColor (invert (getPolarity outloopId session.net)))
+                        , Background.color (backgroundColor (invert (getPolarity outloopId session.net)))
                         ]
                         (addInloopButton insertions)
                     ]
@@ -386,7 +387,7 @@ viewAddOTokenZone session ctx newAtomName =
 
         otoken =
             if String.isEmpty newAtomName then
-                OSep []
+                emptyScroll
 
             else
                 case newAtomName of
@@ -515,7 +516,7 @@ viewSep dnd session id children =
     column
         ([ width fill
          , height fill
-         , Background.color (scrollForegroundColor (getPolarity id session.net))
+         , Background.color (foregroundColor (getPolarity id session.net))
          ]
             ++ (List.map htmlAttribute <| DnD.droppable DragDropMsg Nothing)
             ++ View.Events.dragAction color dnd session.route id
@@ -528,7 +529,7 @@ viewSep dnd session id children =
                     , size = shadowSize
                     , blur = shadowBlur
                     , color =
-                        scrollForegroundColor (getPolarity id session.net)
+                        foregroundColor (getPolarity id session.net)
                             |> Utils.Color.fromElement
                             |> Utils.Color.withAlpha shadowAlpha
                             |> Utils.Color.toElement
@@ -797,38 +798,18 @@ sessionHeightAttr =
 viewSession : DnD -> Session -> Element Msg
 viewSession dnd session =
     let
-        congratsFontSize =
-            case session.route of
-                Playground ->
-                    48
-
-                Manual _ ->
-                    32
-
         sessionEl () =
-            if session.net == empty && not (inEditMode session) then
-                el [ width fill, sessionHeightAttr ]
-                    (el
-                        [ centerX
-                        , centerY
-                        , Font.size congratsFontSize
-                        , Font.color
-                            (Utils.Color.fromRgb { red = 0.6, green = 0.6, blue = 0.6 }
-                                |> Utils.Color.toElement
-                            )
-                        , padding 20
-                        ]
-                        (text "Proof complete!")
-                    )
-
-            else
-                el
-                    [ width fill
-                    , sessionHeightAttr
-                    , styleAttr "overflow-x" "hidden"
-                    , styleAttr "overflow-y" "auto"
-                    ]
-                    (viewTrees dnd session TopLevel (hydrate session.net))
+            let
+                _ =
+                    Debug.log "net" (stringOfNet session.net)
+            in
+            el
+                [ width fill
+                , sessionHeightAttr
+                , styleAttr "overflow-x" "hidden"
+                , styleAttr "overflow-y" "auto"
+                ]
+                (viewTrees dnd session TopLevel (hydrate session.net))
     in
     case session.actionMode of
         ProofMode _ ->
