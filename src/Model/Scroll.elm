@@ -6,6 +6,7 @@ import List.Extra
 import Model.Formula as Formula exposing (..)
 import Utils.List
 import Utils.Maybe
+import Utils.State as State
 
 
 
@@ -251,6 +252,13 @@ juxtapose s t =
 juxtaposeList : List Net -> Net
 juxtaposeList nets =
     List.foldr juxtapose empty nets
+
+
+merge : Net -> Net -> Net
+merge s t =
+    { nodes = Dict.union s.nodes t.nodes
+    , roots = s.roots ++ t.roots
+    }
 
 
 
@@ -692,6 +700,16 @@ freshify s t =
 
 
 -- Hydration pattern
+-- Hydration pattern
+
+
+type alias Scanner a =
+    State.State Id a
+
+
+nextId : Scanner Id
+nextId =
+    \id -> ( id, id + 1 )
 
 
 type Tree
@@ -764,7 +782,9 @@ dehydrateTree ((TNode root) as tree) =
 
 dehydrate : List Tree -> Net
 dehydrate trees =
-    trees |> List.map dehydrateTree |> juxtaposeList
+    trees
+        |> List.map dehydrateTree
+        |> List.foldr merge empty
 
 
 
@@ -772,27 +792,30 @@ dehydrate trees =
 -- although I do not expect too many levels of `Sep` nesting in actual nets.
 
 
-hydrateFormula : Id -> Context -> Polarity -> Formula -> Tree
-hydrateFormula id context polarity form =
-    TNode
-        { id = id
-        , node =
-            { shape = Formula form
-            , name = ""
-            , justif = assumption
-            , context = context
-            , polarity = polarity
-            }
-        , children = []
-        }
+hydrateFormula : Context -> Polarity -> Formula -> Scanner Tree
+hydrateFormula context polarity form =
+    nextId
+        |> State.andThen
+            (\id ->
+                State.return
+                    (TNode
+                        { id = id
+                        , node =
+                            { shape = Formula form
+                            , name = ""
+                            , justif = assumption
+                            , context = context
+                            , polarity = polarity
+                            }
+                        , children = []
+                        }
+                    )
+            )
 
 
-hydrateITokens : Id -> Context -> Polarity -> Bool -> List IToken -> Tree
-hydrateITokens id context polarity isAttached tokens =
+hydrateITokens : Context -> Polarity -> Bool -> List IToken -> Scanner Tree
+hydrateITokens context polarity isAttached tokens =
     let
-        children =
-            List.indexedMap (\i tok -> hydrateIToken (id + i + 1) (Inside id) (invert polarity) tok) tokens
-
         interaction =
             if isAttached then
                 Just attachment
@@ -800,47 +823,60 @@ hydrateITokens id context polarity isAttached tokens =
             else
                 Nothing
     in
-    TNode
-        { id = id
-        , node =
-            { shape = Sep (List.map getTreeId children) interaction
-            , name = ""
-            , justif = assumption
-            , context = context
-            , polarity = polarity
-            }
-        , children = children
-        }
+    nextId
+        |> State.andThen
+            (\id ->
+                State.traverse (hydrateIToken (Inside id) (invert polarity)) tokens
+                    |> State.andThen
+                        (\children ->
+                            State.return
+                                (TNode
+                                    { id = id
+                                    , node =
+                                        { shape = Sep (List.map getTreeId children) interaction
+                                        , name = ""
+                                        , justif = assumption
+                                        , context = context
+                                        , polarity = polarity
+                                        }
+                                    , children = children
+                                    }
+                                )
+                        )
+            )
 
 
-hydrateOToken : Id -> Context -> Polarity -> OToken -> Tree
-hydrateOToken id context polarity token =
+hydrateOToken : Context -> Polarity -> OToken -> Scanner Tree
+hydrateOToken context polarity token =
     case token of
         OForm form ->
-            hydrateFormula id context polarity form
+            hydrateFormula context polarity form
 
         OSep tokens ->
-            hydrateITokens id context polarity False tokens
+            hydrateITokens context polarity False tokens
 
 
-hydrateIToken : Id -> Context -> Polarity -> IToken -> Tree
-hydrateIToken id context polarity token =
+hydrateIToken : Context -> Polarity -> IToken -> Scanner Tree
+hydrateIToken context polarity token =
     case token of
         ITok otoken ->
-            hydrateOToken id context polarity otoken
+            hydrateOToken context polarity otoken
 
         ISep tokens ->
-            hydrateITokens id context polarity True tokens
+            hydrateITokens context polarity True tokens
 
 
 hydrateStruct : Struct -> List Tree
 hydrateStruct struct =
-    List.indexedMap (\i tok -> hydrateOToken i TopLevel Pos tok) struct
+    State.traverse (hydrateOToken TopLevel Pos) struct
+        |> State.eval 0
 
 
 netOfITokens : Context -> Polarity -> List IToken -> Net
-netOfITokens context polarity =
-    List.indexedMap (\i tok -> hydrateIToken i context polarity tok) >> dehydrate
+netOfITokens context polarity tokens =
+    State.traverse (hydrateIToken context polarity) tokens
+        |> State.eval 0
+        |> dehydrate
 
 
 netOfStruct : Struct -> Net
@@ -1037,7 +1073,7 @@ insert : Bool -> Location -> IToken -> Net -> Net
 insert self loc tok net =
     let
         newTree =
-            hydrateIToken 0 loc.ctx (getPolarityContext loc.ctx net) tok
+            hydrateIToken loc.ctx (getPolarityContext loc.ctx net) tok |> State.eval 0
 
         newId =
             getTreeId newTree
@@ -1098,8 +1134,8 @@ iterate id loc net =
 -}
 
 
-merge : Net -> Net -> Net
-merge s t =
+mergeInto : Net -> Net -> Net
+mergeInto s t =
     { nodes = Dict.union s.nodes t.nodes
     , roots = t.roots
     }
@@ -1118,7 +1154,7 @@ deiterate src tgt net =
         backlinkedTgtConclusion =
             deeplink (conclusion subnetSrc) (conclusion subnetTgt)
     in
-    merge backlinkedTgtConclusion net
+    mergeInto backlinkedTgtConclusion net
 
 
 
@@ -1376,7 +1412,7 @@ stringOfTreeList net trees =
     trees
         |> List.map (stringOfTree net)
         >> List.intersperse ", "
-        >> List.foldl String.append ""
+        >> List.foldr String.append ""
 
 
 stringOfNode : Net -> String -> Node -> String
@@ -1392,9 +1428,9 @@ stringOfNode net content node =
         ++ stringOfShape content node.shape
 
 
-stringOfCopy : Net -> Origin -> String
-stringOfCopy net copy =
-    case copy of
+stringOfOrigin : Net -> Origin -> String
+stringOfOrigin net origin =
+    case origin of
         Direct srcId ->
             getName srcId net
 
@@ -1415,7 +1451,7 @@ stringOfJustification net { self, from } =
         fromText =
             case from of
                 Just copy ->
-                    stringOfCopy net copy ++ "/"
+                    stringOfOrigin net copy ++ "/"
 
                 Nothing ->
                     ""

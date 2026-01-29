@@ -6,6 +6,7 @@ import Iddict exposing (Iddict)
 import Model.Scroll as Scroll exposing (..)
 import Queue exposing (Queue)
 import Utils.List
+import Utils.State as State
 
 
 
@@ -442,7 +443,7 @@ actionTransform execMode action =
         Open loc ->
             let
                 (TNode unopenedScroll) =
-                    emptyScroll |> hydrateOToken 0 TopLevel Pos
+                    emptyScroll |> hydrateOToken TopLevel Pos |> State.eval 0
 
                 openedScrollTree =
                     TNode { unopenedScroll | node = updateInteractionNode makeOpened unopenedScroll.node }
