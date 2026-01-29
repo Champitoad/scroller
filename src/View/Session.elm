@@ -17,7 +17,7 @@ import Model.Mascarpone exposing (..)
 import Model.Scroll exposing (..)
 import Model.Session as Session exposing (..)
 import Update.App exposing (..)
-import Utils.Color exposing (fromElement)
+import Utils.Color
 import Utils.Events exposing (onClick)
 import View.Events
 import View.Style as Style exposing (..)
@@ -61,7 +61,7 @@ viewNode dnd session (TNode { id, node, children }) =
             let
                 nameEl =
                     el
-                        [ Font.color (foregroundColor node.polarity) ]
+                        [ foregroundColor node.polarity |> Utils.Color.elementAttr ]
                         (text node.name)
 
                 polarity =
@@ -219,7 +219,7 @@ viewFormula dnd session id formula =
         ([ centerX
          , centerY
          , padding paddingSize
-         , Font.color (foregroundColor (getPolarity id session.net))
+         , foregroundColor (getPolarity id session.net) |> Utils.Color.elementAttr
          , Font.size fontSize
          ]
             ++ dragAction
@@ -318,7 +318,7 @@ addButton params =
         style =
             { width = Css.pct 100
             , height = Css.pct 100
-            , color = introColor |> fromElement
+            , color = introColor |> Utils.Color.fromElement
             , iconColorEnabled = Color.white
             , iconColorDisabled = Color.darkGray
             }

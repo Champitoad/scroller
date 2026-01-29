@@ -64,17 +64,7 @@ button : ButtonStyle widthUnit heightUnit -> ButtonParams msg -> Element msg
 button style { action, title, content, enabled } =
     let
         iconStyledHtml =
-            let
-                iconColor =
-                    if enabled then
-                        style.iconColorEnabled
-
-                    else
-                        style.iconColorDisabled
-            in
-            Html.Styled.div
-                [ css [ Css.color (iconColor |> Utils.Color.toCss) ] ]
-                [ content |> layout [] |> fromUnstyled ]
+            centered content |> layout [] |> fromUnstyled
 
         styleAttrs =
             Css.width style.width
@@ -136,11 +126,23 @@ button style { action, title, content, enabled } =
 
 iconButton : ButtonStyle widthUnit heightUnit -> IconButtonParams msg -> Element msg
 iconButton style { action, title, icon, enabled } =
+    let
+        color =
+            if enabled then
+                style.iconColorEnabled
+
+            else
+                style.iconColorDisabled
+    in
     button
         style
         { action = action
         , title = title
-        , content = icon |> Icons.withSize 30 |> Icons.toHtml [] |> Element.html
+        , content =
+            icon
+                |> Icons.withSize 30
+                |> Icons.toHtml [ color |> Utils.Color.htmlAttr ]
+                |> Element.html
         , enabled = enabled
         }
 
@@ -165,7 +167,7 @@ defaultButton =
 
 
 type alias ToggleParams msg =
-    { color : Color
+    { color : Element.Color
     , iconOn : Icon
     , iconOff : Icon
     , title : String
@@ -204,7 +206,7 @@ toggle { color, iconOn, iconOff, title, onChange } checked =
                         |> Icons.toHtml
                             [ fgColor
                                 |> Utils.Color.fromElement
-                                |> Utils.Color.toHtmlAttr
+                                |> Utils.Color.htmlAttr
                             ]
                         |> html
                     )
@@ -231,15 +233,14 @@ indicatorIcon : Icon -> Element msg
 indicatorIcon icon =
     icon
         |> Icons.withSize 15
-        |> Icons.toHtml [ Color.white |> Utils.Color.toHtmlAttr ]
+        |> Icons.toHtml [ Color.white |> Utils.Color.htmlAttr ]
         |> html
 
 
 indicatorText : String -> Element msg
 indicatorText txt =
     el
-        [ Font.color (Color.white |> Utils.Color.toElement)
-        , Font.size 14
+        [ Font.size 14
         , Font.family
             [ Font.typeface "Open Sans"
             , Font.sansSerif
@@ -248,7 +249,7 @@ indicatorText txt =
         (text txt)
 
 
-indicator : Color -> Element msg -> Element msg
+indicator : Element.Color -> Element msg -> Element msg
 indicator color content =
     el
         [ width indicatorHeight
@@ -256,7 +257,7 @@ indicator color content =
         , Border.rounded 2
         , Background.color color
         ]
-        content
+        (centered content)
 
 
 insertionIndicator : Element msg

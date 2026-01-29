@@ -10,6 +10,7 @@ import Json.Decode
 import Keyboard.Event exposing (decodeKeyboardEvent)
 import Model.App exposing (Model)
 import Update.App exposing (..)
+import Utils.Color
 import View.Manual as Manual
 import View.Route as Route
 import View.Session exposing (..)
@@ -73,7 +74,13 @@ view model =
                     (column
                         (spacing 30 :: fillXY)
                         [ centered (el [ Font.size 50 ] (text "Page not found!"))
-                        , centered (el [ Font.size 25, Font.color (rgb 0.6 0.6 0.6) ] (text url))
+                        , centered
+                            (el
+                                [ Font.size 25
+                                , rgb 0.6 0.6 0.6 |> Utils.Color.elementAttr
+                                ]
+                                (text url)
+                            )
                         ]
                     )
                 ]

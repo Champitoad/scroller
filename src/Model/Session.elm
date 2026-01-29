@@ -1,6 +1,7 @@
 module Model.Session exposing (..)
 
 import Dict exposing (Dict)
+import Html.Attributes exposing (default)
 import Iddict exposing (Iddict)
 import Model.Scroll as Scroll exposing (..)
 import Queue exposing (Queue)
@@ -37,6 +38,15 @@ type ActionMode
         , insertions : Dict Id Int -- maps node IDs to corresponding insertion action IDs
         }
     | NavigationMode
+
+
+defaultEditMode : ActionMode
+defaultEditMode =
+    EditMode
+        { interaction = Operating
+        , newAtomName = ""
+        , insertions = Dict.empty
+        }
 
 
 type ExecMode
@@ -707,7 +717,7 @@ manualExamples =
 
         examples : List ( SandboxID, ActionMode, Net )
         examples =
-            [ ( "Flower", ProofMode Interacting, netOfStruct [ curl [ a "a", a "b" ] [ [ a "c", a "d" ] ] ] )
+            [ ( "Flower", defaultEditMode, netOfStruct [ curl [ a "a", a "b" ] [ [ a "c", a "d" ] ] ] )
             , ( "QED", ProofMode Interacting, netOfStruct [ curl [ a "a" ] [ [ emptyScroll ] ] ] )
             , ( "Justify", ProofMode Interacting, netOfStruct [ Scroll.identity ] )
             , ( "Unlock", ProofMode Interacting, netOfStruct [ curl [ curl [] [ [ a "a" ] ] ] [ [ a "a" ] ] ] )

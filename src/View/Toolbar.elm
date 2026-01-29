@@ -141,7 +141,7 @@ viewActionModeSelector currentMode =
                                     |> Icons.toHtml
                                         [ fgColor
                                             |> Utils.Color.fromElement
-                                            |> Utils.Color.toHtmlAttr
+                                            |> Utils.Color.htmlAttr
                                         ]
                                     |> html
                                 )
@@ -247,7 +247,7 @@ viewExecModeSelector currentMode =
                                     |> Icons.toHtml
                                         [ fgColor
                                             |> Utils.Color.fromElement
-                                            |> Utils.Color.toHtmlAttr
+                                            |> Utils.Color.htmlAttr
                                         ]
                                     |> html
                                 )

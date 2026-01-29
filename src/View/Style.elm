@@ -1,5 +1,6 @@
 module View.Style exposing (..)
 
+import Color
 import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
@@ -7,7 +8,7 @@ import Element.Font as Font
 import Html.Attributes exposing (style)
 import Model.App exposing (..)
 import Model.Scroll exposing (..)
-import Utils.Color as Color
+import Utils.Color
 
 
 styleAttr : String -> String -> Attribute msg
@@ -105,12 +106,12 @@ elimColor =
 
 reorderColor : Color.Color
 reorderColor =
-    Color.fromRgb { red = 0.7, green = 0.7, blue = 0.7 }
+    Color.rgb 0.7 0.7 0.7
 
 
 useColor : Color.Color
 useColor =
-    Color.fromRgb { red = 1, green = 0.8, blue = 0 }
+    Color.rgb 1 0.8 0
 
 
 
@@ -147,12 +148,12 @@ actionable color =
             ]
 
         bgColor =
-            Color.withAlpha 0.5 color |> Color.toElement
+            Utils.Color.withAlpha 0.5 color |> Utils.Color.toElement
     in
     { borderWidth = width
     , active =
         pointer
-            :: Border.color (Color.toElement color)
+            :: Border.color (Utils.Color.toElement color)
             :: Background.color bgColor
             :: border
     , inactive =
@@ -163,22 +164,22 @@ actionable color =
 
 greenActionable : ZoneStyle msg
 greenActionable =
-    actionable (Color.fromRgb { red = 0.3, green = 0.9, blue = 0.3 })
+    actionable (Color.rgb 0.3 0.9 0.3)
 
 
 pinkActionable : ZoneStyle msg
 pinkActionable =
-    actionable (Color.fromRgb { red = 1, green = 0.4, blue = 0.8 })
+    actionable (Color.rgb 1 0.4 0.8)
 
 
 orangeActionable : ZoneStyle msg
 orangeActionable =
-    actionable (Color.fromRgb { red = 1, green = 0.6, blue = 0 })
+    actionable (Color.rgb 1 0.6 0)
 
 
 redActionable : ZoneStyle msg
 redActionable =
-    actionable (Color.fromRgb { red = 1, green = 0, blue = 0 })
+    actionable (Color.rgb 1 0 0)
 
 
 draggable : Color.Color -> ZoneStyle msg
@@ -194,7 +195,7 @@ draggable color =
             ]
 
         borderColor =
-            color |> Color.toElement
+            color |> Utils.Color.toElement
     in
     { borderWidth = width
     , active = Border.color borderColor :: border
@@ -212,11 +213,11 @@ droppable color =
             [ Border.width width
             , Border.dashed
             , Border.rounded scrollBorderRound
-            , Border.color (Color.toElement color)
+            , Border.color (Utils.Color.toElement color)
             ]
 
         bgColor =
-            Color.withAlpha 0.5 color |> Color.toElement
+            Utils.Color.withAlpha 0.5 color |> Utils.Color.toElement
     in
     { borderWidth = width
     , active = Background.color bgColor :: border
