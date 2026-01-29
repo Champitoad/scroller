@@ -3,7 +3,6 @@ module View.Toolbar exposing (..)
 import Dict
 import Element exposing (..)
 import Element.Background as Background
-import Element.Border as Border
 import Element.Events as Events
 import Element.Input as Input
 import FeatherIcons as Icons
@@ -30,29 +29,21 @@ modeSelectorColor =
     rgb 0.5 0.5 0.5
 
 
-modeSelectorBorderRound : ModeSelectorPosition -> { topLeft : Int, topRight : Int, bottomLeft : Int, bottomRight : Int }
+modeSelectorBorderRound : ModeSelectorPosition -> String
 modeSelectorBorderRound position =
+    let
+        r =
+            String.fromInt buttonBorderRadius ++ "px"
+    in
     case position of
         Start ->
-            { topLeft = buttonBorderRadius
-            , bottomLeft = buttonBorderRadius
-            , topRight = 0
-            , bottomRight = 0
-            }
+            r ++ " 0px 0px " ++ r
 
         Middle ->
-            { topLeft = 0
-            , bottomLeft = 0
-            , topRight = 0
-            , bottomRight = 0
-            }
+            "0px 0px 0px 0px"
 
         End ->
-            { topLeft = 0
-            , bottomLeft = 0
-            , topRight = buttonBorderRadius
-            , bottomRight = buttonBorderRadius
-            }
+            "0px " ++ r ++ " " ++ r ++ " 0px"
 
 
 viewAutoButton : ActionMode -> Element Msg
@@ -87,7 +78,7 @@ viewHelpButton =
 viewNewAtomNameTextEdit : String -> Element Msg
 viewNewAtomNameTextEdit newAtomName =
     Input.text
-        [ Border.rounded scrollBorderRound
+        [ styleAttr "border-radius" (String.fromInt scrollBorderRound ++ "px")
         , onClick DoNothing
         ]
         { onChange = UpdateNewAtomName
@@ -160,7 +151,7 @@ viewActionModeSelector currentMode =
                 ([ width (60 |> px)
                  , height (defaultButtonSize |> px)
                  , Background.color bgColor
-                 , Border.roundEach borderRound
+                 , styleAttr "border-radius" borderRound
                  , htmlAttribute <| Html.Attributes.title titleText
                  ]
                     ++ changeAction
@@ -174,9 +165,9 @@ viewActionModeSelector currentMode =
         [ width shrink
         , height shrink
         , spacing 1
-        , Border.width 0
-        , Border.rounded buttonBorderRadius
-        , Border.color borderColor
+        , styleAttr "border-width" "0px"
+        , styleAttr "border-radius" (String.fromInt buttonBorderRadius ++ "px")
+        , styleAttr "border-color" "rgb(153, 153, 153)"
         , Background.color borderColor
         ]
         [ item (ProofMode Justifying) Start
@@ -266,7 +257,7 @@ viewExecModeSelector currentMode =
                 ([ width (60 |> px)
                  , height (defaultButtonSize |> px)
                  , Background.color bgColor
-                 , Border.roundEach borderRound
+                 , styleAttr "border-radius" borderRound
                  , htmlAttribute <| Html.Attributes.title titleText
                  ]
                     ++ changeAction
@@ -280,9 +271,9 @@ viewExecModeSelector currentMode =
         [ width shrink
         , height shrink
         , spacing 1
-        , Border.width 0
-        , Border.rounded buttonBorderRadius
-        , Border.color borderColor
+        , styleAttr "border-width" "0px"
+        , styleAttr "border-radius" (String.fromInt buttonBorderRadius ++ "px")
+        , styleAttr "border-color" "rgb(153, 153, 153)"
         , Background.color borderColor
         ]
         [ item Backward Start
@@ -385,8 +376,9 @@ viewToolbar model =
         , height (toolbarHeight |> px)
         , padding toolbarPadding
         , spacing 100
-        , Border.widthEach { top = 1, right = 0, bottom = 0, left = 0 }
-        , Border.color (rgb 0.6 0.6 0.6)
+        , styleAttr "border-width" "1px 0px 0px 0px"
+        , styleAttr "border-style" "solid"
+        , styleAttr "border-color" "rgb(153, 153, 153)"
 
         -- , Border.shadow
         --     { offset = (0, -3)

@@ -6,8 +6,6 @@ import Css.Global exposing (children)
 import Dict exposing (Dict)
 import Element exposing (..)
 import Element.Background as Background
-import Element.Border as Border
-import Element.Font as Font
 import FeatherIcons as Icons
 import Html.Attributes exposing (title)
 import Html5.DragDrop as DnD
@@ -258,7 +256,7 @@ viewOutloop dnd session id content =
     el
         [ width fill
         , height fill
-        , Border.rounded scrollBorderRound
+        , styleAttr "border-radius" (String.fromInt scrollBorderRound ++ "px")
         ]
         (el
             ([ width fill
@@ -298,7 +296,7 @@ viewInloop dnd session id content =
     el
         [ width fill
         , height fill
-        , Border.rounded scrollBorderRound
+        , styleAttr "border-radius" (String.fromInt scrollBorderRound ++ "px")
         , Background.color (backgroundColor (getPolarity id session.net))
         ]
         (el
@@ -363,7 +361,7 @@ viewAddInloopZone session outloopId =
                         [ width shrink
                         , height fill
                         , padding 10
-                        , Border.rounded scrollBorderRound
+                        , styleAttr "border-radius" (String.fromInt scrollBorderRound ++ "px")
                         , Background.color (backgroundColor (invert (getPolarity outloopId session.net)))
                         ]
                         (addInloopButton insertions)
@@ -443,7 +441,7 @@ viewAddOTokenZone session ctx newAtomName =
                 [ width shrink
                 , height fill
                 , centerX
-                , Border.rounded scrollBorderRound
+                , styleAttr "border-radius" (String.fromInt scrollBorderRound ++ "px")
                 , Background.color Style.transparent
                 ]
                 [ addOTokenButton insertions ]
@@ -521,19 +519,28 @@ viewSep dnd session id children =
             ++ (List.map htmlAttribute <| DnD.droppable DragDropMsg Nothing)
             ++ View.Events.dragAction color dnd session.route id
             ++ onClick DoNothing
-            :: Border.solid
-            :: Border.width grownBorder.borderWidth
+            :: styleAttr "border-style" "solid"
+            :: styleAttr "border-width" (String.fromInt grownBorder.borderWidth ++ "px")
             :: drawGrownBorder (isInserted id session)
-            ++ [ Border.shadow
-                    { offset = shadowOffset
-                    , size = shadowSize
-                    , blur = shadowBlur
-                    , color =
+            ++ [ let
+                    colorStr =
                         foregroundColor (getPolarity id session.net)
                             |> Utils.Color.fromElement
                             |> Utils.Color.withAlpha shadowAlpha
-                            |> Utils.Color.toElement
-                    }
+                            |> Color.toCssString
+
+                    shadowStr =
+                        String.fromFloat (Tuple.first shadowOffset)
+                            ++ "px "
+                            ++ String.fromFloat (Tuple.second shadowOffset)
+                            ++ "px "
+                            ++ String.fromFloat shadowBlur
+                            ++ "px "
+                            ++ String.fromFloat shadowSize
+                            ++ "px "
+                            ++ colorStr
+                 in
+                 styleAttr "box-shadow" shadowStr
                ]
         )
         [ outloopEl, inloopsEl ]
@@ -680,8 +687,9 @@ viewTrees dnd session ctx trees =
             ]
 
         borderAttrs =
-            [ Border.width (droppable Utils.Color.transparent).borderWidth
-            , Border.color Style.transparent
+            [ styleAttr "border-width" (String.fromInt (droppable Utils.Color.transparent).borderWidth ++ "px")
+            , styleAttr "border-color" "transparent"
+            , styleAttr "border-style" "solid"
             ]
 
         elemLength node =

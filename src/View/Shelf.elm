@@ -2,10 +2,10 @@ module View.Shelf exposing (..)
 
 import Element exposing (..)
 import Element.Background as Background
-import Element.Border as Border
 import Model.Session exposing (..)
 import Update.App exposing (..)
 import View.Session exposing (..)
+import View.Style exposing (styleAttr)
 
 
 viewShelf : Session -> Element Msg
@@ -18,8 +18,9 @@ viewShelf session =
             { angle = 0
             , steps = [ rgb 0.85 0.85 0.85, rgb 0.9 0.9 0.9 ]
             }
-        , Border.color (rgb 0.6 0.6 0.6)
-        , Border.widthEach { bottom = 3, left = 0, right = 0, top = 0 }
-        , Border.roundEach { topLeft = 0, topRight = 0, bottomLeft = 30, bottomRight = 30 }
+        , styleAttr "border-color" "rgb(153, 153, 153)"
+        , styleAttr "border-width" "0px 0px 3px 0px"
+        , styleAttr "border-style" "solid"
+        , styleAttr "border-radius" "0px 0px 30px 30px"
         ]
         []

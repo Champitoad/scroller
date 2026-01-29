@@ -3,7 +3,6 @@ module View.Style exposing (..)
 import Color
 import Element exposing (..)
 import Element.Background as Background
-import Element.Border as Border
 import Element.Font as Font
 import Html.Attributes exposing (style)
 import Model.App exposing (..)
@@ -153,9 +152,9 @@ actionable color =
             5
 
         border =
-            [ Border.width width
-            , Border.dotted
-            , Border.rounded scrollBorderRound
+            [ styleAttr "border-width" (String.fromInt width ++ "px")
+            , styleAttr "border-style" "dotted"
+            , styleAttr "border-radius" (String.fromInt scrollBorderRound ++ "px")
             ]
 
         bgColor =
@@ -164,11 +163,11 @@ actionable color =
     { borderWidth = width
     , active =
         pointer
-            :: Border.color (Utils.Color.toElement color)
+            :: styleAttr "border-color" (Color.toCssString color)
             :: Background.color bgColor
             :: border
     , inactive =
-        Border.color transparent
+        styleAttr "border-color" "transparent"
             :: border
     }
 
@@ -200,17 +199,17 @@ draggable color =
             3
 
         border =
-            [ Border.width width
-            , Border.solid
-            , Border.rounded scrollBorderRound
+            [ styleAttr "border-width" (String.fromInt width ++ "px")
+            , styleAttr "border-style" "solid"
+            , styleAttr "border-radius" (String.fromInt scrollBorderRound ++ "px")
             ]
 
         borderColor =
-            color |> Utils.Color.toElement
+            Color.toCssString color
     in
     { borderWidth = width
-    , active = Border.color borderColor :: border
-    , inactive = Border.color transparent :: border
+    , active = styleAttr "border-color" borderColor :: border
+    , inactive = styleAttr "border-color" "transparent" :: border
     }
 
 
@@ -221,10 +220,10 @@ droppable color =
             3
 
         border =
-            [ Border.width width
-            , Border.dashed
-            , Border.rounded scrollBorderRound
-            , Border.color (Utils.Color.toElement color)
+            [ styleAttr "border-width" (String.fromInt width ++ "px")
+            , styleAttr "border-style" "dashed"
+            , styleAttr "border-radius" (String.fromInt scrollBorderRound ++ "px")
+            , styleAttr "border-color" (Color.toCssString color)
             ]
 
         bgColor =
@@ -243,13 +242,13 @@ grownBorder =
             3
 
         border =
-            [ Border.rounded scrollBorderRound ]
+            [ styleAttr "border-radius" (String.fromInt scrollBorderRound ++ "px") ]
     in
     { borderWidth = width
     , active =
-        Border.color introColor
-            :: Border.solid
-            :: Border.width width
+        styleAttr "border-color" (introColor |> Utils.Color.fromElement |> Color.toCssString)
+            :: styleAttr "border-style" "solid"
+            :: styleAttr "border-width" (String.fromInt width ++ "px")
             :: border
     , inactive =
         border

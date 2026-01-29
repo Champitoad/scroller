@@ -1,7 +1,6 @@
 module View.Manual exposing (..)
 
 import Element exposing (..)
-import Element.Border as Border
 import Element.Input as Input
 import FeatherIcons as Icons
 import Model.App exposing (..)
@@ -74,9 +73,8 @@ viewSandbox dnd { currentSession } id =
 
 backButtonStyle : List (Attribute msg)
 backButtonStyle =
-    [ Border.width 2
-    , Border.rounded 4
-    , Border.solid
+    [ styleAttr "border" "2px solid black"
+    , styleAttr "border-radius" "4px"
     , padding 10
     ]
 
@@ -115,7 +113,7 @@ body { manualExamples, dragDrop } =
             ( text, bold, italic )
 
         h1 icon txt =
-            row [ spacing 20, paddingEach { top = 20, bottom = 10, left = 0, right = 0 } ]
+            row [ spacing 20, styleAttr "padding" "20px 0px 10px 0px" ]
                 [ icon
                 , el [ fontSize 40 ] (text txt)
                 ]

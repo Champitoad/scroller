@@ -4,7 +4,6 @@ import Color
 import Css
 import Element exposing (..)
 import Element.Background as Background
-import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
 import FeatherIcons as Icons exposing (Icon)
@@ -191,7 +190,7 @@ toggle { color, iconOn, iconOff, title, onChange } checked =
                 [ width (60 |> px)
                 , height (defaultButtonSize |> px)
                 , Background.color bgColor
-                , Border.rounded buttonBorderRadius
+                , styleAttr "border-radius" (String.fromInt buttonBorderRadius ++ "px")
                 , htmlAttribute <| Html.Attributes.title title
                 ]
                 (el
@@ -254,7 +253,7 @@ indicator color content =
     el
         [ width indicatorHeight
         , height indicatorHeight
-        , Border.rounded 2
+        , styleAttr "border-radius" "2px"
         , Background.color color
         ]
         (centered content)
