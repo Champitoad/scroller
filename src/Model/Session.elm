@@ -293,8 +293,13 @@ isErasedContext ctx session =
 
 
 isInserted : Id -> Session -> Bool
-isInserted id { net, execMode } =
-    getPolarity id net == creationPolarity execMode && (getJustif id net).self
+isInserted id { actionMode } =
+    case actionMode of
+        EditMode { insertions } ->
+            Dict.member id insertions
+
+        _ ->
+            False
 
 
 commitInsertions : Session -> Session
@@ -536,11 +541,14 @@ record action session =
 
         updatedActionMode =
             case ( session.actionMode, action ) of
-                ( EditMode editInteraction, Insert loc _ ) ->
+                ( EditMode editData, Insert loc _ ) ->
                     EditMode
-                        { editInteraction
+                        { editData
                             | insertions =
-                                Dict.insert (getNodeIdAtLocation loc session.net) actionId editInteraction.insertions
+                                Dict.insert
+                                    (getNodeIdAtLocation loc transformedNet)
+                                    actionId
+                                    editData.insertions
                         }
 
                 _ ->

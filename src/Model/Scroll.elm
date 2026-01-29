@@ -378,9 +378,9 @@ getLocation id net =
 getNodeIdAtLocation : Location -> Net -> Id
 getNodeIdAtLocation loc net =
     net.nodes
-        |> Dict.toList
+        |> Dict.keys
         |> List.Extra.findMap
-            (\( id, _ ) ->
+            (\id ->
                 if getLocation id net == loc then
                     Just id
 
