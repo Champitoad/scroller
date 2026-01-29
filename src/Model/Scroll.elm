@@ -265,43 +265,43 @@ merge s t =
 -- Query
 
 
-findAncestor : (Id -> Net -> Bool) -> Id -> Net -> Maybe Id
+findAncestor : (Id -> Bool) -> Id -> Net -> Maybe Id
 findAncestor pred id net =
     case getContext id net of
         TopLevel ->
             Nothing
 
         Inside parentId ->
-            if pred parentId net then
+            if pred parentId then
                 Just parentId
 
             else
                 findAncestor pred parentId net
 
 
-foldAncestors : (Id -> Net -> a -> a) -> a -> Id -> Net -> a
+foldAncestors : (Id -> a -> a) -> a -> Id -> Net -> a
 foldAncestors func acc id net =
     case getContext id net of
         TopLevel ->
             acc
 
         Inside parentId ->
-            foldAncestors func (func parentId net acc) parentId net
+            foldAncestors func (func parentId acc) parentId net
 
 
-existsAncestor : (Id -> Net -> Bool) -> Id -> Net -> Bool
+existsAncestor : (Id -> Bool) -> Id -> Net -> Bool
 existsAncestor pred id net =
     Utils.Maybe.isSomething (findAncestor pred id net)
 
 
-existsAncestorContext : (Id -> Net -> Bool) -> Context -> Net -> Bool
+existsAncestorContext : (Id -> Bool) -> Context -> Net -> Bool
 existsAncestorContext pred ctx net =
     case ctx of
         TopLevel ->
             False
 
         Inside parentId ->
-            pred parentId net
+            pred parentId
                 || existsAncestor pred parentId net
 
 
@@ -1254,7 +1254,7 @@ isIntroduced id net =
     isCreated id net
         || isExpandedOutloop id net
         || isExpandedInloop id net
-        || existsAncestor isCreated id net
+        || existsAncestor (\id_ -> isCreated id_ net) id net
 
 
 isIntroducedContext : Context -> Net -> Bool
@@ -1272,7 +1272,7 @@ isEliminated id net =
     isDestroyed id net
         || isCollapsedOutloop id net
         || isCollapsedInloop id net
-        || existsAncestor isDestroyed id net
+        || existsAncestor (\id_ -> isDestroyed id_ net) id net
 
 
 isEliminatedContext : Context -> Net -> Bool
@@ -1313,6 +1313,28 @@ isNormal net =
 -- Boundaries
 
 
+forgetInteraction : Shape -> Shape
+forgetInteraction shape =
+    case shape of
+        Sep childIds (Just _) ->
+            Sep childIds (Just attachment)
+
+        _ ->
+            shape
+
+
+forgetProof : Net -> Net
+forgetProof net =
+    Dict.foldl
+        (\id _ acc ->
+            acc
+                |> updateJustif id (\_ -> assumption)
+                |> updateShape id forgetInteraction
+        )
+        net
+        net.nodes
+
+
 premiss : Net -> Net
 premiss net =
     Dict.foldl
@@ -1325,6 +1347,7 @@ premiss net =
         )
         net
         net.nodes
+        |> forgetProof
 
 
 conclusion : Net -> Net
@@ -1339,6 +1362,7 @@ conclusion net =
         )
         net
         net.nodes
+        |> forgetProof
 
 
 tokenOfTree : Tree -> IToken

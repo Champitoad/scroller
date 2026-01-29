@@ -326,7 +326,7 @@ addButton params =
 
 insertMsg : Session -> Location -> IToken -> Dict Id Int -> Msg
 insertMsg session loc tok insertions =
-    if existsAncestorContext (\ancId _ -> Dict.member ancId insertions) loc.ctx session.net then
+    if existsAncestorContext (\ancId -> Dict.member ancId insertions) loc.ctx session.net then
         Transform session.route (Session.map (insert False loc tok))
 
     else

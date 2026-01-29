@@ -235,6 +235,13 @@ execAll session =
         | net = boundary session
         , actions = Iddict.empty
         , actionsQueue = Queue.empty
+        , actionMode =
+            case session.actionMode of
+                EditMode _ ->
+                    defaultEditMode
+
+                _ ->
+                    session.actionMode
     }
 
 
@@ -242,12 +249,7 @@ changeActionMode : ActionMode -> Session -> Session
 changeActionMode mode session =
     let
         newSession =
-            case session.actionMode of
-                EditMode _ ->
-                    commitInsertions session
-
-                _ ->
-                    session
+            commitInsertions session
     in
     { newSession | actionMode = mode }
 
@@ -377,7 +379,10 @@ applicable action session =
                 Ok ()
 
         Insert loc _ ->
-            if getPolarityContext loc.ctx session.net /= creationPolarity session.execMode then
+            if existsAncestorContext (\id -> isInserted id session) loc.ctx session.net then
+                Ok ()
+
+            else if getPolarityContext loc.ctx session.net /= creationPolarity session.execMode then
                 Err InvalidPolarity
 
             else if isErasedContext loc.ctx session then
@@ -387,7 +392,10 @@ applicable action session =
                 Ok ()
 
         Delete id ->
-            if getPolarity id session.net /= destructionPolarity session.execMode then
+            if existsAncestor (\id_ -> isInserted id_ session) id session.net then
+                Ok ()
+
+            else if getPolarity id session.net /= destructionPolarity session.execMode then
                 Err InvalidPolarity
 
             else if isErased id session then
