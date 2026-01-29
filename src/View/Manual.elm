@@ -2,7 +2,6 @@ module View.Manual exposing (..)
 
 import Element exposing (..)
 import Element.Border as Border
-import Element.Font as Font
 import Element.Input as Input
 import FeatherIcons as Icons
 import Model.App exposing (..)
@@ -10,7 +9,7 @@ import Model.Scroll exposing (..)
 import Model.Session exposing (..)
 import Update.App exposing (..)
 import View.Session exposing (..)
-import View.Style exposing (..)
+import View.Style as Style exposing (..)
 
 
 mkIcon : Float -> Icons.Icon -> Element msg
@@ -29,7 +28,7 @@ headingIconSize =
 
 flowerIcon : Element msg
 flowerIcon =
-    el [ Font.size (round headingIconSize + 10) ] (text "❀")
+    el [ fontSize (round headingIconSize + 10) ] (text "❀")
 
 
 proofIcon : Element msg
@@ -108,8 +107,8 @@ body { manualExamples, dragDrop } =
                 fontSize =
                     20
             in
-            ( textColumn [ spacing 10, Font.size fontSize ]
-            , paragraph [ Font.size fontSize ]
+            ( textColumn [ spacing 10, Style.fontSize fontSize ]
+            , paragraph [ Style.fontSize fontSize ]
             )
 
         ( t, b, i ) =
@@ -118,13 +117,13 @@ body { manualExamples, dragDrop } =
         h1 icon txt =
             row [ spacing 20, paddingEach { top = 20, bottom = 10, left = 0, right = 0 } ]
                 [ icon
-                , el [ Font.size 40 ] (text txt)
+                , el [ fontSize 40 ] (text txt)
                 ]
 
         h2 txt =
             row [ spacing 15, paddingEach { top = 10, bottom = 0, left = 0, right = 0 } ]
-                [ el [ Font.size 35 ] (text "•")
-                , el [ Font.size 25 ] (bold txt)
+                [ el [ fontSize 35 ] (text "•")
+                , el [ fontSize 25 ] (bold txt)
                 ]
     in
     row

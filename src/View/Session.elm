@@ -210,7 +210,7 @@ viewFormula dnd session id formula =
         ( fontSize, paddingSize ) =
             case session.route of
                 Playground ->
-                    ( 45, 10 )
+                    ( 35, 10 )
 
                 Manual _ ->
                     ( 30, 5 )
@@ -220,7 +220,7 @@ viewFormula dnd session id formula =
          , centerY
          , padding paddingSize
          , foregroundColor (getPolarity id session.net) |> Utils.Color.elementAttr
-         , Font.size fontSize
+         , Style.fontSize fontSize
          ]
             ++ dragAction
             ++ clickAction

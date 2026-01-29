@@ -2,7 +2,6 @@ module View.App exposing (..)
 
 import Browser exposing (Document)
 import Element exposing (..)
-import Element.Font as Font
 import Html exposing (div)
 import Html.Attributes exposing (tabindex)
 import Html.Events exposing (on)
@@ -15,7 +14,7 @@ import View.Manual as Manual
 import View.Route as Route
 import View.Session exposing (..)
 import View.Shelf exposing (..)
-import View.Style exposing (centered, fillXY, styleAttr)
+import View.Style exposing (..)
 import View.Toolbar exposing (..)
 
 
@@ -73,10 +72,10 @@ view model =
                 [ layout []
                     (column
                         (spacing 30 :: fillXY)
-                        [ centered (el [ Font.size 50 ] (text "Page not found!"))
+                        [ centered (el [ fontSize 50 ] (text "Page not found!"))
                         , centered
                             (el
-                                [ Font.size 25
+                                [ fontSize 25
                                 , rgb 0.6 0.6 0.6 |> Utils.Color.elementAttr
                                 ]
                                 (text url)

@@ -240,7 +240,7 @@ indicatorIcon icon =
 indicatorText : String -> Element msg
 indicatorText txt =
     el
-        [ Font.size 14
+        [ fontSize 14
         , Font.family
             [ Font.typeface "Open Sans"
             , Font.sansSerif
@@ -304,7 +304,7 @@ fullPageTextMessage txt =
         (el
             [ centerX
             , centerY
-            , Font.size 50
+            , fontSize 50
             ]
             (text txt)
         )

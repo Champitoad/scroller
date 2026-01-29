@@ -1045,7 +1045,7 @@ insert self loc tok net =
         basename =
             case tok of
                 ITok _ ->
-                    "Value"
+                    "Param"
 
                 ISep _ ->
                     "Branch"

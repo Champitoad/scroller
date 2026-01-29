@@ -7665,7 +7665,7 @@ var $author$project$Model$Scroll$insert = F4(
 		var newId = $author$project$Model$Scroll$getTreeId(newTree);
 		var basename = function () {
 			if (tok.$ === 'ITok') {
-				return 'Value';
+				return 'Param';
 			} else {
 				return 'Branch';
 			}
@@ -16710,7 +16710,7 @@ var $author$project$View$Widgets$indicator = F2(
 					$mdgriffith$elm_ui$Element$Border$rounded(2),
 					$mdgriffith$elm_ui$Element$Background$color(color)
 				]),
-			content);
+			$author$project$View$Style$centered(content));
 	});
 var $avh4$elm_color$Color$white = A4($avh4$elm_color$Color$RgbaSpace, 255 / 255, 255 / 255, 255 / 255, 1.0);
 var $author$project$View$Widgets$indicatorIcon = function (icon) {
@@ -17291,6 +17291,7 @@ var $author$project$Utils$Color$transparent = $avh4$elm_color$Color$fromRgba(
 var $author$project$View$Widgets$Msg = function (a) {
 	return {$: 'Msg', a: a};
 };
+var $avh4$elm_color$Color$darkGray = A4($avh4$elm_color$Color$RgbaSpace, 186 / 255, 189 / 255, 182 / 255, 1.0);
 var $rtfeldman$elm_css$VirtualDom$Styled$Node = F3(
 	function (a, b, c) {
 		return {$: 'Node', a: a, b: b, c: c};
@@ -17498,9 +17499,6 @@ var $author$project$Utils$Color$changeLight = F2(
 				hsla,
 				{lightness: factor * lightness}));
 	});
-var $rtfeldman$elm_css$Css$color = function (c) {
-	return A2($rtfeldman$elm_css$Css$property, 'color', c.value);
-};
 var $rtfeldman$elm_css$VirtualDom$Styled$Attribute = F3(
 	function (a, b, c) {
 		return {$: 'Attribute', a: a, b: b, c: c};
@@ -19870,25 +19868,11 @@ var $author$project$View$Widgets$button = F2(
 														$rtfeldman$elm_css$Css$borderColor($rtfeldman$elm_css$Css$transparent),
 														$rtfeldman$elm_css$Css$backgroundColor($rtfeldman$elm_css$Css$transparent)
 													])))))))))));
-		var iconStyledHtml = function () {
-			var iconColor = enabled ? style.iconColorEnabled : style.iconColorDisabled;
-			return A2(
-				$rtfeldman$elm_css$Html$Styled$div,
-				_List_fromArray(
-					[
-						$rtfeldman$elm_css$Html$Styled$Attributes$css(
-						_List_fromArray(
-							[
-								$rtfeldman$elm_css$Css$color(
-								$author$project$Utils$Color$toCss(iconColor))
-							]))
-					]),
-				_List_fromArray(
-					[
-						$rtfeldman$elm_css$Html$Styled$fromUnstyled(
-						A2($mdgriffith$elm_ui$Element$layout, _List_Nil, content))
-					]));
-		}();
+		var iconStyledHtml = $rtfeldman$elm_css$Html$Styled$fromUnstyled(
+			A2(
+				$mdgriffith$elm_ui$Element$layout,
+				_List_Nil,
+				$author$project$View$Style$centered(content)));
 		var actionAttr = function () {
 			if (enabled) {
 				if (action.$ === 'Msg') {
@@ -19928,6 +19912,7 @@ var $author$project$View$Widgets$iconButton = F2(
 		var title = _v0.title;
 		var icon = _v0.icon;
 		var enabled = _v0.enabled;
+		var color = enabled ? style.iconColorEnabled : style.iconColorDisabled;
 		return A2(
 			$author$project$View$Widgets$button,
 			style,
@@ -19936,7 +19921,10 @@ var $author$project$View$Widgets$iconButton = F2(
 				content: $mdgriffith$elm_ui$Element$html(
 					A2(
 						$feathericons$elm_feather$FeatherIcons$toHtml,
-						_List_Nil,
+						_List_fromArray(
+							[
+								$author$project$Utils$Color$htmlAttr(color)
+							]),
 						A2($feathericons$elm_feather$FeatherIcons$withSize, 30, icon))),
 				enabled: enabled,
 				title: title
@@ -19948,11 +19936,10 @@ var $author$project$View$Session$addButton = function (params) {
 	var style = {
 		color: $author$project$Utils$Color$fromElement($author$project$View$Style$introColor),
 		height: $rtfeldman$elm_css$Css$pct(100),
-		iconColorDisabled: $avh4$elm_color$Color$white,
+		iconColorDisabled: $avh4$elm_color$Color$darkGray,
 		iconColorEnabled: $avh4$elm_color$Color$white,
 		width: $rtfeldman$elm_css$Css$pct(100)
 	};
-	var _v0 = A2($elm$core$Debug$log, 'addButton enabled', params.enabled);
 	return A2($author$project$View$Widgets$iconButton, style, params);
 };
 var $author$project$Update$App$Transform = F2(
@@ -20252,7 +20239,14 @@ var $mdgriffith$elm_ui$Element$image = F2(
 var $author$project$View$Session$viewAtom = function (ident) {
 	if (ident.$ === 'Name') {
 		var name = ident.a;
-		return $mdgriffith$elm_ui$Element$text(name);
+		return A2(
+			$mdgriffith$elm_ui$Element$el,
+			_List_fromArray(
+				[
+					$mdgriffith$elm_ui$Element$Font$size(32),
+					A2($author$project$View$Style$styleAttr, 'transform', 'scale(1.1)')
+				]),
+			$mdgriffith$elm_ui$Element$text(name));
 	} else {
 		var data = ident.a;
 		return A2(
@@ -20268,14 +20262,24 @@ var $author$project$View$Session$viewAtom = function (ident) {
 	}
 };
 var $author$project$View$Session$viewStatement = function (formula) {
+	var sizedText = function (str) {
+		return A2(
+			$mdgriffith$elm_ui$Element$el,
+			_List_fromArray(
+				[
+					$mdgriffith$elm_ui$Element$Font$size(32),
+					A2($author$project$View$Style$styleAttr, 'transform', 'scale(1.1)')
+				]),
+			$mdgriffith$elm_ui$Element$text(str));
+	};
 	switch (formula.$) {
 		case 'Atom':
 			var ident = formula.a;
 			return $author$project$View$Session$viewAtom(ident);
 		case 'Truth':
-			return $mdgriffith$elm_ui$Element$text('⊤');
+			return sizedText('⊤');
 		case 'Falsity':
-			return $mdgriffith$elm_ui$Element$text('⊥');
+			return sizedText('⊥');
 		case 'And':
 			var f1 = formula.a;
 			var f2 = formula.b;
@@ -20285,7 +20289,7 @@ var $author$project$View$Session$viewStatement = function (formula) {
 				_List_fromArray(
 					[
 						$author$project$View$Session$viewStatement(f1),
-						$mdgriffith$elm_ui$Element$text(' ∧ '),
+						sizedText(' ∧ '),
 						$author$project$View$Session$viewStatement(f2)
 					]));
 		case 'Or':
@@ -20297,7 +20301,7 @@ var $author$project$View$Session$viewStatement = function (formula) {
 				_List_fromArray(
 					[
 						$author$project$View$Session$viewStatement(f1),
-						$mdgriffith$elm_ui$Element$text(' v '),
+						sizedText(' v '),
 						$author$project$View$Session$viewStatement(f2)
 					]));
 		case 'Implies':
@@ -20308,11 +20312,11 @@ var $author$project$View$Session$viewStatement = function (formula) {
 				_List_Nil,
 				_List_fromArray(
 					[
-						$mdgriffith$elm_ui$Element$text('('),
+						sizedText('('),
 						$author$project$View$Session$viewStatement(f1),
-						$mdgriffith$elm_ui$Element$text(' ⇒ '),
+						sizedText(' ⇒ '),
 						$author$project$View$Session$viewStatement(f2),
-						$mdgriffith$elm_ui$Element$text(')')
+						sizedText(')')
 					]));
 		default:
 			var f1 = formula.a;
@@ -20321,9 +20325,9 @@ var $author$project$View$Session$viewStatement = function (formula) {
 				_List_Nil,
 				_List_fromArray(
 					[
-						$mdgriffith$elm_ui$Element$text('¬ ('),
+						sizedText('¬ ('),
 						$author$project$View$Session$viewStatement(f1),
-						$mdgriffith$elm_ui$Element$text(')')
+						sizedText(')')
 					]));
 	}
 };
@@ -20386,7 +20390,7 @@ var $author$project$View$Session$viewFormula = F4(
 		var _v0 = function () {
 			var _v1 = session.route;
 			if (_v1.$ === 'Playground') {
-				return _Utils_Tuple2(45, 10);
+				return _Utils_Tuple2(33, 10);
 			} else {
 				return _Utils_Tuple2(30, 5);
 			}
@@ -21564,6 +21568,8 @@ var $author$project$View$Manual$backButtonStyle = _List_fromArray(
 		$mdgriffith$elm_ui$Element$Border$width(2),
 		$mdgriffith$elm_ui$Element$Border$rounded(4),
 		$mdgriffith$elm_ui$Element$Border$solid,
+		$mdgriffith$elm_ui$Element$Border$color(
+		A3($mdgriffith$elm_ui$Element$rgb, 0, 0, 0)),
 		$mdgriffith$elm_ui$Element$padding(10)
 	]);
 var $elm$html$Html$Attributes$href = function (url) {

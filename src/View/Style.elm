@@ -17,6 +17,17 @@ styleAttr attr val =
 
 
 
+-- Font styling with fallback for sizes that don't work with Font.size
+
+
+fontSize : Int -> Attribute msg
+fontSize size =
+    -- Use styleAttr for all font sizes to ensure consistency
+    -- and avoid the 33 threshold issue with Font.size
+    styleAttr "font-size" (String.fromInt size ++ "px")
+
+
+
 -- Interaction
 
 
