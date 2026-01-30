@@ -47,17 +47,17 @@ deleteAction session id =
 drawGrownBorder : Bool -> List (Attribute msg)
 drawGrownBorder doit =
     if doit then
-        grownBorder.active
+        insertedBorder.active
 
     else
-        grownBorder.inactive
+        insertedBorder.inactive
 
 
 viewNode : DnD -> Session -> Tree -> Element Msg
 viewNode dnd session ((TNode { id, node }) as tree) =
     let
         debug =
-            False
+            True
 
         statusBar =
             let
@@ -126,7 +126,7 @@ viewNode dnd session ((TNode { id, node }) as tree) =
                         phantomIndicator
             in
             row
-                [ width fill ]
+                [ width fill, spacing 10 ]
                 [ el [ alignLeft ] introIndicator
                 , el [ centerX ] nameEl
                 , el [ alignRight ] elimIndicator
@@ -141,7 +141,7 @@ viewNode dnd session ((TNode { id, node }) as tree) =
                     viewSep dnd session tree
     in
     column
-        [ width fill, height fill ]
+        [ width fill, height shrink, centerY ]
         [ statusBar, nodeShapeEl ]
 
 
@@ -277,7 +277,7 @@ viewOutloop dnd session id content =
              ]
                 ++ clickAction
             )
-            (viewTrees dnd session (Inside id) content)
+            (viewNodes dnd session (Inside id) content)
         )
 
 
@@ -453,18 +453,20 @@ viewSep dnd session (TNode { id, node, children }) =
         addInloopZone =
             viewAddInloopZone session id
 
+        inloops =
+            List.filter (\(TNode child) -> isInloop child.id session.net) children
+
         inloopsEl =
-            row
-                [ width fill
-                , height fill
-                , spacing sepBorderWidth
-                ]
-                ((children
-                    |> List.filter (\(TNode child) -> isInloop child.id session.net)
-                    |> List.map (viewNode dnd session)
-                 )
-                    ++ addInloopZone
-                )
+            if List.length inloops == 0 then
+                none
+
+            else
+                row
+                    [ width fill
+                    , height fill
+                    , spacing sepBorderWidth
+                    ]
+                    (List.map (viewNode dnd session) inloops ++ addInloopZone)
 
         color =
             case session.actionMode of
@@ -526,7 +528,7 @@ viewSep dnd session (TNode { id, node, children }) =
             ++ View.Events.dragAction color dnd session.route id
             ++ onClick DoNothing
             :: styleAttr "border-style" "solid"
-            :: styleAttr "border-width" (String.fromInt grownBorder.borderWidth ++ "px")
+            :: styleAttr "border-width" (String.fromInt insertedBorder.borderWidth ++ "px")
             :: sepBorderRadius
             :: drawGrownBorder (isInserted id session)
             ++ shadow
@@ -534,10 +536,10 @@ viewSep dnd session (TNode { id, node, children }) =
         [ outloopEl, inloopsEl ]
 
 
-viewTrees : DnD -> Session -> Context -> List Tree -> Element Msg
-viewTrees dnd session ctx trees =
+viewNodes : DnD -> Session -> Context -> List Tree -> Element Msg
+viewNodes dnd session ctx trees =
     let
-        treeEl tree =
+        nodeEl tree =
             viewNode dnd session tree
 
         neighbors =
@@ -721,9 +723,9 @@ viewTrees dnd session ctx trees =
                          ]
                             ++ lastDropzone
                         )
-                        (treeEl tree)
+                        (nodeEl tree)
 
-                els =
+                nodesEls =
                     List.indexedMap sperse trees
 
                 addOTokenZone =
@@ -745,7 +747,7 @@ viewTrees dnd session ctx trees =
                         _ ->
                             []
             in
-            wrappedRow attrs (els ++ addOTokenZone)
+            wrappedRow attrs (nodesEls ++ addOTokenZone)
 
         normal () =
             let
@@ -761,7 +763,7 @@ viewTrees dnd session ctx trees =
                         , centerX
                         , centerY
                         ]
-                        (treeEl tree)
+                        (nodeEl tree)
 
                 els =
                     List.map sperse trees
@@ -774,16 +776,6 @@ viewTrees dnd session ctx trees =
 
         _ ->
             normal ()
-
-
-inEditMode : Session -> Bool
-inEditMode { actionMode } =
-    case actionMode of
-        EditMode _ ->
-            True
-
-        _ ->
-            False
 
 
 sessionHeightAttr : Attribute msg
@@ -805,7 +797,7 @@ viewSession dnd session =
                 , styleAttr "overflow-x" "hidden"
                 , styleAttr "overflow-y" "auto"
                 ]
-                (viewTrees dnd session TopLevel (hydrate session.net))
+                (viewNodes dnd session TopLevel (hydrate session.net))
     in
     case session.actionMode of
         ProofMode _ ->

@@ -339,8 +339,8 @@ commitInsertions session =
     }
 
 
-creationPolarity : ExecMode -> Polarity
-creationPolarity execMode =
+insertionPolarity : ExecMode -> Polarity
+insertionPolarity execMode =
     case execMode of
         Forward ->
             Neg
@@ -349,9 +349,9 @@ creationPolarity execMode =
             Pos
 
 
-destructionPolarity : ExecMode -> Polarity
-destructionPolarity =
-    invert << creationPolarity
+deletionPolarity : ExecMode -> Polarity
+deletionPolarity =
+    invert << insertionPolarity
 
 
 applicable : Action -> Session -> Result ActionError ()
@@ -381,7 +381,7 @@ applicable action session =
             if existsAncestorContext (\id -> isInserted id session) loc.ctx session.net then
                 Ok ()
 
-            else if getPolarityContext loc.ctx session.net /= creationPolarity session.execMode then
+            else if getPolarityContext loc.ctx session.net /= insertionPolarity session.execMode then
                 Err InvalidPolarity
 
             else if isErasedContext loc.ctx session then
@@ -394,7 +394,7 @@ applicable action session =
             if existsAncestor (\id_ -> isInserted id_ session) id session.net then
                 Ok ()
 
-            else if getPolarity id session.net /= destructionPolarity session.execMode then
+            else if getPolarity id session.net /= deletionPolarity session.execMode then
                 Err InvalidPolarity
 
             else if isErased id session then
@@ -404,10 +404,10 @@ applicable action session =
                 Ok ()
 
         Iterate src dst ->
-            if getPolarityContext dst.ctx session.net /= creationPolarity session.execMode then
+            if getPolarityContext dst.ctx session.net /= deletionPolarity session.execMode then
                 Err InvalidPolarity
 
-            else if not (spans (getContext src session.net) dst.ctx session.net) then
+            else if not (spans (Debug.log "Iterate src ctx" (getContext src session.net)) dst.ctx session.net) then
                 Err (OutOfScope src)
 
             else if isErased src session || isErasedContext dst.ctx session then
@@ -417,7 +417,7 @@ applicable action session =
                 Ok ()
 
         Deiterate src tgt ->
-            if getPolarity tgt session.net /= destructionPolarity session.execMode then
+            if getPolarity tgt session.net /= insertionPolarity session.execMode then
                 Err InvalidPolarity
 
             else if not (spans (getContext src session.net) (getContext tgt session.net) session.net) then
@@ -556,7 +556,7 @@ record action session =
                         { editData
                             | insertions =
                                 Dict.insert
-                                    (Debug.log "Inserted node ID" (getNodeIdAtLocation loc transformedNet))
+                                    (getNodeIdAtLocation loc transformedNet)
                                     actionId
                                     editData.insertions
                         }
@@ -627,9 +627,12 @@ execute actionId session =
             }
 
         Nothing ->
-            Debug.log
-                "Error: trying to execute action with non-existing ID. Returning the session unchanged."
-                session
+            let
+                _ =
+                    Debug.log
+                        "Error: trying to execute action with non-existing ID. Returning the session unchanged."
+            in
+            session
 
 
 apply : Action -> Session -> Session

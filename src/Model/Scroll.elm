@@ -537,7 +537,7 @@ spans src dst net =
 
         ( Inside srcId, Inside dstId ) ->
             -- `dst` is equal to, or inside `src`
-            List.member dstId (getDescendentIds srcId net)
+            List.member dstId (Debug.log "desc" (getDescendentIds srcId net))
 
 
 

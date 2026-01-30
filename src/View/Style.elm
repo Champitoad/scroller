@@ -249,8 +249,8 @@ droppable color =
     }
 
 
-grownBorder : ZoneStyle msg
-grownBorder =
+insertedBorder : ZoneStyle msg
+insertedBorder =
     let
         width =
             3
