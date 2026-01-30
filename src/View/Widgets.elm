@@ -225,7 +225,7 @@ toggle { color, iconOn, iconOff, title, onChange } checked =
 
 indicatorHeight : Length
 indicatorHeight =
-    20 |> px
+    25 |> px
 
 
 indicatorIcon : Icon -> Element msg
@@ -253,7 +253,7 @@ indicator color content =
     el
         [ width indicatorHeight
         , height indicatorHeight
-        , styleAttr "border-radius" "2px"
+        , styleAttr "border-radius" "0px"
         , Background.color color
         ]
         (centered content)

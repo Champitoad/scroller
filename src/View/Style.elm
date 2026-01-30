@@ -135,7 +135,7 @@ sepBorderWidth =
 
 sepBorderRound : Int
 sepBorderRound =
-    10
+    25
 
 
 sepBorderRadius : Attribute msg

@@ -281,47 +281,6 @@ viewOutloop dnd session id content =
         )
 
 
-viewInloop : DnD -> Session -> Tree -> Element Msg
-viewInloop dnd session (TNode { id, node, children }) =
-    let
-        clickAction =
-            case session.actionMode of
-                EditMode { interaction } ->
-                    case interaction of
-                        Operating ->
-                            deleteAction session id
-
-                        _ ->
-                            []
-
-                _ ->
-                    []
-
-        paddingSize =
-            case session.route of
-                Playground ->
-                    10
-
-                Manual _ ->
-                    10
-    in
-    el
-        [ width fill
-        , height fill
-        , sepBorderRadius
-        , Background.color (backgroundColor (invert node.polarity))
-        ]
-        (el
-            ([ width fill
-             , height fill
-             , padding paddingSize
-             ]
-                ++ clickAction
-            )
-            (viewTrees dnd session (Inside id) children)
-        )
-
-
 addButton : IconButtonParams msg -> Element msg
 addButton params =
     let
@@ -357,10 +316,18 @@ viewAddInloopZone session outloopId =
         tok =
             ISep []
 
+        kindStr =
+            case getPolarityContext loc.ctx session.net of
+                Pos ->
+                    "continuation"
+
+                Neg ->
+                    "branch"
+
         addInloopButton =
             addButton
                 { action = Msg (insertMsg session loc tok)
-                , title = "Insert new branch"
+                , title = "Insert new " ++ kindStr
                 , icon = Icons.plusSquare
                 , enabled = True
                 }
@@ -429,6 +396,14 @@ viewAddOTokenZone session ctx newAtomName =
         tok =
             ITok otoken
 
+        kindStr =
+            case getPolarityContext ctx session.net of
+                Pos ->
+                    "value"
+
+                Neg ->
+                    "parameter"
+
         addOTokenButton =
             el
                 [ width fill
@@ -436,7 +411,7 @@ viewAddOTokenZone session ctx newAtomName =
                 ]
                 (addButton
                     { action = Msg (insertMsg session loc tok)
-                    , title = "Insert new value"
+                    , title = "Insert new " ++ kindStr
                     , icon = Icons.plus
                     , enabled = True
                     }
@@ -517,6 +492,30 @@ viewSep dnd session (TNode { id, node, children }) =
                     , shadowBlur = 10
                     , shadowAlpha = 0.7
                     }
+
+        colorStr =
+            foregroundColor node.polarity
+                |> Utils.Color.fromElement
+                |> Utils.Color.withAlpha shadowAlpha
+                |> Color.toCssString
+
+        shadowStr =
+            String.fromFloat (Tuple.first shadowOffset)
+                ++ "px "
+                ++ String.fromFloat (Tuple.second shadowOffset)
+                ++ "px "
+                ++ String.fromFloat shadowBlur
+                ++ "px "
+                ++ String.fromFloat shadowSize
+                ++ "px "
+                ++ colorStr
+
+        shadow =
+            if not (isInloop id session.net) then
+                [ styleAttr "box-shadow" shadowStr ]
+
+            else
+                []
     in
     column
         ([ width fill
@@ -530,26 +529,7 @@ viewSep dnd session (TNode { id, node, children }) =
             :: styleAttr "border-width" (String.fromInt grownBorder.borderWidth ++ "px")
             :: sepBorderRadius
             :: drawGrownBorder (isInserted id session)
-            ++ [ let
-                    colorStr =
-                        foregroundColor (getPolarity id session.net)
-                            |> Utils.Color.fromElement
-                            |> Utils.Color.withAlpha shadowAlpha
-                            |> Color.toCssString
-
-                    shadowStr =
-                        String.fromFloat (Tuple.first shadowOffset)
-                            ++ "px "
-                            ++ String.fromFloat (Tuple.second shadowOffset)
-                            ++ "px "
-                            ++ String.fromFloat shadowBlur
-                            ++ "px "
-                            ++ String.fromFloat shadowSize
-                            ++ "px "
-                            ++ colorStr
-                 in
-                 styleAttr "box-shadow" shadowStr
-               ]
+            ++ shadow
         )
         [ outloopEl, inloopsEl ]
 
