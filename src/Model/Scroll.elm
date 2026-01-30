@@ -533,11 +533,37 @@ spans src dst net =
             True
 
         ( _, TopLevel ) ->
-            True
+            False
 
         ( Inside srcId, Inside dstId ) ->
             -- `dst` is equal to, or inside `src`
-            List.member dstId (Debug.log "desc" (getDescendentIds srcId net))
+            List.member dstId (getDescendentIds srcId net)
+
+
+
+{- Whether nodes in context `ctx` are inside sep `src`. -}
+
+
+inside : Id -> Context -> Net -> Bool
+inside src ctx net =
+    case ctx of
+        TopLevel ->
+            False
+
+        Inside parentId ->
+            src == parentId || existsAncestor ((==) src) parentId net
+
+
+
+{- Whether context `dst` is in scope of node `src`.
+
+   Note: for now we forbid recursivity by requiring that nodes in `dst` are not inside `src`.
+-}
+
+
+scopes : Id -> Context -> Net -> Bool
+scopes src dst net =
+    spans (getContext src net) dst net && not (inside src dst net)
 
 
 
