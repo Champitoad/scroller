@@ -269,8 +269,8 @@ viewOutloop dnd session id content =
         )
 
 
-viewInloop : DnD -> Session -> Id -> List Tree -> Element Msg
-viewInloop dnd session id content =
+viewInloop : DnD -> Session -> Tree -> Element Msg
+viewInloop dnd session (TNode { id, node, children }) =
     let
         clickAction =
             case session.actionMode of
@@ -297,8 +297,7 @@ viewInloop dnd session id content =
         [ width fill
         , height fill
         , styleAttr "border-radius" (String.fromInt scrollBorderRound ++ "px")
-        , Background.color (backgroundColor (getPolarity id session.net))
-        , explain Debug.todo
+        , Background.color (backgroundColor (invert node.polarity))
         ]
         (el
             ([ width fill
@@ -307,7 +306,7 @@ viewInloop dnd session id content =
              ]
                 ++ clickAction
             )
-            (viewTrees dnd session (Inside id) content)
+            (viewTrees dnd session (Inside id) children)
         )
 
 
@@ -480,7 +479,7 @@ viewSep dnd session id children =
                 ]
                 ((children
                     |> List.filter (\(TNode child) -> isInloop child.id session.net)
-                    |> List.map (\(TNode inloop) -> viewInloop dnd session inloop.id inloop.children)
+                    |> List.map (viewInloop dnd session)
                  )
                     ++ addInloopZone
                 )
