@@ -241,7 +241,7 @@ droppable color =
             ]
 
         bgColor =
-            Utils.Color.withAlpha 0.5 color |> Utils.Color.toElement
+            color |> Utils.Color.withAlpha 0.5 |> Utils.Color.toElement
     in
     { borderWidth = width
     , active = Background.color bgColor :: border

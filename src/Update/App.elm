@@ -106,13 +106,13 @@ handleDragDropMsg dndMsg model =
                                         newSession =
                                             case ( session.actionMode, destination ) of
                                                 ( ProofMode Justifying, DropNode target ) ->
-                                                    apply (Deiterate source target) session
+                                                    apply (Debug.log "Action" (Deiterate source target)) session
 
                                                 ( ProofMode Justifying, DropLocation location ) ->
-                                                    apply (Iterate source location) session
+                                                    apply (Debug.log "Action" (Iterate source location)) session
 
                                                 ( EditMode _, DropLocation location ) ->
-                                                    apply (Reorder source location.pos) session
+                                                    apply (Debug.log "Action" (Reorder source location.pos)) session
 
                                                 _ ->
                                                     session

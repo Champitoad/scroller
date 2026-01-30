@@ -347,7 +347,6 @@ getContext id net =
 
 getPolarity : Id -> Net -> Polarity
 getPolarity id net =
-    -- foldAncestors (\_ _ -> invert) Pos
     (getNode id net).polarity
 
 
@@ -605,6 +604,11 @@ updateContextNode update node =
     { node | context = update node.context }
 
 
+updatePolarityNode : (Polarity -> Polarity) -> Node -> Node
+updatePolarityNode update node =
+    { node | polarity = update node.polarity }
+
+
 updateNode : Id -> (Node -> Node) -> Net -> Net
 updateNode id update net =
     { net | nodes = Dict.update id (Maybe.map update) net.nodes }
@@ -633,6 +637,11 @@ updateContext id update net =
 updateJustif : Id -> (Justification -> Justification) -> Net -> Net
 updateJustif id update net =
     updateNode id (updateJustifNode update) net
+
+
+updatePolarity : Id -> (Polarity -> Polarity) -> Net -> Net
+updatePolarity id update net =
+    updateNode id (updatePolarityNode update) net
 
 
 
@@ -948,6 +957,20 @@ prune id net =
 
 
 
+{- Refreshes memoized polarities so that they reflect correctly the net's sep structure. -}
+
+
+refreshPolarities : Net -> Net
+refreshPolarities net =
+    Dict.foldl
+        (\id _ acc ->
+            updatePolarity id (\_ -> foldAncestors (\_ -> invert) Pos id net) acc
+        )
+        net
+        net.nodes
+
+
+
 {- Grafts net `src` onto net `tgt` at location `loc`. -}
 
 
@@ -957,57 +980,58 @@ graft loc src tgt =
         srcFresh =
             freshify tgt src
     in
-    { nodes =
-        Dict.foldl
-            (\srcNodeId srcNode acc ->
-                let
-                    ( updatedSrcNode, srcRootIdx ) =
-                        case List.Extra.elemIndex srcNodeId srcFresh.roots of
-                            Just i ->
-                                ( { srcNode | context = loc.ctx }, Just i )
+    refreshPolarities <|
+        { nodes =
+            Dict.foldl
+                (\srcNodeId srcNode acc ->
+                    let
+                        ( updatedSrcNode, srcRootIdx ) =
+                            case List.Extra.elemIndex srcNodeId srcFresh.roots of
+                                Just i ->
+                                    ( { srcNode | context = loc.ctx }, Just i )
 
-                            Nothing ->
-                                ( srcNode, Nothing )
+                                Nothing ->
+                                    ( srcNode, Nothing )
 
-                    accWithSrcNode =
-                        Dict.insert srcNodeId updatedSrcNode acc
-                in
-                case loc.ctx of
-                    -- If we graft at the top-level, just add the node
-                    TopLevel ->
-                        accWithSrcNode
+                        accWithSrcNode =
+                            Dict.insert srcNodeId updatedSrcNode acc
+                    in
+                    case loc.ctx of
+                        -- If we graft at the top-level, just add the node
+                        TopLevel ->
+                            accWithSrcNode
 
-                    -- If we graft in a sep and the node is a root,
-                    -- then we need to link the sep to its new child
-                    Inside parentId ->
-                        accWithSrcNode
-                            |> Dict.update parentId
-                                (Maybe.map
-                                    (\parent ->
-                                        let
-                                            updatedShape =
-                                                case ( parent.shape, srcRootIdx ) of
-                                                    --
-                                                    ( Sep childIds int, Just i ) ->
-                                                        Sep (Utils.List.insert (loc.pos + i) [ srcNodeId ] childIds) int
+                        -- If we graft in a sep and the node is a root,
+                        -- then we need to link the sep to its new child
+                        Inside parentId ->
+                            accWithSrcNode
+                                |> Dict.update parentId
+                                    (Maybe.map
+                                        (\parent ->
+                                            let
+                                                updatedShape =
+                                                    case ( parent.shape, srcRootIdx ) of
+                                                        --
+                                                        ( Sep childIds int, Just i ) ->
+                                                            Sep (Utils.List.insert (loc.pos + i) [ srcNodeId ] childIds) int
 
-                                                    ( shape, _ ) ->
-                                                        shape
-                                        in
-                                        { parent | shape = updatedShape }
+                                                        ( shape, _ ) ->
+                                                            shape
+                                            in
+                                            { parent | shape = updatedShape }
+                                        )
                                     )
-                                )
-            )
-            tgt.nodes
-            srcFresh.nodes
-    , roots =
-        case loc.ctx of
-            TopLevel ->
-                Utils.List.insert loc.pos srcFresh.roots tgt.roots
+                )
+                tgt.nodes
+                srcFresh.nodes
+        , roots =
+            case loc.ctx of
+                TopLevel ->
+                    Utils.List.insert loc.pos srcFresh.roots tgt.roots
 
-            _ ->
-                tgt.roots
-    }
+                _ ->
+                    tgt.roots
+        }
 
 
 

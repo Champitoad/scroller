@@ -57,13 +57,14 @@ viewNode : DnD -> Session -> Tree -> Element Msg
 viewNode dnd session ((TNode { id, node }) as tree) =
     let
         debug =
-            True
+            False
 
         statusBar =
             let
                 nameEl =
                     el
-                        [ foregroundColor node.polarity |> Utils.Color.elementAttr ]
+                        [ foregroundColor node.polarity |> Utils.Color.elementAttr
+                        ]
                         (text
                             ((if debug then
                                 String.fromInt id ++ "#"
@@ -566,8 +567,11 @@ viewNodes dnd session ctx trees =
                                 (DragNode src) =
                                     source
 
+                                loc =
+                                    { ctx = ctx, pos = List.length neighbors }
+
                                 iterateAction =
-                                    Iterate src { ctx = ctx, pos = List.length neighbors }
+                                    Iterate src loc
                             in
                             case applicable iterateAction session of
                                 Err _ ->
@@ -583,9 +587,9 @@ viewNodes dnd session ctx trees =
                                                 -- Hovering some droppable destination
                                                 Just (Just { destination }) ->
                                                     case destination of
-                                                        DropContext dropCtx ->
+                                                        DropLocation dropLoc ->
                                                             -- We only highlight when it's an (iterable) area
-                                                            if dropCtx == ctx then
+                                                            if dropLoc == loc then
                                                                 dropStyle.active
 
                                                             else
@@ -597,7 +601,7 @@ viewNodes dnd session ctx trees =
                                                 _ ->
                                                     dropStyle.inactive
                                     in
-                                    dropTargetStyle ++ dropAttrs (DropContext ctx)
+                                    dropTargetStyle ++ dropAttrs (DropLocation loc)
 
                 EditMode { interaction } ->
                     case interaction of
@@ -787,10 +791,10 @@ viewSession : DnD -> Session -> Element Msg
 viewSession dnd session =
     let
         sessionEl () =
-            let
-                _ =
-                    Debug.log "net" (stringOfNet session.net)
-            in
+            -- let
+            --     _ =
+            --         Debug.log "net" (stringOfNet session.net)
+            -- in
             el
                 [ width fill
                 , sessionHeightAttr

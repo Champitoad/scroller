@@ -240,6 +240,7 @@ indicatorText : String -> Element msg
 indicatorText txt =
     el
         [ fontSize 15
+        , styleAttr "color" "white"
         , Font.family
             [ Font.typeface "Open Sans"
             , Font.sansSerif
@@ -251,8 +252,10 @@ indicatorText txt =
 indicator : Element.Color -> Element msg -> Element msg
 indicator color content =
     el
-        [ width indicatorHeight
+        [ width shrink
         , height indicatorHeight
+        , styleAttr "padding-left" "5px"
+        , styleAttr "padding-right" "5px"
         , styleAttr "border-radius" "0px"
         , Background.color color
         ]
@@ -271,12 +274,12 @@ deletionIndicator =
 
 iterationIndicator : String -> Element msg
 iterationIndicator name =
-    indicator introColor (indicatorText (":=" ++ name))
+    indicator introColor (indicatorText (":= " ++ name))
 
 
 deiterationIndicator : String -> Element msg
 deiterationIndicator name =
-    indicator elimColor (indicatorText (":=" ++ name))
+    indicator elimColor (indicatorText (":= " ++ name))
 
 
 expansionIndicator : Element msg
