@@ -128,7 +128,7 @@ viewNode dnd session (TNode { id, node, children }) =
                     viewSep dnd session id children
     in
     column
-        [ width shrink, height shrink ]
+        [ width fill, height fill ]
         [ statusBar, nodeShapeEl ]
 
 
@@ -298,6 +298,7 @@ viewInloop dnd session id content =
         , height fill
         , styleAttr "border-radius" (String.fromInt scrollBorderRound ++ "px")
         , Background.color (backgroundColor (getPolarity id session.net))
+        , explain Debug.todo
         ]
         (el
             ([ width fill
