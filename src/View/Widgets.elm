@@ -231,7 +231,7 @@ indicatorHeight =
 indicatorIcon : Icon -> Element msg
 indicatorIcon icon =
     icon
-        |> Icons.withSize 15
+        |> Icons.withSize 20
         |> Icons.toHtml [ Color.white |> Utils.Color.htmlAttr ]
         |> html
 
@@ -239,7 +239,7 @@ indicatorIcon icon =
 indicatorText : String -> Element msg
 indicatorText txt =
     el
-        [ fontSize 14
+        [ fontSize 15
         , Font.family
             [ Font.typeface "Open Sans"
             , Font.sansSerif
