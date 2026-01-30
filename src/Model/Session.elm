@@ -1,7 +1,6 @@
 module Model.Session exposing (..)
 
 import Dict exposing (Dict)
-import Html.Attributes exposing (default)
 import Iddict exposing (Iddict)
 import Model.Scroll as Scroll exposing (..)
 import Queue exposing (Queue)
@@ -459,7 +458,10 @@ actionTransform execMode action =
                     emptyScroll |> hydrateOToken TopLevel Pos |> State.eval 0
 
                 openedScrollTree =
-                    TNode { unopenedScroll | node = updateInteractionNode makeOpened unopenedScroll.node }
+                    TNode
+                        { unopenedScroll
+                            | node = updateInteractionNode (annotateExpansion execMode) unopenedScroll.node
+                        }
             in
             graft loc (dehydrateTree openedScrollTree)
 
@@ -554,7 +556,7 @@ record action session =
                         { editData
                             | insertions =
                                 Dict.insert
-                                    (getNodeIdAtLocation loc transformedNet)
+                                    (Debug.log "Inserted node ID" (getNodeIdAtLocation loc transformedNet))
                                     actionId
                                     editData.insertions
                         }

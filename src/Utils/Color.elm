@@ -71,7 +71,7 @@ elementAttr color =
 
 transparent : Color
 transparent =
-    Color.fromRgba { red = 1, green = 1, blue = 1, alpha = 1 }
+    Color.fromRgba { red = 1, green = 1, blue = 1, alpha = 0 }
 
 
 withAlpha : Float -> Color -> Color

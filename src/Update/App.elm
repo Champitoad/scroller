@@ -143,7 +143,7 @@ update msg model =
         Apply route action ->
             let
                 newSession =
-                    apply action (getSession route model)
+                    apply (Debug.log "Action" action) (getSession route model)
             in
             ( setSessionWithHistory route newSession model, Cmd.none )
 

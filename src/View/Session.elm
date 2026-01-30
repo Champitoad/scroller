@@ -7,6 +7,7 @@ import Dict exposing (Dict)
 import Element exposing (..)
 import Element.Background as Background
 import FeatherIcons as Icons
+import Html exposing (p)
 import Html.Attributes exposing (title)
 import Html5.DragDrop as DnD
 import Model.App exposing (..)
@@ -53,14 +54,26 @@ drawGrownBorder doit =
 
 
 viewNode : DnD -> Session -> Tree -> Element Msg
-viewNode dnd session (TNode { id, node, children }) =
+viewNode dnd session ((TNode { id, node }) as tree) =
     let
+        debug =
+            False
+
         statusBar =
             let
                 nameEl =
                     el
                         [ foregroundColor node.polarity |> Utils.Color.elementAttr ]
-                        (text node.name)
+                        (text
+                            ((if debug then
+                                String.fromInt id ++ "#"
+
+                              else
+                                ""
+                             )
+                                ++ node.name
+                            )
+                        )
 
                 polarity =
                     case session.execMode of
@@ -93,7 +106,7 @@ viewNode dnd session (TNode { id, node, children }) =
                         expansionIndicator
 
                     else
-                        none
+                        phantomIndicator
 
                 elimIndicator =
                     if isDeletion polarity node.justif then
@@ -110,7 +123,7 @@ viewNode dnd session (TNode { id, node, children }) =
                         collapseIndicator
 
                     else
-                        none
+                        phantomIndicator
             in
             row
                 [ width fill ]
@@ -125,7 +138,7 @@ viewNode dnd session (TNode { id, node, children }) =
                     viewFormula dnd session id form
 
                 Sep _ _ ->
-                    viewSep dnd session id children
+                    viewSep dnd session tree
     in
     column
         [ width fill, height fill ]
@@ -256,7 +269,6 @@ viewOutloop dnd session id content =
     el
         [ width fill
         , height fill
-        , styleAttr "border-radius" (String.fromInt scrollBorderRound ++ "px")
         ]
         (el
             ([ width fill
@@ -296,7 +308,7 @@ viewInloop dnd session (TNode { id, node, children }) =
     el
         [ width fill
         , height fill
-        , styleAttr "border-radius" (String.fromInt scrollBorderRound ++ "px")
+        , sepBorderRadius
         , Background.color (backgroundColor (invert node.polarity))
         ]
         (el
@@ -324,9 +336,9 @@ addButton params =
     iconButton style params
 
 
-insertMsg : Session -> Location -> IToken -> Dict Id Int -> Msg
-insertMsg session loc tok insertions =
-    if existsAncestorContext (\ancId -> Dict.member ancId insertions) loc.ctx session.net then
+insertMsg : Session -> Location -> IToken -> Msg
+insertMsg session loc tok =
+    if existsAncestorContext (\ancId -> isInserted ancId session) loc.ctx session.net then
         Transform session.route (Session.map (insert False loc tok))
 
     else
@@ -337,7 +349,7 @@ viewAddInloopZone : Session -> Id -> List (Element Msg)
 viewAddInloopZone session outloopId =
     let
         pos =
-            Dict.size (getOutloopInteractions outloopId session.net)
+            List.length (getChildIds outloopId session.net)
 
         loc =
             { ctx = Inside outloopId, pos = pos }
@@ -345,30 +357,25 @@ viewAddInloopZone session outloopId =
         tok =
             ISep []
 
-        addInloopButton insertions =
+        addInloopButton =
             addButton
-                { action = Msg (insertMsg session loc tok insertions)
+                { action = Msg (insertMsg session loc tok)
                 , title = "Insert new branch"
                 , icon = Icons.plusSquare
                 , enabled = True
                 }
     in
-    case session.actionMode of
-        EditMode { insertions } ->
-            case applicable (Insert loc tok) session of
-                Ok _ ->
-                    [ el
-                        [ width shrink
-                        , height fill
-                        , padding 10
-                        , styleAttr "border-radius" (String.fromInt scrollBorderRound ++ "px")
-                        , Background.color (backgroundColor (invert (getPolarity outloopId session.net)))
-                        ]
-                        (addInloopButton insertions)
-                    ]
-
-                Err _ ->
-                    []
+    case ( session.actionMode, applicable (Insert loc tok) session ) of
+        ( EditMode _, Ok _ ) ->
+            [ el
+                [ width shrink
+                , height fill
+                , padding 10
+                , sepBorderRadius
+                , Background.color (backgroundColor (invert (getPolarity outloopId session.net)))
+                ]
+                addInloopButton
+            ]
 
         _ ->
             []
@@ -422,13 +429,13 @@ viewAddOTokenZone session ctx newAtomName =
         tok =
             ITok otoken
 
-        addOTokenButton insertions =
+        addOTokenButton =
             el
                 [ width fill
                 , height fill
                 ]
                 (addButton
-                    { action = Msg (insertMsg session loc tok insertions)
+                    { action = Msg (insertMsg session loc tok)
                     , title = "Insert new value"
                     , icon = Icons.plus
                     , enabled = True
@@ -436,27 +443,27 @@ viewAddOTokenZone session ctx newAtomName =
                 )
     in
     case ( session.actionMode, applicable (Insert loc tok) session ) of
-        ( EditMode { insertions }, Ok _ ) ->
+        ( EditMode _, Ok _ ) ->
             column
                 [ width shrink
                 , height fill
                 , centerX
-                , styleAttr "border-radius" (String.fromInt scrollBorderRound ++ "px")
+                , sepBorderRadius
                 , Background.color Style.transparent
                 ]
-                [ addOTokenButton insertions ]
+                [ addOTokenButton ]
 
         _ ->
             none
 
 
-viewSep : DnD -> Session -> Id -> List Tree -> Element Msg
-viewSep dnd session id children =
+viewSep : DnD -> Session -> Tree -> Element Msg
+viewSep dnd session (TNode { id, node, children }) =
     let
         outloopContent =
             List.filter
-                (\(TNode { node }) ->
-                    case node.shape of
+                (\(TNode child) ->
+                    case child.node.shape of
                         Sep _ (Just _) ->
                             False
 
@@ -475,11 +482,11 @@ viewSep dnd session id children =
             row
                 [ width fill
                 , height fill
-                , spacing scrollBorderWidth
+                , spacing sepBorderWidth
                 ]
                 ((children
                     |> List.filter (\(TNode child) -> isInloop child.id session.net)
-                    |> List.map (viewInloop dnd session)
+                    |> List.map (viewNode dnd session)
                  )
                     ++ addInloopZone
                 )
@@ -514,13 +521,14 @@ viewSep dnd session id children =
     column
         ([ width fill
          , height fill
-         , Background.color (foregroundColor (getPolarity id session.net))
+         , Background.color (foregroundColor node.polarity)
          ]
             ++ (List.map htmlAttribute <| DnD.droppable DragDropMsg Nothing)
             ++ View.Events.dragAction color dnd session.route id
             ++ onClick DoNothing
             :: styleAttr "border-style" "solid"
             :: styleAttr "border-width" (String.fromInt grownBorder.borderWidth ++ "px")
+            :: sepBorderRadius
             :: drawGrownBorder (isInserted id session)
             ++ [ let
                     colorStr =

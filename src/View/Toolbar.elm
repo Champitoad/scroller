@@ -78,7 +78,7 @@ viewHelpButton =
 viewNewAtomNameTextEdit : String -> Element Msg
 viewNewAtomNameTextEdit newAtomName =
     Input.text
-        [ styleAttr "border-radius" (String.fromInt scrollBorderRound ++ "px")
+        [ styleAttr "border-radius" (String.fromInt sepBorderRound ++ "px")
         , onClick DoNothing
         ]
         { onChange = UpdateNewAtomName

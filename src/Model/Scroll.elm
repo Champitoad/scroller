@@ -1079,12 +1079,18 @@ insert self loc tok net =
             getTreeId newTree
 
         basename =
-            case tok of
-                ITok _ ->
+            case ( tok, getPolarityContext loc.ctx net ) of
+                ( ITok _, Neg ) ->
                     "Param"
 
-                ISep _ ->
+                ( ITok _, Pos ) ->
+                    "Value"
+
+                ( ISep _, Neg ) ->
                     "Branch"
+
+                ( ISep _, Pos ) ->
+                    "Continuation"
 
         ins =
             dehydrateTree newTree

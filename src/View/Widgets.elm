@@ -289,6 +289,11 @@ collapseIndicator =
     indicator introColor (indicatorIcon Icons.minimize2)
 
 
+phantomIndicator : Element msg
+phantomIndicator =
+    indicator (Utils.Color.transparent |> Utils.Color.toElement) none
+
+
 
 -- Misc
 

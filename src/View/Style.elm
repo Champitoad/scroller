@@ -128,14 +128,28 @@ useColor =
 -- Scroll styling
 
 
-scrollBorderWidth : Int
-scrollBorderWidth =
+sepBorderWidth : Int
+sepBorderWidth =
     3
 
 
-scrollBorderRound : Int
-scrollBorderRound =
+sepBorderRound : Int
+sepBorderRound =
     10
+
+
+sepBorderRadius : Attribute msg
+sepBorderRadius =
+    let
+        borderRadiusCssStr =
+            String.fromInt sepBorderRound ++ "px"
+    in
+    styleAttr "border-radius"
+        ("0px 0px "
+            ++ borderRadiusCssStr
+            ++ " "
+            ++ borderRadiusCssStr
+        )
 
 
 type alias ZoneStyle msg =
@@ -154,7 +168,7 @@ actionable color =
         border =
             [ styleAttr "border-width" (String.fromInt width ++ "px")
             , styleAttr "border-style" "dotted"
-            , styleAttr "border-radius" (String.fromInt scrollBorderRound ++ "px")
+            , styleAttr "border-radius" (String.fromInt sepBorderRound ++ "px")
             ]
 
         bgColor =
@@ -201,7 +215,7 @@ draggable color =
         border =
             [ styleAttr "border-width" (String.fromInt width ++ "px")
             , styleAttr "border-style" "solid"
-            , styleAttr "border-radius" (String.fromInt scrollBorderRound ++ "px")
+            , styleAttr "border-radius" (String.fromInt sepBorderRound ++ "px")
             ]
 
         borderColor =
@@ -222,7 +236,7 @@ droppable color =
         border =
             [ styleAttr "border-width" (String.fromInt width ++ "px")
             , styleAttr "border-style" "dashed"
-            , styleAttr "border-radius" (String.fromInt scrollBorderRound ++ "px")
+            , styleAttr "border-radius" (String.fromInt sepBorderRound ++ "px")
             , styleAttr "border-color" (Color.toCssString color)
             ]
 
@@ -242,7 +256,7 @@ grownBorder =
             3
 
         border =
-            [ styleAttr "border-radius" (String.fromInt scrollBorderRound ++ "px") ]
+            [ sepBorderRadius ]
     in
     { borderWidth = width
     , active =
