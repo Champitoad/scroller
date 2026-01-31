@@ -1,3 +1,13 @@
+# Next
+
+- Editable names
+- Highlight origin when hovering `use` indicator
+- Proper name generation for iterated nodes
+- `Deiteration` actions
+- `Open` actions
+- Fix `Close` actions
+- Fix `Reorder` actions
+
 # Features
 
 - Execution of actions
