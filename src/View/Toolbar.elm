@@ -331,12 +331,12 @@ toolbarHeight =
 viewToolbar : Model -> Element Msg
 viewToolbar model =
     let
-        -- autoButton = viewAutoButton model.session.actionMode
+        -- autoButton = viewAutoButton model.playground.actionMode
         helpButton =
             viewHelpButton
 
         actionModeSelector =
-            viewActionModeSelector model.session.actionMode
+            viewActionModeSelector model.playground.actionMode
 
         undoRedo =
             viewUndoRedo model.history
@@ -347,7 +347,7 @@ viewToolbar model =
                 , spacing 10
                 , centerX
                 ]
-                (case model.session.actionMode of
+                (case model.playground.actionMode of
                     EditMode { newAtomName } ->
                         [ el
                             [ width (fill |> maximum 200)
@@ -366,9 +366,9 @@ viewToolbar model =
                 , spacing 20
                 , centerX
                 ]
-                [ viewRecordToggle model.session.recording
-                , viewExecModeSelector model.session.execMode
-                , viewExecButtons model.session
+                [ viewRecordToggle model.playground.recording
+                , viewExecModeSelector model.playground.execMode
+                , viewExecButtons model.playground
                 ]
     in
     row

@@ -16,7 +16,16 @@ styleAttr attr val =
 
 
 
--- Font styling with fallback for sizes that don't work with Font.size
+-- Fonts
+
+
+nameFontFamily : Attribute msg
+nameFontFamily =
+    styleAttr "font-family" "Fira Code"
+
+
+
+{- Fallback for sizes that don't work with Font.size -}
 
 
 fontSize : Int -> Attribute msg
@@ -215,7 +224,6 @@ draggable color =
         border =
             [ styleAttr "border-width" (String.fromInt width ++ "px")
             , styleAttr "border-style" "solid"
-            , styleAttr "border-radius" (String.fromInt sepBorderRound ++ "px")
             ]
 
         borderColor =
@@ -223,7 +231,7 @@ draggable color =
     in
     { borderWidth = width
     , active = styleAttr "border-color" borderColor :: border
-    , inactive = styleAttr "border-color" "transparent" :: border
+    , inactive = []
     }
 
 
@@ -245,7 +253,7 @@ droppable color =
     in
     { borderWidth = width
     , active = Background.color bgColor :: border
-    , inactive = border
+    , inactive = []
     }
 
 
@@ -256,7 +264,7 @@ insertedBorder =
             3
 
         border =
-            [ sepBorderRadius ]
+            []
     in
     { borderWidth = width
     , active =

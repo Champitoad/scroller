@@ -121,7 +121,7 @@ handleDragDropMsg dndMsg model =
                                             model
 
                                 sessionApplied =
-                                    modelApplied.session
+                                    getSession drag.route modelApplied
                             in
                             setSession drag.route { sessionApplied | actionMode = defaultMode } modelApplied
 
@@ -157,19 +157,19 @@ update msg model =
             ( setSessionWithHistory route newSession model, Cmd.none )
 
         ExecAll ->
-            ( { model | session = execAll model.session }, Cmd.none )
+            ( setSessionWithHistory model.playground.route (execAll model.playground) model, Cmd.none )
 
         Step ->
             Debug.todo "Action stepping not implemented yet"
 
         ChangeActionMode mode ->
-            ( { model | session = changeActionMode mode model.session }, Cmd.none )
+            ( { model | playground = changeActionMode mode model.playground }, Cmd.none )
 
         ChangeExecMode mode ->
-            ( { model | session = changeExecMode mode model.session }, Cmd.none )
+            ( { model | playground = changeExecMode mode model.playground }, Cmd.none )
 
         ToggleRecording recording ->
-            ( { model | session = toggleRecording recording model.session }, Cmd.none )
+            ( { model | playground = toggleRecording recording model.playground }, Cmd.none )
 
         Undo ->
             ( undo model, Cmd.none )
@@ -181,7 +181,7 @@ update msg model =
             Debug.todo "Auto not implemented yet"
 
         UpdateNewAtomName name ->
-            ( { model | session = updateNewAtomName name model.session }, Cmd.none )
+            ( { model | playground = updateNewAtomName name model.playground }, Cmd.none )
 
         DragDropMsg dndMsg ->
             handleDragDropMsg dndMsg model

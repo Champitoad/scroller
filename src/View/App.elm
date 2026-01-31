@@ -30,14 +30,14 @@ view model =
         Route.Playground ->
             let
                 shelf =
-                    viewShelf model.session
+                    viewShelf model.playground
 
                 session =
                     el
                         [ width fill
                         , sessionHeightAttr
                         ]
-                        (viewSession model.dragDrop model.session)
+                        (viewSession model.dragDrop model.playground)
 
                 toolbar =
                     el

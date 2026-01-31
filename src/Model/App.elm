@@ -43,7 +43,7 @@ type alias DnDMsg =
 
 
 type alias Model =
-    { session : Session
+    { playground : Session
     , history : History
     , manualExamples : Sandboxes
     , dragDrop : DnD
@@ -54,7 +54,7 @@ type alias Model =
 
 init : Url.Url -> Browser.Navigation.Key -> Model
 init url key =
-    { session = Session.fromNet (netOfStruct [ modusPonensCurryfied ])
+    { playground = Session.fromNet (netOfStruct [ modusPonensCurryfied ])
     , history = History { prev = Nothing, next = Nothing }
     , manualExamples = manualExamples
     , dragDrop = DnD.init
@@ -67,7 +67,7 @@ getSession : Route -> Model -> Session
 getSession route model =
     case route of
         Session.Playground ->
-            model.session
+            model.playground
 
         Session.Manual sandboxID ->
             (Session.getSandbox sandboxID model.manualExamples).currentSession
@@ -77,7 +77,7 @@ setSession : Route -> Session -> Model -> Model
 setSession route session model =
     case route of
         Session.Playground ->
-            { model | session = session }
+            { model | playground = session }
 
         Session.Manual sandboxID ->
             { model | manualExamples = Session.updateSandbox sandboxID session model.manualExamples }
@@ -88,7 +88,7 @@ setSessionWithHistory route session model =
     case route of
         Session.Playground ->
             { model
-                | session = session
+                | playground = session
                 , history = History { prev = Just model, next = Nothing }
             }
 

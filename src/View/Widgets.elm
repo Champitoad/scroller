@@ -236,19 +236,6 @@ indicatorIcon icon =
         |> html
 
 
-indicatorText : String -> Element msg
-indicatorText txt =
-    el
-        [ fontSize 15
-        , styleAttr "color" "white"
-        , Font.family
-            [ Font.typeface "Open Sans"
-            , Font.sansSerif
-            ]
-        ]
-        (text txt)
-
-
 indicator : Element.Color -> Element msg -> Element msg
 indicator color content =
     el
@@ -272,14 +259,41 @@ deletionIndicator =
     indicator elimColor (indicatorIcon Icons.x)
 
 
+iterationText : String -> Element msg
+iterationText originName =
+    let
+        symbolText =
+            el
+                [ fontSize 18
+                , styleAttr "color" "white"
+                , Font.bold
+                , Font.family
+                    [ Font.typeface "Open Sans"
+                    , Font.sansSerif
+                    ]
+                ]
+                (text "use")
+
+        originText =
+            el
+                [ fontSize 16
+                , styleAttr "color" "white"
+                , nameFontFamily
+                , alignBottom
+                ]
+                (text originName)
+    in
+    row [ spacing 7 ] [ symbolText, originText ]
+
+
 iterationIndicator : String -> Element msg
-iterationIndicator name =
-    indicator introColor (indicatorText (":= " ++ name))
+iterationIndicator originName =
+    indicator introColor (iterationText originName)
 
 
 deiterationIndicator : String -> Element msg
-deiterationIndicator name =
-    indicator elimColor (indicatorText (":= " ++ name))
+deiterationIndicator originName =
+    indicator elimColor (iterationText originName)
 
 
 expansionIndicator : Element msg
@@ -290,11 +304,6 @@ expansionIndicator =
 collapseIndicator : Element msg
 collapseIndicator =
     indicator introColor (indicatorIcon Icons.minimize2)
-
-
-phantomIndicator : Element msg
-phantomIndicator =
-    indicator (Utils.Color.transparent |> Utils.Color.toElement) none
 
 
 

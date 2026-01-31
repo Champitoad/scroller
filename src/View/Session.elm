@@ -3,11 +3,9 @@ module View.Session exposing (..)
 import Color
 import Css
 import Css.Global exposing (children)
-import Dict exposing (Dict)
 import Element exposing (..)
 import Element.Background as Background
 import FeatherIcons as Icons
-import Html exposing (p)
 import Html.Attributes exposing (title)
 import Html5.DragDrop as DnD
 import Model.App exposing (..)
@@ -44,8 +42,8 @@ deleteAction session id =
         "Delete"
 
 
-drawGrownBorder : Bool -> List (Attribute msg)
-drawGrownBorder doit =
+drawInsertedBorder : Bool -> List (Attribute msg)
+drawInsertedBorder doit =
     if doit then
         insertedBorder.active
 
@@ -63,7 +61,10 @@ viewNode dnd session ((TNode { id, node }) as tree) =
             let
                 nameEl =
                     el
-                        [ foregroundColor node.polarity |> Utils.Color.elementAttr
+                        [ width fill
+                        , height indicatorHeight
+                        , foregroundColor node.polarity |> Utils.Color.elementAttr
+                        , nameFontFamily
                         ]
                         (text
                             ((if debug then
@@ -107,7 +108,7 @@ viewNode dnd session ((TNode { id, node }) as tree) =
                         expansionIndicator
 
                     else
-                        phantomIndicator
+                        none
 
                 elimIndicator =
                     if isDeletion polarity node.justif then
@@ -124,7 +125,7 @@ viewNode dnd session ((TNode { id, node }) as tree) =
                         collapseIndicator
 
                     else
-                        phantomIndicator
+                        none
             in
             row
                 [ width fill, spacing 10 ]
@@ -133,17 +134,46 @@ viewNode dnd session ((TNode { id, node }) as tree) =
                 , el [ alignRight ] elimIndicator
                 ]
 
-        nodeShapeEl =
+        ( nodeShapeEl, nodeHeight, nodeBorderRadius ) =
             case node.shape of
                 Formula form ->
-                    viewFormula dnd session id form
+                    ( viewFormula dnd session id form
+                    , height shrink
+                    , styleAttr "border-radius" "none"
+                    )
 
                 Sep _ _ ->
-                    viewSep dnd session tree
+                    ( viewSep dnd session tree
+                    , height fill
+                    , sepBorderRadius
+                    )
+
+        dragColor =
+            case session.actionMode of
+                ProofMode _ ->
+                    useColor
+
+                EditMode _ ->
+                    reorderColor
+
+                _ ->
+                    Utils.Color.transparent
     in
     column
-        [ width fill, height shrink, centerY ]
-        [ statusBar, nodeShapeEl ]
+        [ width fill, nodeHeight, centerX, centerY ]
+        [ statusBar
+        , el
+            (View.Events.dragAction dragColor dnd session.route id
+                ++ drawInsertedBorder (isInserted id session)
+                ++ [ width fill
+                   , centerY
+                   , nodeHeight
+                   , nodeBorderRadius
+                   , onClick DoNothing
+                   ]
+            )
+            nodeShapeEl
+        ]
 
 
 viewAtom : Formula.Ident -> Element Msg
@@ -469,17 +499,6 @@ viewSep dnd session (TNode { id, node, children }) =
                     ]
                     (List.map (viewNode dnd session) inloops ++ addInloopZone)
 
-        color =
-            case session.actionMode of
-                ProofMode _ ->
-                    useColor
-
-                EditMode _ ->
-                    reorderColor
-
-                _ ->
-                    Utils.Color.transparent
-
         { shadowOffset, shadowSize, shadowBlur, shadowAlpha } =
             case session.route of
                 Playground ->
@@ -496,7 +515,7 @@ viewSep dnd session (TNode { id, node, children }) =
                     , shadowAlpha = 0.7
                     }
 
-        colorStr =
+        shadowColorStr =
             foregroundColor node.polarity
                 |> Utils.Color.fromElement
                 |> Utils.Color.withAlpha shadowAlpha
@@ -511,7 +530,7 @@ viewSep dnd session (TNode { id, node, children }) =
                 ++ "px "
                 ++ String.fromFloat shadowSize
                 ++ "px "
-                ++ colorStr
+                ++ shadowColorStr
 
         shadow =
             if not (isInloop id session.net) then
@@ -524,14 +543,9 @@ viewSep dnd session (TNode { id, node, children }) =
         ([ width fill
          , height fill
          , Background.color (foregroundColor node.polarity)
+         , sepBorderRadius
          ]
             ++ (List.map htmlAttribute <| DnD.droppable DragDropMsg Nothing)
-            ++ View.Events.dragAction color dnd session.route id
-            ++ onClick DoNothing
-            :: styleAttr "border-style" "solid"
-            :: styleAttr "border-width" (String.fromInt insertedBorder.borderWidth ++ "px")
-            :: sepBorderRadius
-            :: drawGrownBorder (isInserted id session)
             ++ shadow
         )
         [ outloopEl, inloopsEl ]
