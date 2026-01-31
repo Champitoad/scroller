@@ -52,7 +52,7 @@ handleDragDropMsg dndMsg model =
         ( newDragDrop, result ) =
             DnD.update dndMsg model.dragDrop
 
-        model_ =
+        newModel =
             case dragStart of
                 Just { dragId } ->
                     let
@@ -69,14 +69,8 @@ handleDragDropMsg dndMsg model =
 
                                 _ ->
                                     session.actionMode
-
-                        newSession =
-                            { session | actionMode = newMode }
-
-                        newModel =
-                            { model | dragDrop = newDragDrop }
                     in
-                    setSession dragId.route newSession newModel
+                    setSession dragId.route { session | actionMode = newMode } model
 
                 Nothing ->
                     case result of
@@ -98,43 +92,44 @@ handleDragDropMsg dndMsg model =
 
                                         _ ->
                                             session.actionMode
+
+                                action =
+                                    drop
+                                        |> Maybe.andThen
+                                            (\{ destination } ->
+                                                case ( session.actionMode, destination ) of
+                                                    ( ProofMode Justifying, DropNode target ) ->
+                                                        Just (Deiterate source target)
+
+                                                    ( ProofMode Justifying, DropLocation location ) ->
+                                                        Just (Iterate source location)
+
+                                                    ( EditMode _, DropLocation location ) ->
+                                                        Just (Reorder source location.pos)
+
+                                                    _ ->
+                                                        Nothing
+                                            )
+
+                                modelApplied =
+                                    case action of
+                                        Just action_ ->
+                                            update (Apply drag.route action_) model
+                                                |> Tuple.first
+
+                                        Nothing ->
+                                            model
+
+                                sessionApplied =
+                                    modelApplied.session
                             in
-                            case drop of
-                                -- Dropping on valid destination
-                                Just { destination } ->
-                                    let
-                                        newSession =
-                                            case ( session.actionMode, destination ) of
-                                                ( ProofMode Justifying, DropNode target ) ->
-                                                    apply (Debug.log "Action" (Deiterate source target)) session
-
-                                                ( ProofMode Justifying, DropLocation location ) ->
-                                                    apply (Debug.log "Action" (Iterate source location)) session
-
-                                                ( EditMode _, DropLocation location ) ->
-                                                    apply (Debug.log "Action" (Reorder source location.pos)) session
-
-                                                _ ->
-                                                    session
-
-                                        newModel =
-                                            setSession session.route { newSession | actionMode = defaultMode } model
-                                    in
-                                    { newModel | dragDrop = newDragDrop }
-
-                                -- Dropping on invalid destination
-                                Nothing ->
-                                    let
-                                        newModel =
-                                            setSession session.route { session | actionMode = defaultMode } model
-                                    in
-                                    { newModel | dragDrop = newDragDrop }
+                            setSession drag.route { sessionApplied | actionMode = defaultMode } modelApplied
 
                         -- Dragging
                         Nothing ->
-                            { model | dragDrop = newDragDrop }
+                            model
     in
-    ( model_, cmd )
+    ( { newModel | dragDrop = newDragDrop }, cmd )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
