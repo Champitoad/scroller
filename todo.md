@@ -1,11 +1,12 @@
 # Next
 
 - Editable names
-- Highlight origin when hovering `use` indicator
 - Proper name generation for iterated nodes
+- Grayed out destructed nodes
 - `Deiteration` actions
 - `Open` actions
 - Fix `Close` actions
+- Highlight origin when hovering `use` indicator
 - Fix `Reorder` actions
 
 # Features
@@ -14,7 +15,7 @@
   - "Step" button that dequeues and executes the next action
   - The action at the head of the queue should always be highlighted at the location where it occurs in the goal
   - **Free execution**:
-    - the user can execute actions in the order she wants by clicking directly on them in the goal. However, only actions which are *executable* (and thus do not depend on other actions) can be executed:
+    - the user can execute actions in the order she wants by clicking directly on them in the goal. However, only actions which are _executable_ (and thus do not depend on other actions) can be executed:
       - `Open`: the parent is neither introduced nor eliminated
       - `Insert`: the parent is neither introduced nor eliminated
       - `Iterate`: the target's parent is neither introduced nor eliminated, and the source is not introduced
@@ -34,10 +35,12 @@
       Also if we do not label every inloop and every judgment in outloops, there might be more than
       one solution for permutation matching, and it is not clear if this should be presented to the
       user (probably not).
+
     - or we don't do it up to permutation. Then it puts more load on the user, but makes things
       completely deterministic (and closer to traditional programming). We would still want to force
       constructor labels on every inloop to actually match the semantics of ADTs.
-    - OR we admit that scroll structures are *hierarchical imperative states*: they hold variable names, and order does not matter
+    - OR we admit that scroll structures are _hierarchical imperative states_: they hold variable names, and order does not matter
+
   - Support for DnD actions on inloops
 
 - Edit mode
@@ -69,8 +72,8 @@
   - Manipulating the global env
     - Search bar
     - Import (copy) a definition by dragging from the search results
-        - If premiss non-empty, need to match it with some conclusion in the goal (should work similarly to deiteration)
-        - Actually, import may be implemented by iteration once we implement evaluation
+      - If premiss non-empty, need to match it with some conclusion in the goal (should work similarly to deiteration)
+      - Actually, import may be implemented by iteration once we implement evaluation
 
 - Vertical generalization of the scroll
   - `ScrollData.inloops` becomes a tree instead of a list
@@ -82,35 +85,38 @@
 
 # Brainstorming
 
-- It seems we don't need to distinguish between judgment and constructor identifiers for inloops in the (bi-)intuitionistic case, since they will always be (de)iterated in the same scroll. Classical logic might require this distinction though, because inloops can become outloops (and vice versa); or we could just drop constructor identifiers altogether since there is no purpose in distinguishing between inloops and outloops, in the same way that one can go one-sided in classical sequent calculus (and thus drop the distinction between *term* and *continuation* variables).
+- It seems we don't need to distinguish between judgment and constructor identifiers for inloops in the (bi-)intuitionistic case, since they will always be (de)iterated in the same scroll. Classical logic might require this distinction though, because inloops can become outloops (and vice versa); or we could just drop constructor identifiers altogether since there is no purpose in distinguishing between inloops and outloops, in the same way that one can go one-sided in classical sequent calculus (and thus drop the distinction between _term_ and _continuation_ variables).
 
 - Maybe things would be simpler if there was only the cut construct, and inloops are just special cuts that are marked as "attached" or "continuations", i.e.:
+
   ```elm
   type alias Struct
     = List ONode
-  
+
   type ONode
     = OForm Formula
     | OCut (List INode)
-  
+
   type INode
     = IVal ONode
     | ICont Struct
   ```
+
   This gives $n$-scroll structures. To get generalized scroll structures:
+
   ```elm
   type alias Struct
     = List ONode
-  
+
   type ONode
     = OForm Formula
     | OCut (List INode)
-  
+
   type INode
     = IVal ONode
     | ICont (List INode)
   ```
-  
+
 ## Names
 
 ### Variables
@@ -122,7 +128,7 @@
 - Maintain uniqueness of same-scope bound variables in various operations
   - Function `bvu` (bound vars upward) that computes the bound variables available at a given `Path`
   - Function `bvd` (bound vars downward) that computes all the bound variables in scope of a given `Path`
-  - Notice that $\mathsf{bv} = \mathsf{bvu} \cap \mathsf{bvd}$, where `bv` is the set of variables bound precisely in the area of the `Path` 
+  - Notice that $\mathsf{bv} = \mathsf{bvu} \cap \mathsf{bvd}$, where `bv` is the set of variables bound precisely in the area of the `Path`
   - All actions that introduce a new node (`Open`/`Insert`/`Iterate`):
     - can compute a fresh name automatically, or can ask the user for a name and deny it if it is already in `bvu ∪ bvd`
   - All actions that change the scope of a binder (`Close`)
