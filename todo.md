@@ -1,7 +1,5 @@
 # Next
 
-- Editable names
-- Proper name generation for iterated nodes
 - Grayed out destructed nodes
 - `Deiteration` actions
 - `Open` actions

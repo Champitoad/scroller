@@ -550,21 +550,31 @@ record action session =
         updatedActionsQueue =
             Queue.enqueue actionId session.actionsQueue
 
-        baseNet =
+        transformedNet =
             actionTransform session.execMode action session.net
+
+        renamingData loc =
+            let
+                id =
+                    getNodeIdAtLocation loc transformedNet
+
+                defaultName =
+                    getName id transformedNet
+
+                netWithEmptyName =
+                    updateName id (\_ -> "") transformedNet
+            in
+            ( id
+            , netWithEmptyName
+            , Just { id = id, originalName = defaultName }
+            )
 
         ( finalNet, updatedActionMode, updatedRenaming ) =
             case ( session.actionMode, action ) of
                 ( EditMode editData, Insert loc _ ) ->
                     let
-                        id =
-                            getNodeIdAtLocation loc baseNet
-
-                        defaultName =
-                            getName id baseNet
-
-                        netWithEmptyName =
-                            updateName id (\_ -> "") baseNet
+                        ( id, netWithEmptyName, renaming ) =
+                            renamingData loc
                     in
                     ( netWithEmptyName
                     , EditMode
@@ -575,27 +585,21 @@ record action session =
                                     actionId
                                     editData.insertions
                         }
-                    , Just { id = id, originalName = defaultName }
+                    , renaming
                     )
 
                 ( _, Iterate _ loc ) ->
                     let
-                        id =
-                            getNodeIdAtLocation loc baseNet
-
-                        defaultName =
-                            getName id baseNet
-
-                        netWithEmptyName =
-                            updateName id (\_ -> "") baseNet
+                        ( _, netWithEmptyName, renaming ) =
+                            renamingData loc
                     in
                     ( netWithEmptyName
                     , session.actionMode
-                    , Just { id = id, originalName = defaultName }
+                    , renaming
                     )
 
                 _ ->
-                    ( baseNet, session.actionMode, Nothing )
+                    ( transformedNet, session.actionMode, Nothing )
     in
     ( actionId
     , { session
