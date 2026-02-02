@@ -4,7 +4,6 @@
 - `Deiteration` actions
 - `Open` actions
 - Fix `Close` actions
-- Highlight origin when hovering `use` indicator
 - Fix `Reorder` actions
 
 # Features

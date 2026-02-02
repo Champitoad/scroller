@@ -4,12 +4,15 @@ import Color
 import Css
 import Element exposing (..)
 import Element.Background as Background
+import Element.Events as Events
 import Element.Font as Font
 import Element.Input as Input
 import FeatherIcons as Icons exposing (Icon)
 import Html.Attributes
 import Html.Styled exposing (fromUnstyled, toUnstyled)
 import Html.Styled.Attributes as Attrs exposing (action, css)
+import Model.Scroll exposing (Id)
+import Update.App exposing (Msg(..))
 import Utils.Color
 import Utils.Events
 import View.Style exposing (..)
@@ -236,7 +239,7 @@ indicatorIcon icon =
         |> html
 
 
-indicator : Element.Color -> Element msg -> Element msg
+indicator : Color -> Element msg -> Element msg
 indicator color content =
     el
         [ width shrink
@@ -259,13 +262,20 @@ deletionIndicator =
     indicator elimColor (indicatorIcon Icons.x)
 
 
-iterationText : String -> Element msg
-iterationText originName =
+iterationText : String -> Bool -> Element msg
+iterationText originName isHovered =
     let
+        fontColor =
+            if isHovered then
+                "black"
+
+            else
+                "white"
+
         symbolText =
             el
                 [ fontSize 18
-                , styleAttr "color" "white"
+                , styleAttr "color" fontColor
                 , Font.bold
                 , Font.family
                     [ Font.typeface "Open Sans"
@@ -277,7 +287,7 @@ iterationText originName =
         originText =
             el
                 [ fontSize 16
-                , styleAttr "color" "white"
+                , styleAttr "color" fontColor
                 , nameFontFamily
                 , alignBottom
                 ]
@@ -286,14 +296,39 @@ iterationText originName =
     row [ spacing 7 ] [ symbolText, originText ]
 
 
-iterationIndicator : String -> Element msg
-iterationIndicator originName =
-    indicator introColor (iterationText originName)
+interactiveIndicator : Element.Color -> (Maybe Id -> msg) -> Maybe Id -> String -> Bool -> Element msg
+interactiveIndicator color mkMsg originId originName isHovered =
+    let
+        backgroundColor =
+            if isHovered then
+                useColor |> Utils.Color.toElement
+
+            else
+                color
+
+        baseIndicator =
+            indicator backgroundColor (iterationText originName isHovered)
+    in
+    case originId of
+        Just id ->
+            el
+                [ Events.onMouseEnter (mkMsg (Just id))
+                , Events.onMouseLeave (mkMsg Nothing)
+                ]
+                baseIndicator
+
+        Nothing ->
+            baseIndicator
 
 
-deiterationIndicator : String -> Element msg
-deiterationIndicator originName =
-    indicator elimColor (iterationText originName)
+iterationIndicator : Maybe Id -> String -> Bool -> Element Msg
+iterationIndicator =
+    interactiveIndicator introColor HighlightOrigin
+
+
+deiterationIndicator : Maybe Id -> String -> Bool -> Element Msg
+deiterationIndicator =
+    interactiveIndicator elimColor HighlightOrigin
 
 
 expansionIndicator : Element msg

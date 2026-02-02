@@ -149,6 +149,7 @@ type alias Session =
     , actions : Iddict Action
     , actionsQueue : Queue Int
     , renaming : Maybe { id : Id, originalName : String }
+    , hoveredOrigin : Maybe Id
     }
 
 
@@ -163,6 +164,7 @@ fromNet net =
     , actions = Iddict.empty
     , actionsQueue = Queue.empty
     , renaming = Nothing
+    , hoveredOrigin = Nothing
     }
 
 
@@ -774,6 +776,7 @@ manualExamples =
                 , actions = Iddict.empty
                 , actionsQueue = Queue.empty
                 , renaming = Nothing
+                , hoveredOrigin = Nothing
                 }
 
         examples : List ( SandboxID, ActionMode, Net )

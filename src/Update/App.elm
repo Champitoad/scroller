@@ -38,6 +38,7 @@ type Msg
     | DragDropMsg DnDMsg
     | ResetSandbox SandboxID
     | HandleKeyboardEvent KeyboardEvent
+    | HighlightOrigin (Maybe Id)
     | ConsoleLog String String
     | DoNothing
     | UrlChanged Url.Url
@@ -284,6 +285,16 @@ update msg model =
                             model
             in
             ( newModel, Cmd.none )
+
+        HighlightOrigin maybeId ->
+            let
+                session =
+                    model.playground
+
+                newSession =
+                    { session | hoveredOrigin = maybeId }
+            in
+            ( { model | playground = newSession }, Cmd.none )
 
         ConsoleLog tag message ->
             let

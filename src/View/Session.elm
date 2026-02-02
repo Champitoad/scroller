@@ -120,20 +120,24 @@ viewNode dnd session ((TNode { id, node }) as tree) =
                         Backward ->
                             invert node.polarity
 
-                originName =
+                ( originId, originName, isHoveredOrigin ) =
                     case node.justif.from of
                         Just origin ->
-                            getName (originSourceId origin) session.net
+                            let
+                                oId =
+                                    originSourceId origin
+                            in
+                            ( Just oId, getName oId session.net, session.hoveredOrigin == Just oId )
 
                         _ ->
-                            ""
+                            ( Nothing, "", False )
 
                 introIndicator =
                     if isInsertion polarity node.justif then
                         insertionIndicator
 
                     else if isIteration polarity node.justif then
-                        iterationIndicator originName
+                        iterationIndicator originId originName isHoveredOrigin
 
                     else if
                         getInloopInteraction id session.net
@@ -150,7 +154,7 @@ viewNode dnd session ((TNode { id, node }) as tree) =
                         deletionIndicator
 
                     else if isDeiteration polarity node.justif then
-                        deiterationIndicator originName
+                        deiterationIndicator originId originName isHoveredOrigin
 
                     else if
                         getInloopInteraction id session.net
@@ -193,6 +197,16 @@ viewNode dnd session ((TNode { id, node }) as tree) =
 
                 _ ->
                     Utils.Color.transparent
+
+        drawHoveredOrigin =
+            if session.hoveredOrigin == Just id then
+                [ styleAttr "border-width" "3px"
+                , styleAttr "border-color" (Color.toCssString Style.useColor)
+                , styleAttr "border-style" "solid"
+                ]
+
+            else
+                []
     in
     column
         [ width fill, nodeHeight, centerX, centerY ]
@@ -200,6 +214,7 @@ viewNode dnd session ((TNode { id, node }) as tree) =
         , el
             (View.Events.dragAction dragColor dnd session.route id
                 ++ drawInsertedBorder (isInserted id session)
+                ++ drawHoveredOrigin
                 ++ [ width fill
                    , centerY
                    , nodeHeight
