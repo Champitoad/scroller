@@ -6,6 +6,7 @@ import Browser.Navigation
 import Html5.DragDrop as DnD
 import Json.Decode exposing (Value)
 import Keyboard.Event exposing (KeyboardEvent)
+import Keyboard.Key
 import Model.App exposing (..)
 import Model.Formula exposing (..)
 import Model.Scroll exposing (..)
@@ -233,7 +234,7 @@ update msg model =
                 newSession =
                     { session | renaming = Nothing }
             in
-            ( { model | playground = newSession }, Cmd.none )
+            ( { model | playground = newSession }, focusApp )
 
         CancelRenaming ->
             let
@@ -255,7 +256,7 @@ update msg model =
                         Nothing ->
                             session
             in
-            ( { model | playground = newSession }, Cmd.none )
+            ( { model | playground = newSession }, focusApp )
 
         DragDropMsg dndMsg ->
             handleDragDropMsg dndMsg model
@@ -265,26 +266,55 @@ update msg model =
             , Cmd.none
             )
 
-        HandleKeyboardEvent { ctrlKey, key } ->
-            let
-                newModel =
-                    case ( ctrlKey, key ) of
-                        ( True, Just "z" ) ->
-                            update Undo model |> Tuple.first
+        HandleKeyboardEvent { ctrlKey, altKey, metaKey, shiftKey, key, keyCode } ->
+            case ( ( ctrlKey || metaKey, altKey, shiftKey ), keyCode, key ) of
+                ( ( True, _, _ ), _, Just "z" ) ->
+                    update Undo model
 
-                        ( True, Just "y" ) ->
-                            update Redo model |> Tuple.first
+                ( ( True, _, _ ), _, Just "y" ) ->
+                    update Redo model
 
-                        ( _, Just "Enter" ) ->
-                            update CommitRenaming model |> Tuple.first
+                ( ( True, _, _ ), Keyboard.Key.R, _ ) ->
+                    update (ToggleRecording (not model.playground.recording)) model
 
-                        ( _, Just "Escape" ) ->
-                            update CancelRenaming model |> Tuple.first
+                ( ( _, True, False ), Keyboard.Key.Tab, _ ) ->
+                    let
+                        newMode =
+                            case model.playground.actionMode of
+                                ProofMode _ ->
+                                    defaultEditMode
 
-                        _ ->
-                            model
-            in
-            ( newModel, Cmd.none )
+                                _ ->
+                                    ProofMode Interacting
+                    in
+                    update (ChangeActionMode newMode) model
+
+                ( ( _, True, True ), Keyboard.Key.Tab, _ ) ->
+                    update (ChangeExecMode (flipExecMode model.playground.execMode)) model
+
+                ( ( _, True, _ ), Keyboard.Key.P, _ ) ->
+                    update (ChangeActionMode (ProofMode Interacting)) model
+
+                ( ( _, True, _ ), Keyboard.Key.E, _ ) ->
+                    update (ChangeActionMode defaultEditMode) model
+
+                ( ( _, True, _ ), Keyboard.Key.N, _ ) ->
+                    update (ChangeActionMode NavigationMode) model
+
+                ( ( _, True, _ ), Keyboard.Key.B, _ ) ->
+                    update (ChangeExecMode Backward) model
+
+                ( ( _, True, _ ), Keyboard.Key.F, _ ) ->
+                    update (ChangeExecMode Forward) model
+
+                ( ( _, _, _ ), _, Just "Enter" ) ->
+                    update CommitRenaming model
+
+                ( ( _, _, _ ), _, Just "Escape" ) ->
+                    update CancelRenaming model
+
+                _ ->
+                    ( model, Cmd.none )
 
         HighlightOrigin maybeId ->
             let
@@ -346,3 +376,8 @@ focusRenamingInput : Cmd Msg
 focusRenamingInput =
     Browser.Dom.focus "renaming-input"
         |> Task.attempt (\_ -> DoNothing)
+
+
+focusApp : Cmd Msg
+focusApp =
+    Task.attempt (\_ -> DoNothing) (Browser.Dom.focus "app-container")

@@ -19,10 +19,10 @@
             "noordstar/elm-iddict": "1.0.1",
             "norpan/elm-html5-drag-drop": "3.1.4",
             "owanturist/elm-queue": "2.0.0",
-            "rtfeldman/elm-css": "18.0.0"
+            "rtfeldman/elm-css": "18.0.0",
+            "SwiftsNamesake/proper-keyboard": "4.0.0"
         },
         "indirect": {
-            "SwiftsNamesake/proper-keyboard": "4.0.0",
             "elm/svg": "1.0.1",
             "elm/time": "1.0.0",
             "elm/virtual-dom": "1.0.3",

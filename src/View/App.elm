@@ -3,10 +3,11 @@ module View.App exposing (..)
 import Browser exposing (Document)
 import Element exposing (..)
 import Html exposing (div)
-import Html.Attributes exposing (tabindex)
-import Html.Events exposing (on)
+import Html.Attributes exposing (id, style, tabindex)
+import Html.Events exposing (preventDefaultOn)
 import Json.Decode
-import Keyboard.Event exposing (decodeKeyboardEvent)
+import Keyboard.Event exposing (KeyboardEvent, decodeKeyboardEvent)
+import Keyboard.Key
 import Model.App exposing (Model)
 import Update.App exposing (..)
 import Utils.Color
@@ -20,8 +21,25 @@ import View.Toolbar exposing (..)
 
 keyboardListener : Html.Attribute Msg
 keyboardListener =
-    on "keydown" <|
-        Json.Decode.map HandleKeyboardEvent decodeKeyboardEvent
+    let
+        handleAndPrevent : KeyboardEvent -> ( Msg, Bool )
+        handleAndPrevent event =
+            let
+                prevent =
+                    case ( event.keyCode, event.ctrlKey || event.metaKey ) of
+                        ( Keyboard.Key.Tab, _ ) ->
+                            True
+
+                        ( Keyboard.Key.R, True ) ->
+                            True
+
+                        _ ->
+                            False
+            in
+            ( HandleKeyboardEvent event, prevent )
+    in
+    preventDefaultOn "keydown" <|
+        Json.Decode.map handleAndPrevent decodeKeyboardEvent
 
 
 view : Model -> Document Msg
@@ -55,7 +73,9 @@ view model =
             , body =
                 [ div
                     [ keyboardListener
+                    , id "app-container"
                     , tabindex 0
+                    , style "outline" "none"
                     ]
                     [ app ]
                 ]
