@@ -205,6 +205,12 @@ forall p l =
     List.foldl (\x acc -> acc && p x) True l
 
 
+forall2 : (a -> b -> Bool) -> List a -> List b -> Bool
+forall2 p l1 l2 =
+    List.map2 p l1 l2
+        |> List.foldl (&&) True
+
+
 exists : (a -> Bool) -> List a -> Bool
 exists p l =
     List.foldl (\x acc -> acc || p x) False l

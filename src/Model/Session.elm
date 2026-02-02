@@ -426,13 +426,13 @@ applicable action session =
             if getPolarity tgt session.net /= insertionPolarity session.execMode then
                 Err InvalidPolarity
 
-            else if not (scopes src (getContext tgt session.net) session.net) then
+            else if src == tgt || not (scopes src (getContext tgt session.net) session.net) then
                 Err (OutOfScope src)
 
             else if isErased src session || isErased tgt session then
                 Err Erased
 
-            else if getSubnet src (boundary session) /= getSubnet tgt (boundary session) then
+            else if not (isEqualIToken (getToken src (boundary session)) (getToken tgt (boundary session))) then
                 Err (IncompatibleBoundaries src tgt)
 
             else

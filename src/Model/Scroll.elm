@@ -36,6 +36,64 @@ type alias Struct =
     List OToken
 
 
+isEqualOToken : OToken -> OToken -> Bool
+isEqualOToken t1 t2 =
+    case ( t1, t2 ) of
+        ( OForm f1, OForm f2 ) ->
+            f1 == f2
+
+        ( OSep ts1, OSep ts2 ) ->
+            isEqualITokens ts1 ts2
+
+        _ ->
+            False
+
+
+
+{- Splits a list of inner tokens into a pair `( outloop, inloops )`. -}
+
+
+splitITokens : List IToken -> ( List OToken, List (List IToken) )
+splitITokens ts =
+    List.foldr
+        (\t ( outloop, inloops ) ->
+            case t of
+                ITok tok ->
+                    ( tok :: outloop, inloops )
+
+                ISep inloop ->
+                    ( outloop, inloop :: inloops )
+        )
+        ( [], [] )
+        ts
+
+
+isEqualITokens : List IToken -> List IToken -> Bool
+isEqualITokens ts1 ts2 =
+    let
+        ( ( outloop1, inloops1 ), ( outloop2, inloops2 ) ) =
+            ( splitITokens ts1, splitITokens ts2 )
+    in
+    List.length outloop1
+        == List.length outloop2
+        && List.length inloops1
+        == List.length inloops2
+        && Utils.List.forall2 isEqualOToken outloop1 outloop2
+        && Utils.List.forall2 isEqualITokens inloops1 inloops2
+
+
+isEqualIToken : IToken -> IToken -> Bool
+isEqualIToken t1 t2 =
+    isEqualITokens [ t1 ] [ t2 ]
+
+
+isEqualStruct : Struct -> Struct -> Bool
+isEqualStruct s1 s2 =
+    List.length s1
+        == List.length s2
+        && Utils.List.forall2 isEqualOToken s1 s2
+
+
 fo : Formula -> OToken
 fo form =
     OForm form
@@ -467,6 +525,11 @@ getDescendentIds id net =
 getSubnet : Id -> Net -> Net
 getSubnet id =
     buildTree id >> dehydrateTree
+
+
+getToken : Id -> Net -> IToken
+getToken id =
+    buildTree id >> tokenOfTree
 
 
 
@@ -1464,6 +1527,11 @@ structOfNet =
             )
 
 
+tokensOfNet : Net -> List IToken
+tokensOfNet =
+    hydrate >> List.map tokenOfTree
+
+
 premissStruct : Net -> Struct
 premissStruct =
     premiss >> structOfNet
@@ -1562,3 +1630,12 @@ stringOfShape content shape =
 
                 Just _ ->
                     "(" ++ content ++ ")"
+
+
+logNet : String -> Net -> Net
+logNet tag net =
+    let
+        _ =
+            Debug.log tag (stringOfNet net)
+    in
+    net

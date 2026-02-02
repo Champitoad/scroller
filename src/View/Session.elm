@@ -216,6 +216,63 @@ viewNode dnd session ((TNode { id, node }) as tree) =
 
             else
                 []
+
+        dropAttrs dest =
+            List.map htmlAttribute <|
+                DnD.droppable DragDropMsg
+                    (Just
+                        { route = session.route
+                        , destination = dest
+                        }
+                    )
+
+        dropAction =
+            case session.actionMode of
+                ProofMode Justifying ->
+                    case DnD.getDragId dnd of
+                        Nothing ->
+                            []
+
+                        Just { source } ->
+                            let
+                                (DragNode src) =
+                                    source
+
+                                deiterateAction =
+                                    Deiterate src id
+                            in
+                            case applicable deiterateAction session of
+                                Err _ ->
+                                    []
+
+                                Ok _ ->
+                                    let
+                                        dropStyle =
+                                            droppable useColor
+
+                                        dropTargetStyle =
+                                            case DnD.getDropId dnd of
+                                                -- Hovering some droppable destination
+                                                Just (Just { destination }) ->
+                                                    case destination of
+                                                        DropNode dropId ->
+                                                            -- We only highlight when it's an (iterable) area
+                                                            if dropId == id then
+                                                                dropStyle.active
+
+                                                            else
+                                                                dropStyle.inactive
+
+                                                        _ ->
+                                                            dropStyle.inactive
+
+                                                _ ->
+                                                    dropStyle.inactive
+                                    in
+                                    dropTargetStyle ++ dropAttrs (DropNode id)
+
+                _ ->
+                    []
     in
     column
         [ width fill, nodeHeight, centerX, centerY ]
@@ -225,6 +282,7 @@ viewNode dnd session ((TNode { id, node }) as tree) =
                 ++ drawInsertedBorder (isInserted id session)
                 ++ drawHoveredOrigin
                 ++ drawErased
+                ++ dropAction
                 ++ [ width fill
                    , centerY
                    , nodeHeight
