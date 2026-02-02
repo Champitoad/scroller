@@ -266,8 +266,8 @@ update msg model =
             , Cmd.none
             )
 
-        HandleKeyboardEvent { ctrlKey, altKey, metaKey, shiftKey, key, keyCode } ->
-            case ( ( ctrlKey || metaKey, altKey, shiftKey ), keyCode, key ) of
+        HandleKeyboardEvent { ctrlKey, altKey, shiftKey, key, keyCode } ->
+            case ( ( ctrlKey, altKey, shiftKey ), keyCode, key ) of
                 ( ( True, _, _ ), _, Just "z" ) ->
                     update Undo model
 

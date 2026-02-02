@@ -26,7 +26,7 @@ keyboardListener =
         handleAndPrevent event =
             let
                 prevent =
-                    case ( event.keyCode, event.ctrlKey || event.metaKey ) of
+                    case ( event.keyCode, event.ctrlKey ) of
                         ( Keyboard.Key.Tab, _ ) ->
                             True
 
