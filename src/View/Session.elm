@@ -207,6 +207,15 @@ viewNode dnd session ((TNode { id, node }) as tree) =
 
             else
                 []
+
+        drawErased =
+            if Session.isErased id session then
+                [ styleAttr "opacity" "0.5"
+                , styleAttr "pointer-events" "none"
+                ]
+
+            else
+                []
     in
     column
         [ width fill, nodeHeight, centerX, centerY ]
@@ -215,6 +224,7 @@ viewNode dnd session ((TNode { id, node }) as tree) =
             (View.Events.dragAction dragColor dnd session.route id
                 ++ drawInsertedBorder (isInserted id session)
                 ++ drawHoveredOrigin
+                ++ drawErased
                 ++ [ width fill
                    , centerY
                    , nodeHeight

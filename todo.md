@@ -1,6 +1,5 @@
 # Next
 
-- Grayed out destructed nodes
 - `Deiteration` actions
 - `Open` actions
 - Fix `Close` actions
