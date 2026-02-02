@@ -4,7 +4,7 @@ import Browser exposing (Document)
 import Element exposing (..)
 import Html exposing (div)
 import Html.Attributes exposing (id, style, tabindex)
-import Html.Events exposing (preventDefaultOn)
+import Html.Events exposing (on, preventDefaultOn)
 import Json.Decode
 import Keyboard.Event exposing (KeyboardEvent, decodeKeyboardEvent)
 import Keyboard.Key
@@ -42,6 +42,11 @@ keyboardListener =
         Json.Decode.map handleAndPrevent decodeKeyboardEvent
 
 
+keyUpListener : Html.Attribute Msg
+keyUpListener =
+    on "keyup" (Json.Decode.map HandleKeyUpEvent decodeKeyboardEvent)
+
+
 view : Model -> Document Msg
 view model =
     case Route.fromUrl model.url of
@@ -73,6 +78,7 @@ view model =
             , body =
                 [ div
                     [ keyboardListener
+                    , keyUpListener
                     , id "app-container"
                     , tabindex 0
                     , style "outline" "none"

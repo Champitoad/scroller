@@ -1,52 +1,56 @@
 module Utils.Events exposing (..)
 
-import Html.Events
-import Json.Decode as Json
-
 import Element exposing (..)
-
+import Html.Events
 import Html.Styled
 import Html.Styled.Events
+import Json.Decode as Json
 
 
 onClick : msg -> Attribute msg
 onClick =
-  alwaysStopPropagationOn "click"
+    alwaysStopPropagationOn "click"
 
 
 onClickStyled : msg -> Html.Styled.Attribute msg
 onClickStyled =
-  alwaysStopPropagationOnStyled "click"
+    alwaysStopPropagationOnStyled "click"
 
 
 onMouseDown : msg -> Attribute msg
 onMouseDown =
-  alwaysStopPropagationOn "mousedown"
+    alwaysStopPropagationOn "mousedown"
 
 
 onMouseUp : msg -> Attribute msg
 onMouseUp =
-  alwaysStopPropagationOn "mouseup"
+    alwaysStopPropagationOn "mouseup"
 
 
 onMouseMove : msg -> Attribute msg
 onMouseMove =
-  alwaysStopPropagationOn "mousemove"
+    alwaysStopPropagationOn "mousemove"
 
 
 onDragOver : msg -> Attribute msg
 onDragOver =
-  alwaysStopPropagationOn "dragover"
+    alwaysStopPropagationOn "dragover"
 
 
 alwaysStopPropagationOn : String -> msg -> Attribute msg
 alwaysStopPropagationOn event msg =
-  let always m = ( m, True ) in
-  Html.Events.stopPropagationOn event (Json.map always (Json.succeed msg)) |>
-  htmlAttribute
+    let
+        always m =
+            ( m, True )
+    in
+    Html.Events.stopPropagationOn event (Json.map always (Json.succeed msg))
+        |> htmlAttribute
 
 
 alwaysStopPropagationOnStyled : String -> msg -> Html.Styled.Attribute msg
 alwaysStopPropagationOnStyled event msg =
-  let always m = ( m, True ) in
-  Html.Styled.Events.stopPropagationOn event (Json.map always (Json.succeed msg))
+    let
+        always m =
+            ( m, True )
+    in
+    Html.Styled.Events.stopPropagationOn event (Json.map always (Json.succeed msg))

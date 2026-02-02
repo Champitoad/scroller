@@ -39,7 +39,9 @@ type Msg
     | DragDropMsg DnDMsg
     | ResetSandbox SandboxID
     | HandleKeyboardEvent KeyboardEvent
+    | HandleKeyUpEvent KeyboardEvent
     | HighlightOrigin (Maybe Id)
+    | SetCopyMode CopyMode
     | ConsoleLog String String
     | DoNothing
     | UrlChanged Url.Url
@@ -69,8 +71,12 @@ handleDragDropMsg dndMsg model =
 
                         newMode =
                             case session.actionMode of
-                                ProofMode Interacting ->
-                                    ProofMode Justifying
+                                ProofMode ({ interaction } as modeData) ->
+                                    if interaction == Interacting then
+                                        ProofMode { modeData | interaction = Justifying }
+
+                                    else
+                                        session.actionMode
 
                                 EditMode modeData ->
                                     EditMode { modeData | interaction = Reordering }
@@ -92,8 +98,12 @@ handleDragDropMsg dndMsg model =
 
                                 defaultMode =
                                     case session.actionMode of
-                                        ProofMode _ ->
-                                            ProofMode Interacting
+                                        ProofMode ({ interaction } as modeData) ->
+                                            if interaction == Justifying then
+                                                ProofMode { modeData | interaction = Interacting }
+
+                                            else
+                                                session.actionMode
 
                                         EditMode modeData ->
                                             EditMode { modeData | interaction = Operating }
@@ -106,11 +116,19 @@ handleDragDropMsg dndMsg model =
                                         |> Maybe.andThen
                                             (\{ destination } ->
                                                 case ( session.actionMode, destination ) of
-                                                    ( ProofMode Justifying, DropNode target ) ->
-                                                        Just (Deiterate source target)
+                                                    ( ProofMode { interaction, copyMode }, DropNode target ) ->
+                                                        if interaction == Justifying && copyMode == Deiteration then
+                                                            Just (Deiterate source target)
 
-                                                    ( ProofMode Justifying, DropLocation location ) ->
-                                                        Just (Iterate source location)
+                                                        else
+                                                            Nothing
+
+                                                    ( ProofMode { interaction, copyMode }, DropLocation location ) ->
+                                                        if interaction == Justifying && copyMode == Iteration then
+                                                            Just (Iterate source location)
+
+                                                        else
+                                                            Nothing
 
                                                     ( EditMode _, DropLocation location ) ->
                                                         Just (Reorder source location.pos)
@@ -266,6 +284,33 @@ update msg model =
             , Cmd.none
             )
 
+        SetCopyMode copyMode ->
+            let
+                newMode =
+                    case model.playground.actionMode of
+                        ProofMode ({ interaction } as modeData) ->
+                            if interaction == Interacting then
+                                ProofMode { modeData | copyMode = copyMode }
+
+                            else
+                                model.playground.actionMode
+
+                        _ ->
+                            model.playground.actionMode
+            in
+            update (ChangeActionMode newMode) model
+
+        HandleKeyUpEvent { key } ->
+            case key of
+                Just "c" ->
+                    update (SetCopyMode Iteration) model
+
+                Just "C" ->
+                    update (SetCopyMode Iteration) model
+
+                _ ->
+                    ( model, Cmd.none )
+
         HandleKeyboardEvent { ctrlKey, altKey, shiftKey, key, keyCode } ->
             case ( ( ctrlKey, altKey, shiftKey ), keyCode, key ) of
                 ( ( True, _, _ ), _, Just "z" ) ->
@@ -277,6 +322,20 @@ update msg model =
                 ( ( True, _, _ ), Keyboard.Key.R, _ ) ->
                     update (ToggleRecording (not model.playground.recording)) model
 
+                ( _, _, Just "c" ) ->
+                    if model.playground.renaming == Nothing then
+                        update (SetCopyMode Deiteration) model
+
+                    else
+                        ( model, Cmd.none )
+
+                ( _, _, Just "C" ) ->
+                    if model.playground.renaming == Nothing then
+                        update (SetCopyMode Deiteration) model
+
+                    else
+                        ( model, Cmd.none )
+
                 ( ( _, True, False ), Keyboard.Key.Tab, _ ) ->
                     let
                         newMode =
@@ -285,7 +344,7 @@ update msg model =
                                     defaultEditMode
 
                                 _ ->
-                                    ProofMode Interacting
+                                    defaultProofMode
                     in
                     update (ChangeActionMode newMode) model
 
@@ -293,7 +352,7 @@ update msg model =
                     update (ChangeExecMode (flipExecMode model.playground.execMode)) model
 
                 ( ( _, True, _ ), Keyboard.Key.P, _ ) ->
-                    update (ChangeActionMode (ProofMode Interacting)) model
+                    update (ChangeActionMode defaultProofMode) model
 
                 ( ( _, True, _ ), Keyboard.Key.E, _ ) ->
                     update (ChangeActionMode defaultEditMode) model

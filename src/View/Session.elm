@@ -228,48 +228,52 @@ viewNode dnd session ((TNode { id, node }) as tree) =
 
         dropAction =
             case session.actionMode of
-                ProofMode Justifying ->
-                    case DnD.getDragId dnd of
-                        Nothing ->
-                            []
+                ProofMode { interaction, copyMode } ->
+                    if interaction == Justifying && copyMode == Deiteration then
+                        case DnD.getDragId dnd of
+                            Nothing ->
+                                []
 
-                        Just { source } ->
-                            let
-                                (DragNode src) =
-                                    source
+                            Just { source } ->
+                                let
+                                    (DragNode src) =
+                                        source
 
-                                deiterateAction =
-                                    Deiterate src id
-                            in
-                            case applicable deiterateAction session of
-                                Err _ ->
-                                    []
+                                    deiterateAction =
+                                        Deiterate src id
+                                in
+                                case applicable deiterateAction session of
+                                    Err _ ->
+                                        []
 
-                                Ok _ ->
-                                    let
-                                        dropStyle =
-                                            droppable useColor
+                                    Ok _ ->
+                                        let
+                                            dropStyle =
+                                                droppable useColor
 
-                                        dropTargetStyle =
-                                            case DnD.getDropId dnd of
-                                                -- Hovering some droppable destination
-                                                Just (Just { destination }) ->
-                                                    case destination of
-                                                        DropNode dropId ->
-                                                            -- We only highlight when it's an (iterable) area
-                                                            if dropId == id then
-                                                                dropStyle.active
+                                            dropTargetStyle =
+                                                case DnD.getDropId dnd of
+                                                    -- Hovering some droppable destination
+                                                    Just (Just { destination }) ->
+                                                        case destination of
+                                                            DropNode dropId ->
+                                                                -- We only highlight when it's an (iterable) area
+                                                                if dropId == id then
+                                                                    dropStyle.active
 
-                                                            else
+                                                                else
+                                                                    dropStyle.inactive
+
+                                                            _ ->
                                                                 dropStyle.inactive
 
-                                                        _ ->
-                                                            dropStyle.inactive
+                                                    _ ->
+                                                        dropStyle.inactive
+                                        in
+                                        dropTargetStyle ++ dropAttrs (DropNode id)
 
-                                                _ ->
-                                                    dropStyle.inactive
-                                    in
-                                    dropTargetStyle ++ dropAttrs (DropNode id)
+                    else
+                        []
 
                 _ ->
                     []
@@ -334,16 +338,20 @@ viewFormula dnd session id formula =
     let
         clickAction =
             case session.actionMode of
-                ProofMode Interacting ->
-                    case formula of
-                        Atom _ ->
-                            []
+                ProofMode { interaction } ->
+                    if interaction == Interacting then
+                        case formula of
+                            Atom _ ->
+                                []
 
-                        _ ->
-                            viewClickAction session
-                                (Decompose id)
-                                pinkActionable
-                                "Decompose"
+                            _ ->
+                                viewClickAction session
+                                    (Decompose id)
+                                    pinkActionable
+                                    "Decompose"
+
+                    else
+                        []
 
                 EditMode { interaction } ->
                     case interaction of
@@ -358,8 +366,12 @@ viewFormula dnd session id formula =
 
         dragAction =
             case session.actionMode of
-                ProofMode Interacting ->
-                    View.Events.dragAction useColor dnd session.route id
+                ProofMode { interaction } ->
+                    if interaction == Interacting then
+                        View.Events.dragAction useColor dnd session.route id
+
+                    else
+                        []
 
                 EditMode _ ->
                     View.Events.dragAction reorderColor dnd session.route id
@@ -393,8 +405,12 @@ viewOutloop dnd session id content =
     let
         clickAction =
             case session.actionMode of
-                ProofMode Interacting ->
-                    viewClickAction session (Close id) orangeActionable "Close"
+                ProofMode { interaction } ->
+                    if interaction == Interacting then
+                        viewClickAction session (Close id) orangeActionable "Close"
+
+                    else
+                        []
 
                 EditMode { interaction } ->
                     case interaction of
@@ -689,51 +705,55 @@ viewNodes dnd session ctx trees =
 
         dropAction pos =
             case session.actionMode of
-                ProofMode Justifying ->
-                    case DnD.getDragId dnd of
-                        Nothing ->
-                            []
+                ProofMode { interaction, copyMode } ->
+                    if interaction == Justifying && copyMode == Iteration then
+                        case DnD.getDragId dnd of
+                            Nothing ->
+                                []
 
-                        Just { source } ->
-                            let
-                                (DragNode src) =
-                                    source
+                            Just { source } ->
+                                let
+                                    (DragNode src) =
+                                        source
 
-                                loc =
-                                    { ctx = ctx, pos = List.length neighbors }
+                                    loc =
+                                        { ctx = ctx, pos = List.length neighbors }
 
-                                iterateAction =
-                                    Iterate src loc
-                            in
-                            case applicable iterateAction session of
-                                Err _ ->
-                                    []
+                                    iterateAction =
+                                        Iterate src loc
+                                in
+                                case applicable iterateAction session of
+                                    Err _ ->
+                                        []
 
-                                Ok _ ->
-                                    let
-                                        dropStyle =
-                                            droppable useColor
+                                    Ok _ ->
+                                        let
+                                            dropStyle =
+                                                droppable useColor
 
-                                        dropTargetStyle =
-                                            case DnD.getDropId dnd of
-                                                -- Hovering some droppable destination
-                                                Just (Just { destination }) ->
-                                                    case destination of
-                                                        DropLocation dropLoc ->
-                                                            -- We only highlight when it's an (iterable) area
-                                                            if dropLoc == loc then
-                                                                dropStyle.active
+                                            dropTargetStyle =
+                                                case DnD.getDropId dnd of
+                                                    -- Hovering some droppable destination
+                                                    Just (Just { destination }) ->
+                                                        case destination of
+                                                            DropLocation dropLoc ->
+                                                                -- We only highlight when it's an (iterable) area
+                                                                if dropLoc == loc then
+                                                                    dropStyle.active
 
-                                                            else
+                                                                else
+                                                                    dropStyle.inactive
+
+                                                            _ ->
                                                                 dropStyle.inactive
 
-                                                        _ ->
-                                                            dropStyle.inactive
+                                                    _ ->
+                                                        dropStyle.inactive
+                                        in
+                                        dropTargetStyle ++ dropAttrs (DropLocation loc)
 
-                                                _ ->
-                                                    dropStyle.inactive
-                                    in
-                                    dropTargetStyle ++ dropAttrs (DropLocation loc)
+                    else
+                        []
 
                 EditMode { interaction } ->
                     case interaction of

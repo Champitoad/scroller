@@ -170,7 +170,7 @@ viewActionModeSelector currentMode =
         , styleAttr "border-color" "rgb(153, 153, 153)"
         , Background.color borderColor
         ]
-        [ item (ProofMode Justifying) Start
+        [ item defaultProofMode Start
         , item
             (EditMode
                 { interaction = Operating
@@ -328,6 +328,34 @@ toolbarHeight =
     defaultButtonSize + 2 * toolbarPadding
 
 
+viewCopyModeSelector : CopyMode -> Element Msg
+viewCopyModeSelector copyMode =
+    let
+        isDeiterating =
+            case copyMode of
+                Deiteration ->
+                    True
+
+                Iteration ->
+                    False
+
+        msg isEnabled =
+            if isEnabled then
+                SetCopyMode Deiteration
+
+            else
+                SetCopyMode Iteration
+    in
+    toggle
+        { color = modeSelectorColor
+        , iconOn = Icons.copy
+        , iconOff = Icons.copy
+        , title = "Deiterate"
+        , onChange = msg
+        }
+        isDeiterating
+
+
 viewToolbar : Model -> Element Msg
 viewToolbar model =
     let
@@ -355,6 +383,9 @@ viewToolbar model =
                             ]
                             (viewNewAtomNameTextEdit newAtomName)
                         ]
+
+                    ProofMode { copyMode } ->
+                        [ viewCopyModeSelector copyMode ]
 
                     _ ->
                         []

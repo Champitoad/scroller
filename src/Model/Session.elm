@@ -20,6 +20,11 @@ type alias Selection =
 -- Modal UI
 
 
+type CopyMode
+    = Iteration
+    | Deiteration
+
+
 type ProofInteraction
     = Interacting
     | Justifying -- Drag-and-Drop
@@ -31,13 +36,24 @@ type EditInteraction
 
 
 type ActionMode
-    = ProofMode ProofInteraction
+    = ProofMode
+        { interaction : ProofInteraction
+        , copyMode : CopyMode
+        }
     | EditMode
         { interaction : EditInteraction
         , newAtomName : String
         , insertions : Dict Id Int -- maps node IDs to corresponding insertion action IDs
         }
     | NavigationMode
+
+
+defaultProofMode : ActionMode
+defaultProofMode =
+    ProofMode
+        { interaction = Interacting
+        , copyMode = Iteration
+        }
 
 
 defaultEditMode : ActionMode
@@ -158,7 +174,7 @@ fromNet net =
     { net = net
     , navigation = initialNavigation
     , route = Playground
-    , actionMode = ProofMode Interacting
+    , actionMode = defaultProofMode
     , execMode = Forward
     , recording = True
     , actions = Iddict.empty
@@ -782,15 +798,15 @@ manualExamples =
         examples : List ( SandboxID, ActionMode, Net )
         examples =
             [ ( "Flower", defaultEditMode, netOfStruct [ curl [ a "a", a "b" ] [ [ a "c", a "d" ] ] ] )
-            , ( "QED", ProofMode Interacting, netOfStruct [ curl [ a "a" ] [ [ emptyScroll ] ] ] )
-            , ( "Justify", ProofMode Interacting, netOfStruct [ Scroll.identity ] )
-            , ( "Unlock", ProofMode Interacting, netOfStruct [ curl [ curl [] [ [ a "a" ] ] ] [ [ a "a" ] ] ] )
-            , ( "Import", ProofMode Interacting, netOfStruct [ Scroll.modusPonensCurryfied ] )
+            , ( "QED", defaultProofMode, netOfStruct [ curl [ a "a" ] [ [ emptyScroll ] ] ] )
+            , ( "Justify", defaultProofMode, netOfStruct [ Scroll.identity ] )
+            , ( "Unlock", defaultProofMode, netOfStruct [ curl [ curl [] [ [ a "a" ] ] ] [ [ a "a" ] ] ] )
+            , ( "Import", defaultProofMode, netOfStruct [ Scroll.modusPonensCurryfied ] )
             , ( "Case"
-              , ProofMode Interacting
+              , defaultProofMode
               , netOfStruct [ curl [ curl [] [ [ a "a", a "b" ] ], curl [ a "a" ] [ [ a "c" ] ], curl [ a "b" ] [ [ a "c" ] ] ] [ [ a "c" ] ] ]
               )
-            , ( "Decompose", ProofMode Interacting, netOfStruct [ Scroll.orElim ] )
+            , ( "Decompose", defaultProofMode, netOfStruct [ Scroll.orElim ] )
             ]
     in
     examples
