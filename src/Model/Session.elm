@@ -134,6 +134,8 @@ type Route
    - `actions`: dictionary of all recorded actions pending for execution, accessed through unique IDs
 
    - `actionsQueue`: queue of recorded actions IDs
+
+   - `renaming`: the state of the renaming interaction, if any (ID of the node and its original name)
 -}
 
 
@@ -146,6 +148,7 @@ type alias Session =
     , recording : Bool
     , actions : Iddict Action
     , actionsQueue : Queue Int
+    , renaming : Maybe { id : Id, originalName : String }
     }
 
 
@@ -159,6 +162,7 @@ fromNet net =
     , recording = True
     , actions = Iddict.empty
     , actionsQueue = Queue.empty
+    , renaming = Nothing
     }
 
 
@@ -546,30 +550,60 @@ record action session =
         updatedActionsQueue =
             Queue.enqueue actionId session.actionsQueue
 
-        transformedNet =
+        baseNet =
             actionTransform session.execMode action session.net
 
-        updatedActionMode =
+        ( finalNet, updatedActionMode, updatedRenaming ) =
             case ( session.actionMode, action ) of
                 ( EditMode editData, Insert loc _ ) ->
-                    EditMode
+                    let
+                        id =
+                            getNodeIdAtLocation loc baseNet
+
+                        defaultName =
+                            getName id baseNet
+
+                        netWithEmptyName =
+                            updateName id (\_ -> "") baseNet
+                    in
+                    ( netWithEmptyName
+                    , EditMode
                         { editData
                             | insertions =
                                 Dict.insert
-                                    (getNodeIdAtLocation loc transformedNet)
+                                    id
                                     actionId
                                     editData.insertions
                         }
+                    , Just { id = id, originalName = defaultName }
+                    )
+
+                ( _, Iterate _ loc ) ->
+                    let
+                        id =
+                            getNodeIdAtLocation loc baseNet
+
+                        defaultName =
+                            getName id baseNet
+
+                        netWithEmptyName =
+                            updateName id (\_ -> "") baseNet
+                    in
+                    ( netWithEmptyName
+                    , session.actionMode
+                    , Just { id = id, originalName = defaultName }
+                    )
 
                 _ ->
-                    session.actionMode
+                    ( baseNet, session.actionMode, Nothing )
     in
     ( actionId
     , { session
         | actions = newActions
         , actionsQueue = updatedActionsQueue
         , actionMode = updatedActionMode
-        , net = transformedNet
+        , net = finalNet
+        , renaming = updatedRenaming
       }
     )
 
@@ -596,28 +630,28 @@ execute actionId session =
                 newFocus : Net
                 newFocus =
                     case action of
-                        Open loc ->
+                        Open _ ->
                             Debug.todo "Open action execution not implemented yet."
 
-                        Close id ->
+                        Close _ ->
                             Debug.todo "Close action execution not implemented yet."
 
-                        Insert loc tok ->
+                        Insert _ _ ->
                             Debug.todo "Insert action execution not implemented yet."
 
-                        Delete id ->
+                        Delete _ ->
                             Debug.todo "Delete action execution not implemented yet."
 
-                        Iterate src dst ->
+                        Iterate _ _ ->
                             Debug.todo "Iterate action execution not implemented yet."
 
-                        Deiterate src tgt ->
+                        Deiterate _ _ ->
                             Debug.todo "Deiterate action execution not implemented yet."
 
-                        Reorder id pos ->
+                        Reorder _ _ ->
                             Debug.todo "Reorder action execution not implemented yet"
 
-                        Decompose id ->
+                        Decompose _ ->
                             Debug.todo "Decompose action execution not implemented yet."
             in
             { session
@@ -735,6 +769,7 @@ manualExamples =
                 , recording = True
                 , actions = Iddict.empty
                 , actionsQueue = Queue.empty
+                , renaming = Nothing
                 }
 
         examples : List ( SandboxID, ActionMode, Net )

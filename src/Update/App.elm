@@ -1,6 +1,7 @@
 port module Update.App exposing (..)
 
 import Browser
+import Browser.Dom
 import Browser.Navigation
 import Html5.DragDrop as DnD
 import Json.Decode exposing (Value)
@@ -9,6 +10,7 @@ import Model.App exposing (..)
 import Model.Formula exposing (..)
 import Model.Scroll exposing (..)
 import Model.Session exposing (..)
+import Task
 import Url
 import View.Route as Route
 
@@ -29,6 +31,10 @@ type Msg
     | Redo
     | Auto
     | UpdateNewAtomName String
+    | Rename Id String
+    | StartRenaming Id
+    | CommitRenaming
+    | CancelRenaming
     | DragDropMsg DnDMsg
     | ResetSandbox SandboxID
     | HandleKeyboardEvent KeyboardEvent
@@ -52,7 +58,7 @@ handleDragDropMsg dndMsg model =
         ( newDragDrop, result ) =
             DnD.update dndMsg model.dragDrop
 
-        newModel =
+        ( newModel, nextCmd ) =
             case dragStart of
                 Just { dragId } ->
                     let
@@ -70,7 +76,7 @@ handleDragDropMsg dndMsg model =
                                 _ ->
                                     session.actionMode
                     in
-                    setSession dragId.route { session | actionMode = newMode } model
+                    ( setSession dragId.route { session | actionMode = newMode } model, Cmd.none )
 
                 Nothing ->
                     case result of
@@ -111,25 +117,26 @@ handleDragDropMsg dndMsg model =
                                                         Nothing
                                             )
 
-                                modelApplied =
+                                ( modelApplied, applyCmd ) =
                                     case action of
                                         Just action_ ->
                                             update (Apply drag.route action_) model
-                                                |> Tuple.first
 
                                         Nothing ->
-                                            model
+                                            ( model, Cmd.none )
 
                                 sessionApplied =
                                     getSession drag.route modelApplied
                             in
-                            setSession drag.route { sessionApplied | actionMode = defaultMode } modelApplied
+                            ( setSession drag.route { sessionApplied | actionMode = defaultMode } modelApplied
+                            , applyCmd
+                            )
 
                         -- Dragging
                         Nothing ->
-                            model
+                            ( model, Cmd.none )
     in
-    ( { newModel | dragDrop = newDragDrop }, cmd )
+    ( { newModel | dragDrop = newDragDrop }, Cmd.batch [ cmd, nextCmd ] )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -139,8 +146,16 @@ update msg model =
             let
                 newSession =
                     apply (Debug.log "Action" action) (getSession route model)
+
+                cmd =
+                    case newSession.renaming of
+                        Just _ ->
+                            focusRenamingInput
+
+                        Nothing ->
+                            Cmd.none
             in
-            ( setSessionWithHistory route newSession model, Cmd.none )
+            ( setSessionWithHistory route newSession model, cmd )
 
         Transform route transform ->
             let
@@ -183,6 +198,64 @@ update msg model =
         UpdateNewAtomName name ->
             ( { model | playground = updateNewAtomName name model.playground }, Cmd.none )
 
+        Rename id newName ->
+            let
+                session =
+                    model.playground
+
+                newNet =
+                    updateName id (\_ -> newName) session.net
+
+                newSession =
+                    { session | net = newNet }
+            in
+            ( { model | playground = newSession }, Cmd.none )
+
+        StartRenaming id ->
+            let
+                session =
+                    model.playground
+
+                currentName =
+                    getName id session.net
+
+                newSession =
+                    { session | renaming = Just { id = id, originalName = currentName } }
+            in
+            ( { model | playground = newSession }, focusRenamingInput )
+
+        CommitRenaming ->
+            let
+                session =
+                    model.playground
+
+                newSession =
+                    { session | renaming = Nothing }
+            in
+            ( { model | playground = newSession }, Cmd.none )
+
+        CancelRenaming ->
+            let
+                session =
+                    model.playground
+
+                newSession =
+                    case session.renaming of
+                        Just { id, originalName } ->
+                            let
+                                newNet =
+                                    updateName id (\_ -> originalName) session.net
+                            in
+                            { session
+                                | net = newNet
+                                , renaming = Nothing
+                            }
+
+                        Nothing ->
+                            session
+            in
+            ( { model | playground = newSession }, Cmd.none )
+
         DragDropMsg dndMsg ->
             handleDragDropMsg dndMsg model
 
@@ -200,6 +273,12 @@ update msg model =
 
                         ( True, Just "y" ) ->
                             update Redo model |> Tuple.first
+
+                        ( _, Just "Enter" ) ->
+                            update CommitRenaming model |> Tuple.first
+
+                        ( _, Just "Escape" ) ->
+                            update CancelRenaming model |> Tuple.first
 
                         _ ->
                             model
@@ -250,3 +329,9 @@ update msg model =
 
                 Browser.External href ->
                     ( model, Browser.Navigation.load href )
+
+
+focusRenamingInput : Cmd Msg
+focusRenamingInput =
+    Browser.Dom.focus "renaming-input"
+        |> Task.attempt (\_ -> DoNothing)

@@ -223,9 +223,9 @@ toggle { color, iconOn, iconOff, title, onChange } checked =
 -- Indicators
 
 
-indicatorHeight : Length
+indicatorHeight : Int
 indicatorHeight =
-    25 |> px
+    25
 
 
 indicatorIcon : Icon -> Element msg
@@ -240,7 +240,7 @@ indicator : Element.Color -> Element msg -> Element msg
 indicator color content =
     el
         [ width shrink
-        , height indicatorHeight
+        , height (indicatorHeight |> px)
         , styleAttr "padding-left" "5px"
         , styleAttr "padding-right" "5px"
         , styleAttr "border-radius" "0px"

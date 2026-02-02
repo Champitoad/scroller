@@ -5,6 +5,9 @@ import Css
 import Css.Global exposing (children)
 import Element exposing (..)
 import Element.Background as Background
+import Element.Border as Border
+import Element.Font as Font
+import Element.Input as Input
 import FeatherIcons as Icons
 import Html.Attributes exposing (title)
 import Html5.DragDrop as DnD
@@ -60,22 +63,54 @@ viewNode dnd session ((TNode { id, node }) as tree) =
         statusBar =
             let
                 nameEl =
-                    el
-                        [ width fill
-                        , height indicatorHeight
-                        , foregroundColor node.polarity |> Utils.Color.elementAttr
-                        , nameFontFamily
-                        ]
-                        (text
-                            ((if debug then
-                                String.fromInt id ++ "#"
+                    let
+                        isRenaming =
+                            case session.renaming of
+                                Just renaming ->
+                                    renaming.id == id
 
-                              else
-                                ""
-                             )
-                                ++ node.name
+                                Nothing ->
+                                    False
+
+                        commonAttrs =
+                            [ width (fill |> minimum 10)
+                            , height (indicatorHeight - 2 |> px)
+                            , foregroundColor node.polarity |> Utils.Color.elementAttr
+                            , nameFontFamily
+                            ]
+                    in
+                    if isRenaming then
+                        Input.text
+                            (commonAttrs
+                                ++ [ padding 0
+                                   , Background.color Style.transparent
+                                   , Border.width 0
+                                   , htmlAttribute (Html.Attributes.id "renaming-input")
+                                   ]
                             )
-                        )
+                            { onChange = Rename id
+                            , text = node.name
+                            , placeholder = Nothing
+                            , label = Input.labelHidden "Node name"
+                            }
+
+                    else
+                        el
+                            (commonAttrs
+                                ++ [ Font.center
+                                   , Utils.Events.onClick (StartRenaming id)
+                                   , htmlAttribute (Html.Attributes.style "cursor" "text")
+                                   ]
+                            )
+                            (text <|
+                                (if debug then
+                                    String.fromInt id ++ "#"
+
+                                 else
+                                    ""
+                                )
+                                    ++ node.name
+                            )
 
                 polarity =
                     case session.execMode of
@@ -130,7 +165,7 @@ viewNode dnd session ((TNode { id, node }) as tree) =
             row
                 [ width fill, spacing 10 ]
                 [ el [ alignLeft ] introIndicator
-                , el [ centerX ] nameEl
+                , el [ width fill ] nameEl
                 , el [ alignRight ] elimIndicator
                 ]
 

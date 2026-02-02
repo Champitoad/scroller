@@ -253,7 +253,7 @@ droppable color =
     in
     { borderWidth = width
     , active = Background.color bgColor :: border
-    , inactive = []
+    , inactive = border
     }
 
 

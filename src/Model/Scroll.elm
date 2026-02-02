@@ -727,10 +727,20 @@ freshId net =
 freshify : Net -> Net -> Net
 freshify s t =
     let
-        fId =
+        offset =
             freshId s
+
+        isInternal id =
+            Dict.member id t.nodes
+
+        mapId id =
+            if isInternal id then
+                id + offset
+
+            else
+                id
     in
-    idMapNet (\id -> id + fId) t
+    idMapNet mapId t
 
 
 
@@ -1083,7 +1093,7 @@ deeplink source target =
 
 deepcopy : Net -> Net
 deepcopy net =
-    net |> deeplink net |> freshify net
+    net |> freshify net |> deeplink net
 
 
 
@@ -1177,8 +1187,8 @@ iterate id loc net =
             net
                 |> getSubnet id
                 |> conclusion
+                |> updateName id (\name -> "Copy of " ++ name)
                 |> deepcopy
-                |> updateName id (\name -> freshName ("Copy of " ++ name) net)
     in
     graft loc copy net
 
