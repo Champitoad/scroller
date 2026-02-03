@@ -249,7 +249,7 @@ viewNode dnd session ((TNode { id, node }) as tree) =
                                     Ok _ ->
                                         let
                                             dropStyle =
-                                                droppable useColor
+                                                droppableNode useColor
 
                                             dropTargetStyle =
                                                 case DnD.getDropId dnd of
@@ -257,7 +257,7 @@ viewNode dnd session ((TNode { id, node }) as tree) =
                                                     Just (Just { destination }) ->
                                                         case destination of
                                                             DropNode dropId ->
-                                                                -- We only highlight when it's an (iterable) area
+                                                                -- We only highlight when it's a deiterable node
                                                                 if dropId == id then
                                                                     dropStyle.active
 
@@ -597,6 +597,20 @@ viewAddOTokenZone session ctx newAtomName =
             none
 
 
+isDeiterationTarget : DnD -> Session -> Id -> Bool
+isDeiterationTarget dnd session id =
+    case DnD.getDragId dnd of
+        Nothing ->
+            False
+
+        Just { source } ->
+            let
+                (DragNode src) =
+                    source
+            in
+            applicable (Deiterate src id) session == Ok ()
+
+
 viewSep : DnD -> Session -> Tree -> Element Msg
 viewSep dnd session (TNode { id, node, children }) =
     let
@@ -672,6 +686,24 @@ viewSep dnd session (TNode { id, node, children }) =
 
             else
                 []
+
+        sepDropAction =
+            case session.actionMode of
+                ProofMode { copyMode } ->
+                    if
+                        copyMode
+                            == Deiteration
+                            && (isDeiterationTarget dnd session id
+                                    || existsAncestor (isDeiterationTarget dnd session) id session.net
+                               )
+                    then
+                        []
+
+                    else
+                        List.map htmlAttribute <| DnD.droppable DragDropMsg Nothing
+
+                _ ->
+                    List.map htmlAttribute <| DnD.droppable DragDropMsg Nothing
     in
     column
         ([ width fill
@@ -679,7 +711,7 @@ viewSep dnd session (TNode { id, node, children }) =
          , Background.color (foregroundColor node.polarity)
          , sepBorderRadius
          ]
-            ++ (List.map htmlAttribute <| DnD.droppable DragDropMsg Nothing)
+            ++ sepDropAction
             ++ shadow
         )
         [ outloopEl, inloopsEl ]
@@ -729,7 +761,7 @@ viewNodes dnd session ctx trees =
                                     Ok _ ->
                                         let
                                             dropStyle =
-                                                droppable useColor
+                                                droppableArea useColor
 
                                             dropTargetStyle =
                                                 case DnD.getDropId dnd of
@@ -784,7 +816,7 @@ viewNodes dnd session ctx trees =
                                                     { ctx = ctx, pos = pos }
 
                                                 dropStyle =
-                                                    droppable reorderColor
+                                                    droppableArea reorderColor
 
                                                 dropTargetStyle =
                                                     case DnD.getDropId dnd of
@@ -833,7 +865,7 @@ viewNodes dnd session ctx trees =
             ]
 
         borderAttrs =
-            [ styleAttr "border-width" (String.fromInt (droppable Utils.Color.transparent).borderWidth ++ "px")
+            [ styleAttr "border-width" (String.fromInt (droppableArea Utils.Color.transparent).borderWidth ++ "px")
             , styleAttr "border-color" "transparent"
             , styleAttr "border-style" "solid"
             ]
@@ -948,11 +980,13 @@ viewSession dnd session =
             --         Debug.log "net" (stringOfNet session.net)
             -- in
             el
-                [ width fill
-                , sessionHeightAttr
-                , styleAttr "overflow-x" "hidden"
-                , styleAttr "overflow-y" "auto"
-                ]
+                ([ width fill
+                 , sessionHeightAttr
+                 , styleAttr "overflow-x" "hidden"
+                 , styleAttr "overflow-y" "auto"
+                 ]
+                    ++ (List.map htmlAttribute <| DnD.droppable DragDropMsg Nothing)
+                )
                 (viewNodes dnd session TopLevel (hydrate session.net))
     in
     case session.actionMode of

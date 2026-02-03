@@ -173,7 +173,7 @@ body { manualExamples, dragDrop } =
                 [ t "Drag a "
                 , el (draggable useColor).active (text "flower")
                 , t " to copy it, and drop it in an "
-                , el (droppable useColor).active (text "area")
+                , el (droppableArea useColor).active (text "area")
                 , t " to paste it."
                 ]
             , sandbox "Import"

@@ -235,25 +235,48 @@ draggable color =
     }
 
 
-droppable : Color.Color -> ZoneStyle msg
-droppable color =
-    let
-        width =
-            3
+droppableBorderWidth : Int
+droppableBorderWidth =
+    3
 
-        border =
-            [ styleAttr "border-width" (String.fromInt width ++ "px")
-            , styleAttr "border-style" "dashed"
-            , styleAttr "border-radius" (String.fromInt sepBorderRound ++ "px")
-            , styleAttr "border-color" (Color.toCssString color)
-            ]
 
-        bgColor =
-            color |> Utils.Color.withAlpha 0.5 |> Utils.Color.toElement
-    in
-    { borderWidth = width
-    , active = Background.color bgColor :: border
-    , inactive = border
+droppableBorder : Color.Color -> List (Attribute msg)
+droppableBorder color =
+    [ styleAttr "border-width" (String.fromInt droppableBorderWidth ++ "px")
+    , styleAttr "border-style" "dashed"
+    , styleAttr "border-radius" (String.fromInt sepBorderRound ++ "px")
+    , styleAttr "border-color" (Color.toCssString color)
+    ]
+
+
+droppableBackground : Color.Color -> Attribute msg
+droppableBackground color =
+    color |> Utils.Color.withAlpha 0.5 |> Utils.Color.toElement |> Background.color
+
+
+droppableArea : Color.Color -> ZoneStyle msg
+droppableArea color =
+    { borderWidth = droppableBorderWidth
+    , active = droppableBackground color :: droppableBorder color
+    , inactive = droppableBorder color
+    }
+
+
+droppableNode : Color.Color -> ZoneStyle msg
+droppableNode color =
+    { borderWidth = droppableBorderWidth
+    , active =
+        inFront
+            (el
+                [ width fill
+                , height fill
+                , droppableBackground color
+                , styleAttr "pointer-events" "none"
+                ]
+                none
+            )
+            :: droppableBorder color
+    , inactive = droppableBorder color
     }
 
 
