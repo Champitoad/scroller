@@ -338,20 +338,13 @@ viewCopyModeSelector copyMode =
 
                 Iteration ->
                     False
-
-        msg isEnabled =
-            if isEnabled then
-                SetCopyMode Deiteration
-
-            else
-                SetCopyMode Iteration
     in
     toggle
         { color = modeSelectorColor
         , iconOn = Icons.copy
         , iconOff = Icons.copy
         , title = "Deiterate"
-        , onChange = msg
+        , onChange = ToggleCopyMode
         }
         isDeiterating
 

@@ -11,6 +11,7 @@ import Keyboard.Key
 import Model.App exposing (Model)
 import Update.App exposing (..)
 import Utils.Color
+import View.Events
 import View.Manual as Manual
 import View.Route as Route
 import View.Session exposing (..)
@@ -52,9 +53,8 @@ view model =
     case Route.fromUrl model.url of
         Route.Playground ->
             let
-                shelf =
-                    viewShelf model.playground
-
+                -- shelf =
+                --     viewShelf model.playground
                 session =
                     el
                         [ width fill
@@ -79,6 +79,7 @@ view model =
                 [ div
                     [ keyboardListener
                     , keyUpListener
+                    , View.Events.trackDragModifiers
                     , id "app-container"
                     , tabindex 0
                     , style "outline" "none"

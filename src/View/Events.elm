@@ -2,8 +2,11 @@ module View.Events exposing (..)
 
 import Color
 import Element exposing (..)
+import Html
 import Html.Attributes exposing (..)
+import Html.Events
 import Html5.DragDrop as DnD
+import Json.Decode
 import Model.App exposing (..)
 import Model.Scroll exposing (..)
 import Model.Session exposing (..)
@@ -46,3 +49,13 @@ dragAction color dnd route id =
                 DnD.draggable DragDropMsg
                     { route = route, source = DragNode id }
            )
+
+
+trackDragModifiers : Html.Attribute Msg
+trackDragModifiers =
+    let
+        decoder =
+            Json.Decode.field "altKey" Json.Decode.bool
+                |> Json.Decode.map (\alt -> SetDragModifiers { alt = alt })
+    in
+    Html.Events.on "dragover" decoder

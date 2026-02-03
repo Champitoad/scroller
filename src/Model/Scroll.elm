@@ -1,6 +1,5 @@
 module Model.Scroll exposing (..)
 
-import Css exposing (text_)
 import Dict exposing (Dict)
 import List.Extra
 import Model.Formula as Formula exposing (..)

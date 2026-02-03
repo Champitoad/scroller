@@ -3,7 +3,7 @@ module Model.App exposing (..)
 import Browser.Navigation
 import Html5.DragDrop as DnD
 import Model.Mascarpone exposing (..)
-import Model.Scroll as Scroll exposing (..)
+import Model.Scroll exposing (..)
 import Model.Session as Session exposing (..)
 import Url
 

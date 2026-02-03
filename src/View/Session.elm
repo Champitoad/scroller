@@ -228,8 +228,8 @@ viewNode dnd session ((TNode { id, node }) as tree) =
 
         dropAction =
             case session.actionMode of
-                ProofMode { interaction, copyMode } ->
-                    if interaction == Justifying && copyMode == Deiteration then
+                ProofMode { copyMode } ->
+                    if copyMode == Deiteration then
                         case DnD.getDragId dnd of
                             Nothing ->
                                 []
@@ -705,8 +705,8 @@ viewNodes dnd session ctx trees =
 
         dropAction pos =
             case session.actionMode of
-                ProofMode { interaction, copyMode } ->
-                    if interaction == Justifying && copyMode == Iteration then
+                ProofMode { copyMode } ->
+                    if copyMode == Iteration then
                         case DnD.getDragId dnd of
                             Nothing ->
                                 []

@@ -27,7 +27,7 @@ type CopyMode
 
 type ProofInteraction
     = Interacting
-    | Justifying -- Drag-and-Drop
+    | Justifying CopyMode -- Drag-and-Drop, store the copy mode defined before starting drag
 
 
 type EditInteraction
@@ -293,6 +293,46 @@ flipExecMode execMode =
 
         Backward ->
             Forward
+
+
+flipCopyMode : CopyMode -> CopyMode
+flipCopyMode copyMode =
+    case copyMode of
+        Iteration ->
+            Deiteration
+
+        Deiteration ->
+            Iteration
+
+
+toggleCopyMode : Bool -> Session -> Session
+toggleCopyMode doit session =
+    case session.actionMode of
+        ProofMode modeData ->
+            let
+                defaultCopyMode =
+                    case modeData.interaction of
+                        Justifying copyMode ->
+                            copyMode
+
+                        _ ->
+                            Iteration
+            in
+            { session
+                | actionMode =
+                    ProofMode
+                        { modeData
+                            | copyMode =
+                                if doit then
+                                    flipCopyMode defaultCopyMode
+
+                                else
+                                    defaultCopyMode
+                        }
+            }
+
+        _ ->
+            session
 
 
 isErased : Id -> Session -> Bool

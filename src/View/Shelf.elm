@@ -9,7 +9,7 @@ import View.Style exposing (styleAttr)
 
 
 viewShelf : Session -> Element Msg
-viewShelf session =
+viewShelf _ =
     row
         [ width fill
         , height (fillPortion 1)

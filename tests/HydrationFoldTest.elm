@@ -1,6 +1,5 @@
 module HydrationFoldTest exposing (..)
 
-import Dict
 import Expect
 import Model.Formula as Formula
 import Model.Scroll as Scroll exposing (..)

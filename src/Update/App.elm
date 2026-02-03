@@ -28,6 +28,7 @@ type Msg
     | ChangeActionMode ActionMode
     | ChangeExecMode ExecMode
     | ToggleRecording Bool
+    | ToggleCopyMode Bool
     | Undo
     | Redo
     | Auto
@@ -37,11 +38,11 @@ type Msg
     | CommitRenaming
     | CancelRenaming
     | DragDropMsg DnDMsg
+    | SetDragModifiers { alt : Bool }
     | ResetSandbox SandboxID
     | HandleKeyboardEvent KeyboardEvent
     | HandleKeyUpEvent KeyboardEvent
     | HighlightOrigin (Maybe Id)
-    | SetCopyMode CopyMode
     | ConsoleLog String String
     | DoNothing
     | UrlChanged Url.Url
@@ -71,12 +72,8 @@ handleDragDropMsg dndMsg model =
 
                         newMode =
                             case session.actionMode of
-                                ProofMode ({ interaction } as modeData) ->
-                                    if interaction == Interacting then
-                                        ProofMode { modeData | interaction = Justifying }
-
-                                    else
-                                        session.actionMode
+                                ProofMode modeData ->
+                                    ProofMode { modeData | interaction = Justifying modeData.copyMode }
 
                                 EditMode modeData ->
                                     EditMode { modeData | interaction = Reordering }
@@ -98,12 +95,8 @@ handleDragDropMsg dndMsg model =
 
                                 defaultMode =
                                     case session.actionMode of
-                                        ProofMode ({ interaction } as modeData) ->
-                                            if interaction == Justifying then
-                                                ProofMode { modeData | interaction = Interacting }
-
-                                            else
-                                                session.actionMode
+                                        ProofMode modeData ->
+                                            ProofMode { modeData | interaction = Interacting }
 
                                         EditMode modeData ->
                                             EditMode { modeData | interaction = Operating }
@@ -116,15 +109,15 @@ handleDragDropMsg dndMsg model =
                                         |> Maybe.andThen
                                             (\{ destination } ->
                                                 case ( session.actionMode, destination ) of
-                                                    ( ProofMode { interaction, copyMode }, DropNode target ) ->
-                                                        if interaction == Justifying && copyMode == Deiteration then
+                                                    ( ProofMode { copyMode }, DropNode target ) ->
+                                                        if copyMode == Deiteration then
                                                             Just (Deiterate source target)
 
                                                         else
                                                             Nothing
 
-                                                    ( ProofMode { interaction, copyMode }, DropLocation location ) ->
-                                                        if interaction == Justifying && copyMode == Iteration then
+                                                    ( ProofMode { copyMode }, DropLocation location ) ->
+                                                        if copyMode == Iteration then
                                                             Just (Iterate source location)
 
                                                         else
@@ -279,37 +272,24 @@ update msg model =
         DragDropMsg dndMsg ->
             handleDragDropMsg dndMsg model
 
+        SetDragModifiers { alt } ->
+            case model.playground.actionMode of
+                ProofMode _ ->
+                    update (ToggleCopyMode alt) model
+
+                _ ->
+                    update DoNothing model
+
         ResetSandbox id ->
             ( { model | manualExamples = resetSandbox id model.manualExamples }
             , Cmd.none
             )
 
-        SetCopyMode copyMode ->
-            let
-                newMode =
-                    case model.playground.actionMode of
-                        ProofMode ({ interaction } as modeData) ->
-                            if interaction == Interacting then
-                                ProofMode { modeData | copyMode = copyMode }
+        ToggleCopyMode doit ->
+            ( setSession Playground (toggleCopyMode doit model.playground) model, Cmd.none )
 
-                            else
-                                model.playground.actionMode
-
-                        _ ->
-                            model.playground.actionMode
-            in
-            update (ChangeActionMode newMode) model
-
-        HandleKeyUpEvent { key } ->
-            case key of
-                Just "c" ->
-                    update (SetCopyMode Iteration) model
-
-                Just "C" ->
-                    update (SetCopyMode Iteration) model
-
-                _ ->
-                    ( model, Cmd.none )
+        HandleKeyUpEvent _ ->
+            ( model, Cmd.none )
 
         HandleKeyboardEvent { ctrlKey, altKey, shiftKey, key, keyCode } ->
             case ( ( ctrlKey, altKey, shiftKey ), keyCode, key ) of
@@ -321,20 +301,6 @@ update msg model =
 
                 ( ( True, _, _ ), Keyboard.Key.R, _ ) ->
                     update (ToggleRecording (not model.playground.recording)) model
-
-                ( _, _, Just "c" ) ->
-                    if model.playground.renaming == Nothing then
-                        update (SetCopyMode Deiteration) model
-
-                    else
-                        ( model, Cmd.none )
-
-                ( _, _, Just "C" ) ->
-                    if model.playground.renaming == Nothing then
-                        update (SetCopyMode Deiteration) model
-
-                    else
-                        ( model, Cmd.none )
 
                 ( ( _, True, False ), Keyboard.Key.Tab, _ ) ->
                     let
