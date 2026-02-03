@@ -165,7 +165,7 @@ body { manualExamples, dragDrop } =
             , par [ t "Click on an ", el greenActionable.active (text "atom"), t " to erase it." ]
             , sandbox "Justify"
             , h2 "Unlock"
-            , par [ t "Click on an ", el orangeActionable.active (text "empty outloop"), t " to unlock its inloop." ]
+            , par [ t "Click on an ", el collapseActionable.active (text "empty outloop"), t " to unlock its inloop." ]
             , sandbox "Unlock"
             , par [ t "Note that flowers can be ", b "nested", t " inside each other." ]
             , h2 "Import"
@@ -178,7 +178,7 @@ body { manualExamples, dragDrop } =
                 ]
             , sandbox "Import"
             , h2 "Case"
-            , par [ t "Click on an ", el orangeActionable.active (text "empty outloop"), t " to turn its attached inloops into outloops." ]
+            , par [ t "Click on an ", el collapseActionable.active (text "empty outloop"), t " to turn its attached inloops into outloops." ]
             , sandbox "Case"
             , h2 "Decompose"
             , par [ t "Click on a ", el pinkActionable.active (text "symbolic formula"), t " to turn it into a flower." ]

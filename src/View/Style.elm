@@ -113,14 +113,24 @@ backgroundColor polarity =
             negativeColor
 
 
-introColor : Color
-introColor =
+createColor : Color
+createColor =
     rgb 0.227 0.525 1
 
 
-elimColor : Color
-elimColor =
+destroyColor : Color
+destroyColor =
     rgb 1 0 0
+
+
+expandColor : Color
+expandColor =
+    rgb 0.3 0.8 0
+
+
+collapseColor : Color
+collapseColor =
+    rgb 1 0.6 0
 
 
 reorderColor : Color.Color
@@ -205,14 +215,14 @@ pinkActionable =
     actionable (Color.rgb 1 0.4 0.8)
 
 
-orangeActionable : ZoneStyle msg
-orangeActionable =
-    actionable (Color.rgb 1 0.6 0)
+collapseActionable : ZoneStyle msg
+collapseActionable =
+    actionable (collapseColor |> Utils.Color.fromElement)
 
 
-redActionable : ZoneStyle msg
-redActionable =
-    actionable (Color.rgb 1 0 0)
+destroyActionable : ZoneStyle msg
+destroyActionable =
+    actionable (destroyColor |> Utils.Color.fromElement)
 
 
 draggable : Color.Color -> ZoneStyle msg
@@ -291,7 +301,7 @@ insertedBorder =
     in
     { borderWidth = width
     , active =
-        styleAttr "border-color" (introColor |> Utils.Color.fromElement |> Color.toCssString)
+        styleAttr "border-color" (createColor |> Utils.Color.fromElement |> Color.toCssString)
             :: styleAttr "border-style" "solid"
             :: styleAttr "border-width" (String.fromInt width ++ "px")
             :: border

@@ -254,12 +254,12 @@ indicator color content =
 
 insertionIndicator : Element msg
 insertionIndicator =
-    indicator introColor (indicatorIcon Icons.plus)
+    indicator createColor (indicatorIcon Icons.plus)
 
 
 deletionIndicator : Element msg
 deletionIndicator =
-    indicator elimColor (indicatorIcon Icons.x)
+    indicator destroyColor (indicatorIcon Icons.x)
 
 
 iterationText : String -> Bool -> Element msg
@@ -323,22 +323,22 @@ interactiveIndicator color mkMsg originId originName isHovered =
 
 iterationIndicator : Maybe Id -> String -> Bool -> Element Msg
 iterationIndicator =
-    interactiveIndicator introColor HighlightOrigin
+    interactiveIndicator createColor HighlightOrigin
 
 
 deiterationIndicator : Maybe Id -> String -> Bool -> Element Msg
 deiterationIndicator =
-    interactiveIndicator elimColor HighlightOrigin
+    interactiveIndicator destroyColor HighlightOrigin
 
 
 expansionIndicator : Element msg
 expansionIndicator =
-    indicator introColor (indicatorIcon Icons.maximize2)
+    indicator expandColor (indicatorIcon Icons.maximize2)
 
 
 collapseIndicator : Element msg
 collapseIndicator =
-    indicator introColor (indicatorIcon Icons.minimize2)
+    indicator collapseColor (indicatorIcon Icons.minimize2)
 
 
 

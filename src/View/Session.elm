@@ -41,7 +41,7 @@ deleteAction : Session -> Id -> List (Attribute Msg)
 deleteAction session id =
     viewClickAction session
         (Delete id)
-        redActionable
+        destroyActionable
         "Delete"
 
 
@@ -407,7 +407,7 @@ viewOutloop dnd session id content =
             case session.actionMode of
                 ProofMode { interaction } ->
                     if interaction == Interacting then
-                        viewClickAction session (Close id) orangeActionable "Close"
+                        viewClickAction session (Close id) collapseActionable "Close"
 
                     else
                         []
@@ -452,7 +452,7 @@ addButton params =
         style =
             { width = Css.pct 100
             , height = Css.pct 100
-            , color = introColor |> Utils.Color.fromElement
+            , color = createColor |> Utils.Color.fromElement
             , iconColorEnabled = Color.white
             , iconColorDisabled = Color.darkGray
             }
