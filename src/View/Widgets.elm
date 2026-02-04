@@ -244,10 +244,11 @@ indicator color content =
     el
         [ width shrink
         , height (indicatorHeight |> px)
+        , Background.color color
         , styleAttr "padding-left" "5px"
         , styleAttr "padding-right" "5px"
         , styleAttr "border-radius" "0px"
-        , Background.color color
+        , styleAttr "z-index" "1"
         ]
         (centered content)
 

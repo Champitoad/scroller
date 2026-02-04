@@ -24,7 +24,7 @@ import View.Toolbar exposing (toolbarHeight)
 import View.Widgets as Widgets exposing (..)
 
 
-viewClickAction : Session -> Shape -> Color -> Action -> List (Attribute Msg)
+viewClickAction : Session -> Maybe Shape -> Color -> Action -> List (Attribute Msg)
 viewClickAction session shape color action =
     case applicable action session of
         Err _ ->
@@ -37,7 +37,7 @@ viewClickAction session shape color action =
 deleteAction : Session -> Id -> List (Attribute Msg)
 deleteAction session id =
     viewClickAction session
-        (getShape id session.net)
+        (Just (getShape id session.net))
         destroyColor
         (Delete id)
 
@@ -56,6 +56,14 @@ viewNode dnd session ((TNode { id, node }) as tree) =
     let
         debug =
             False
+
+        inForwardMode =
+            case session.execMode of
+                Forward ->
+                    True
+
+                Backward ->
+                    False
 
         statusBar =
             let
@@ -138,7 +146,13 @@ viewNode dnd session ((TNode { id, node }) as tree) =
 
                     else if
                         getInloopInteraction id session.net
-                            |> Maybe.map (isExpansion polarity)
+                            |> Maybe.map
+                                (if inForwardMode then
+                                    .opened
+
+                                 else
+                                    .closed
+                                )
                             |> Maybe.withDefault False
                     then
                         expansionIndicator
@@ -155,7 +169,13 @@ viewNode dnd session ((TNode { id, node }) as tree) =
 
                     else if
                         getInloopInteraction id session.net
-                            |> Maybe.map (isCollapse polarity)
+                            |> Maybe.map
+                                (if inForwardMode then
+                                    .closed
+
+                                 else
+                                    .opened
+                                )
                             |> Maybe.withDefault False
                     then
                         collapseIndicator
@@ -204,10 +224,32 @@ viewNode dnd session ((TNode { id, node }) as tree) =
                 []
 
         drawErased =
-            if Session.isErased id session then
-                [ styleAttr "opacity" "0.5"
-                , styleAttr "pointer-events" "none"
-                ]
+            if
+                Session.isErased id session
+                    && (if inForwardMode then
+                            not (isCollapsedInloop id session.net)
+
+                        else
+                            not (isExpandedInloop id session.net)
+                       )
+            then
+                if isFormula id session.net then
+                    [ styleAttr "opacity" "0.5"
+                    , styleAttr "pointer-events" "none"
+                    ]
+
+                else
+                    [ inFront
+                        (el
+                            [ width fill
+                            , height fill
+                            , shapeBorderRadius (Just node.shape)
+                            , Background.color (rgba 0.5 0.5 0.5 0.5)
+                            , styleAttr "pointer-events" "none"
+                            ]
+                            none
+                        )
+                    ]
 
             else
                 []
@@ -298,7 +340,7 @@ viewNode dnd session ((TNode { id, node }) as tree) =
                 ++ [ width fill
                    , centerY
                    , nodeHeight
-                   , shapeBorderRadius node.shape
+                   , shapeBorderRadius (Just node.shape)
                    , onClick DoNothing
                    , styleAttr "position" "relative"
                    , styleAttr "z-index" "1"
@@ -356,7 +398,7 @@ viewFormula dnd session id formula =
 
                             _ ->
                                 viewClickAction session
-                                    (Formula formula)
+                                    (Just (Formula formula))
                                     pink
                                     (Decompose id)
 
@@ -405,18 +447,6 @@ viewFormula dnd session id formula =
 viewOutloop : DnD -> Session -> Id -> List Tree -> Element Msg
 viewOutloop dnd session id content =
     let
-        clickAction =
-            case session.actionMode of
-                ProofMode { interaction } ->
-                    if interaction == Interacting then
-                        viewClickAction session (getShape id session.net) collapseColor (Close id)
-
-                    else
-                        []
-
-                _ ->
-                    []
-
         paddingSize =
             case session.route of
                 Playground ->
@@ -430,12 +460,10 @@ viewOutloop dnd session id content =
         , height fill
         ]
         (el
-            ([ width fill
-             , height fill
-             , padding paddingSize
-             ]
-                ++ clickAction
-            )
+            [ width fill
+            , height fill
+            , padding paddingSize
+            ]
             (viewNodes dnd session (Inside id) content)
         )
 
@@ -507,6 +535,44 @@ viewAddInloopZone session outloopId =
             []
 
 
+newOToken : String -> OToken
+newOToken newAtomName =
+    if String.isEmpty newAtomName then
+        emptyScroll
+
+    else
+        case newAtomName of
+            "sugar" ->
+                OForm sugar
+
+            "mascarpone" ->
+                OForm mascarpone
+
+            "egg" ->
+                OForm egg
+
+            "white" ->
+                OForm white
+
+            "yolk" ->
+                OForm yolk
+
+            "whisked whites" ->
+                OForm whiskedWhites
+
+            "yolky paste" ->
+                OForm yolkPaste
+
+            "thick paste" ->
+                OForm thickPaste
+
+            "mascarpone cream" ->
+                OForm mascarponeCream
+
+            _ ->
+                OForm (Formula.atom newAtomName)
+
+
 viewAddOTokenZone : Session -> Context -> String -> Element Msg
 viewAddOTokenZone session ctx newAtomName =
     let
@@ -516,44 +582,8 @@ viewAddOTokenZone session ctx newAtomName =
         loc =
             { ctx = ctx, pos = List.length neighbors }
 
-        otoken =
-            if String.isEmpty newAtomName then
-                emptyScroll
-
-            else
-                case newAtomName of
-                    "sugar" ->
-                        OForm sugar
-
-                    "mascarpone" ->
-                        OForm mascarpone
-
-                    "egg" ->
-                        OForm egg
-
-                    "white" ->
-                        OForm white
-
-                    "yolk" ->
-                        OForm yolk
-
-                    "whisked whites" ->
-                        OForm whiskedWhites
-
-                    "yolky paste" ->
-                        OForm yolkPaste
-
-                    "thick paste" ->
-                        OForm thickPaste
-
-                    "mascarpone cream" ->
-                        OForm mascarponeCream
-
-                    _ ->
-                        OForm (Formula.atom newAtomName)
-
         tok =
-            ITok otoken
+            ITok (newOToken newAtomName)
 
         kindStr =
             case getPolarityContext ctx session.net of
@@ -716,6 +746,43 @@ viewNodes dnd session ctx trees =
 
         neighbors =
             getChildIdsContext ctx session.net
+
+        clickAction =
+            let
+                newNodeLoc =
+                    { ctx = ctx, pos = List.length neighbors }
+            in
+            case session.actionMode of
+                ProofMode { interaction, interactionMode } ->
+                    case ( interaction, interactionMode ) of
+                        ( Interacting, Expansion ) ->
+                            viewClickAction session
+                                Nothing
+                                expandColor
+                                (Open newNodeLoc)
+
+                        -- ( Interacting, Collapse, Inside sepId ) ->
+                        --     viewClickAction session
+                        --         (Just (getShape sepId session.net))
+                        --         collapseColor
+                        --         (Close sepId)
+                        _ ->
+                            []
+
+                EditMode { interaction, operationMode, newAtomName } ->
+                    case ( interaction, operationMode ) of
+                        ( Operating, Insertion ) ->
+                            Debug.log "" <|
+                                viewClickAction session
+                                    Nothing
+                                    createColor
+                                    (Insert newNodeLoc (ITok (newOToken newAtomName)))
+
+                        _ ->
+                            []
+
+                _ ->
+                    []
 
         dropAttrs dest =
             List.map htmlAttribute <|
@@ -881,6 +948,7 @@ viewNodes dnd session ctx trees =
                          ]
                             ++ borderAttrs
                             ++ dropAction pos
+                            ++ clickAction
                         )
                         none
 
@@ -946,6 +1014,7 @@ viewNodes dnd session ctx trees =
                     layoutAttrs
                         ++ borderAttrs
                         ++ dropAction (List.length neighbors)
+                        ++ clickAction
 
                 sperse ((TNode { node }) as tree) =
                     el
@@ -978,10 +1047,10 @@ viewSession : DnD -> Session -> Element Msg
 viewSession dnd session =
     let
         sessionEl () =
-            -- let
-            --     _ =
-            --         Debug.log "net" (stringOfNet session.net)
-            -- in
+            let
+                _ =
+                    Debug.log "net" (stringOfNet session.net)
+            in
             el
                 ([ width fill
                  , sessionHeightAttr

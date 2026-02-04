@@ -174,14 +174,17 @@ sepBorderRadius =
         )
 
 
-shapeBorderRadius : Shape -> Attribute msg
+shapeBorderRadius : Maybe Shape -> Attribute msg
 shapeBorderRadius shape =
     case shape of
-        Formula _ ->
-            styleAttr "border-radius" "none"
-
-        Sep _ _ ->
+        Just (Sep _ _) ->
             sepBorderRadius
+
+        Nothing ->
+            styleAttr "border-radius" "20px"
+
+        _ ->
+            styleAttr "border-radius" "none"
 
 
 type alias ZoneStyle msg =
@@ -191,7 +194,7 @@ type alias ZoneStyle msg =
     }
 
 
-actionable : msg -> Shape -> Color -> ZoneStyle msg
+actionable : msg -> Maybe Shape -> Color -> ZoneStyle msg
 actionable msg shape color =
     let
         borderWidth =

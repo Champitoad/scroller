@@ -12,9 +12,9 @@ import View.Session exposing (..)
 import View.Style as Style exposing (..)
 
 
-dummyForm : Shape
+dummyForm : Maybe Shape
 dummyForm =
-    Formula (Formula.atom "")
+    Just (Formula (Formula.atom ""))
 
 
 mkIcon : Float -> Icons.Icon -> Element msg

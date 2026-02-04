@@ -387,6 +387,16 @@ getShape id net =
     (getNode id net).shape
 
 
+isFormula : Id -> Net -> Bool
+isFormula id net =
+    case getShape id net of
+        Formula _ ->
+            True
+
+        _ ->
+            False
+
+
 getName : Id -> Net -> String
 getName id net =
     (getNode id net).name
@@ -1324,16 +1334,6 @@ isDeiteration polarity justif =
     polarity == Neg && isDirect justif
 
 
-isExpansion : Polarity -> Interaction -> Bool
-isExpansion pol int =
-    (pol == Pos && int.opened) || (pol == Neg && int.closed)
-
-
-isCollapse : Polarity -> Interaction -> Bool
-isCollapse pol int =
-    (pol == Pos && int.closed) || (pol == Neg && int.opened)
-
-
 isCreation : Polarity -> Justification -> Bool
 isCreation polarity justif =
     isInsertion polarity justif || isIteration polarity justif
@@ -1358,27 +1358,27 @@ isExpandedOutloop : Id -> Net -> Bool
 isExpandedOutloop id net =
     getOutloopInteractions id net
         |> Dict.toList
-        |> Utils.List.exists (\( _, int ) -> isExpansion (getPolarity id net) int)
+        |> Utils.List.exists (\( _, int ) -> int.opened)
 
 
 isCollapsedOutloop : Id -> Net -> Bool
 isCollapsedOutloop id net =
     getOutloopInteractions id net
         |> Dict.toList
-        |> Utils.List.exists (\( _, int ) -> isCollapse (getPolarity id net) int)
+        |> Utils.List.exists (\( _, int ) -> int.closed)
 
 
 isExpandedInloop : Id -> Net -> Bool
 isExpandedInloop id net =
     getInloopInteraction id net
-        |> Maybe.map (isExpansion (getPolarity id net))
+        |> Maybe.map .opened
         |> Maybe.withDefault False
 
 
 isCollapsedInloop : Id -> Net -> Bool
 isCollapsedInloop id net =
     getInloopInteraction id net
-        |> Maybe.map (isCollapse (getPolarity id net))
+        |> Maybe.map .closed
         |> Maybe.withDefault False
 
 
@@ -1386,7 +1386,7 @@ isIntroduced : Id -> Net -> Bool
 isIntroduced id net =
     isCreated id net
         || isExpandedOutloop id net
-        || isExpandedInloop id net
+        -- || isExpandedInloop id net
         || existsAncestor (\id_ -> isCreated id_ net) id net
 
 
@@ -1404,7 +1404,7 @@ isEliminated : Id -> Net -> Bool
 isEliminated id net =
     isDestroyed id net
         || isCollapsedOutloop id net
-        || isCollapsedInloop id net
+        -- || isCollapsedInloop id net
         || existsAncestor (\id_ -> isDestroyed id_ net) id net
 
 
@@ -1632,8 +1632,23 @@ stringOfShape content shape =
                 Nothing ->
                     "[" ++ content ++ "]"
 
-                Just _ ->
-                    "(" ++ content ++ ")"
+                Just int ->
+                    let
+                        leftBracket =
+                            if int.opened then
+                                "<("
+
+                            else
+                                "("
+
+                        rightBracket =
+                            if int.closed then
+                                ")>"
+
+                            else
+                                ")"
+                    in
+                    leftBracket ++ content ++ rightBracket
 
 
 logNet : String -> Net -> Net

@@ -544,16 +544,15 @@ actionTransform execMode action =
     case action of
         Open loc ->
             let
-                (TNode unopenedScroll) =
+                unopenedScrollTree =
                     emptyScroll |> hydrateOToken TopLevel Pos |> State.eval 0
 
-                openedScrollTree =
-                    TNode
-                        { unopenedScroll
-                            | node = updateInteractionNode (annotateExpansion execMode) unopenedScroll.node
-                        }
+                openedScroll =
+                    unopenedScrollTree
+                        |> dehydrateTree
+                        |> updateInteraction 1 (annotateExpansion execMode)
             in
-            graft loc (dehydrateTree openedScrollTree)
+            graft loc openedScroll
 
         Close id ->
             updateInteraction id (annotateExpansion (flipExecMode execMode))
