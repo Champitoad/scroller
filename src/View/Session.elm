@@ -353,8 +353,8 @@ viewFormula dnd session id formula =
                     else
                         []
 
-                EditMode { interaction } ->
-                    if interaction == Operating then
+                EditMode { interaction, operationMode } ->
+                    if interaction == Operating && operationMode == Deletion then
                         deleteAction session id
 
                     else
@@ -411,8 +411,8 @@ viewOutloop dnd session id content =
                     else
                         []
 
-                EditMode { interaction } ->
-                    if interaction == Operating then
+                EditMode { interaction, operationMode } ->
+                    if interaction == Operating && operationMode == Deletion then
                         deleteAction session id
 
                     else
