@@ -7,7 +7,9 @@ import Element.Font as Font
 import Html.Attributes exposing (style)
 import Model.App exposing (..)
 import Model.Scroll exposing (..)
+import Model.Session exposing (..)
 import Utils.Color
+import Utils.Events
 
 
 styleAttr : String -> String -> Attribute msg
@@ -178,51 +180,51 @@ type alias ZoneStyle msg =
     }
 
 
-actionable : Color.Color -> ZoneStyle msg
-actionable color =
+actionable : msg -> Color -> ZoneStyle msg
+actionable msg color =
     let
-        width =
+        borderWidth =
             5
 
         border =
-            [ styleAttr "border-width" (String.fromInt width ++ "px")
+            [ styleAttr "border-width" (String.fromInt borderWidth ++ "px")
             , styleAttr "border-style" "dotted"
             , styleAttr "border-radius" (String.fromInt sepBorderRound ++ "px")
+            , styleAttr "border-color" (color |> Utils.Color.fromElement |> Color.toCssString)
             ]
 
-        bgColor =
-            Utils.Color.withAlpha 0.5 color |> Utils.Color.toElement
+        mouseOverAttrs =
+            [ Background.color (color |> Utils.Color.fromElement |> Utils.Color.withAlpha 0.4 |> Utils.Color.toElement) ]
+
+        mouseDownAttrs =
+            [ Background.color (color |> Utils.Color.fromElement |> Utils.Color.withAlpha 0.6 |> Utils.Color.toElement) ]
     in
-    { borderWidth = width
+    { borderWidth = borderWidth
     , active =
-        pointer
-            :: styleAttr "border-color" (Color.toCssString color)
-            :: Background.color bgColor
+        inFront
+            (el
+                [ width fill
+                , height fill
+                , pointer
+                , mouseOver mouseOverAttrs
+                , mouseDown mouseDownAttrs
+                , Utils.Events.onClick msg
+                ]
+                none
+            )
             :: border
-    , inactive =
-        styleAttr "border-color" "transparent"
-            :: border
+    , inactive = border
     }
 
 
-greenActionable : ZoneStyle msg
-greenActionable =
-    actionable (Color.rgb 0.3 0.9 0.3)
+green : Color
+green =
+    rgb 0.3 0.9 0.3
 
 
-pinkActionable : ZoneStyle msg
-pinkActionable =
-    actionable (Color.rgb 1 0.4 0.8)
-
-
-collapseActionable : ZoneStyle msg
-collapseActionable =
-    actionable (collapseColor |> Utils.Color.fromElement)
-
-
-destroyActionable : ZoneStyle msg
-destroyActionable =
-    actionable (destroyColor |> Utils.Color.fromElement)
+pink : Color
+pink =
+    rgb 1 0.4 0.8
 
 
 draggable : Color.Color -> ZoneStyle msg

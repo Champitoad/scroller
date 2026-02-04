@@ -25,23 +25,23 @@ import View.Toolbar exposing (toolbarHeight)
 import View.Widgets as Widgets exposing (..)
 
 
-viewClickAction : Session -> Action -> ZoneStyle Msg -> String -> List (Attribute Msg)
-viewClickAction session action actionableStyle titleText =
+viewClickAction : Session -> Action -> Color -> String -> List (Attribute Msg)
+viewClickAction session action color titleText =
     case applicable action session of
         Err _ ->
-            actionableStyle.inactive
+            []
 
         Ok _ ->
             Utils.Events.onClick (Apply session.route action)
                 :: (htmlAttribute <| title titleText)
-                :: actionableStyle.active
+                :: (actionable (Apply session.route action) color).active
 
 
 deleteAction : Session -> Id -> List (Attribute Msg)
 deleteAction session id =
     viewClickAction session
         (Delete id)
-        destroyActionable
+        destroyColor
         "Delete"
 
 
@@ -277,6 +277,18 @@ viewNode dnd session ((TNode { id, node }) as tree) =
 
                 _ ->
                     []
+
+        clickAction =
+            case session.actionMode of
+                EditMode { interaction, operationMode } ->
+                    if interaction == Operating && operationMode == Deletion then
+                        deleteAction session id
+
+                    else
+                        []
+
+                _ ->
+                    []
     in
     column
         [ width fill, nodeHeight, centerX, centerY ]
@@ -287,6 +299,7 @@ viewNode dnd session ((TNode { id, node }) as tree) =
                 ++ drawHoveredOrigin
                 ++ drawErased
                 ++ dropAction
+                ++ clickAction
                 ++ [ width fill
                    , centerY
                    , nodeHeight
@@ -347,15 +360,8 @@ viewFormula dnd session id formula =
                             _ ->
                                 viewClickAction session
                                     (Decompose id)
-                                    pinkActionable
+                                    pink
                                     "Decompose"
-
-                    else
-                        []
-
-                EditMode { interaction, operationMode } ->
-                    if interaction == Operating && operationMode == Deletion then
-                        deleteAction session id
 
                     else
                         []
@@ -406,20 +412,13 @@ viewOutloop dnd session id content =
             case session.actionMode of
                 ProofMode { interaction } ->
                     if interaction == Interacting then
-                        viewClickAction session (Close id) collapseActionable "Close"
-
-                    else
-                        []
-
-                EditMode { interaction, operationMode } ->
-                    if interaction == Operating && operationMode == Deletion then
-                        deleteAction session id
+                        viewClickAction session (Close id) collapseColor "Close"
 
                     else
                         []
 
                 _ ->
-                    (actionable Utils.Color.transparent).inactive
+                    []
 
         paddingSize =
             case session.route of
@@ -627,9 +626,6 @@ viewSep dnd session (TNode { id, node, children }) =
         outloopEl =
             viewOutloop dnd session id outloopContent
 
-        addInloopZone =
-            viewAddInloopZone session id
-
         inloops =
             List.filter (\(TNode child) -> isInloop child.id session.net) children
 
@@ -643,7 +639,7 @@ viewSep dnd session (TNode { id, node, children }) =
                     , height fill
                     , spacing sepBorderWidth
                     ]
-                    (List.map (viewNode dnd session) inloops ++ addInloopZone)
+                    (List.map (viewNode dnd session) inloops)
 
         { shadowOffset, shadowSize, shadowBlur, shadowAlpha } =
             case session.route of
@@ -925,7 +921,7 @@ viewNodes dnd session ctx trees =
                             in
                             case applicable insertAction session of
                                 Ok _ ->
-                                    [ viewAddOTokenZone session ctx newAtomName ]
+                                    []
 
                                 Err _ ->
                                     []
