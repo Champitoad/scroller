@@ -1,6 +1,6 @@
 module View.Toolbar exposing (..)
 
-import Dict
+import Color
 import Element exposing (..)
 import Element.Background as Background
 import Element.Events as Events
@@ -171,15 +171,92 @@ viewActionModeSelector currentMode =
         , Background.color borderColor
         ]
         [ item defaultProofMode Start
-        , item
-            (EditMode
-                { interaction = Operating Insertion
-                , newAtomName = ""
-                , insertions = Dict.empty
-                }
-            )
-            Middle
+        , item defaultEditMode Middle
         , item NavigationMode End
+        ]
+
+
+viewOperationModeSelector : OperationMode -> Element Msg
+viewOperationModeSelector currentMode =
+    let
+        item mode position =
+            let
+                isSelected =
+                    mode == currentMode
+
+                selectedColor =
+                    case mode of
+                        Insertion ->
+                            createColor
+
+                        Deletion ->
+                            destroyColor
+
+                ( bgColor, fgColor ) =
+                    if isSelected then
+                        ( selectedColor, rgb 1 1 1 )
+
+                    else
+                        ( rgb 1 1 1, rgb 0 0 0 )
+
+                ( iconEl, titleText ) =
+                    let
+                        ( title, icon ) =
+                            case mode of
+                                Insertion ->
+                                    ( "Insert", Icons.plus )
+
+                                Deletion ->
+                                    ( "Delete", Icons.x )
+
+                        elem =
+                            el
+                                [ centerX, centerY ]
+                                (icon
+                                    |> Icons.withSize 30
+                                    |> Icons.toHtml
+                                        [ fgColor
+                                            |> Utils.Color.fromElement
+                                            |> Utils.Color.htmlAttr
+                                        ]
+                                    |> html
+                                )
+                    in
+                    ( elem, title )
+
+                borderRound =
+                    modeSelectorBorderRound position
+
+                changeAction =
+                    [ Events.onClick (ChangeOperationMode mode)
+                    , pointer
+                    ]
+            in
+            el
+                ([ width (60 |> px)
+                 , height (defaultButtonSize |> px)
+                 , Background.color bgColor
+                 , styleAttr "border-radius" borderRound
+                 , htmlAttribute <| Html.Attributes.title titleText
+                 ]
+                    ++ changeAction
+                )
+                iconEl
+
+        borderColor =
+            rgb 0.6 0.6 0.6
+    in
+    row
+        [ width shrink
+        , height shrink
+        , spacing 1
+        , styleAttr "border-width" "0px"
+        , styleAttr "border-radius" (String.fromInt buttonBorderRadius ++ "px")
+        , styleAttr "border-color" (borderColor |> Utils.Color.fromElement |> Color.toCssString)
+        , Background.color borderColor
+        ]
+        [ item Insertion Start
+        , item Deletion End
         ]
 
 
@@ -369,12 +446,13 @@ viewToolbar model =
                 , centerX
                 ]
                 (case model.playground.actionMode of
-                    EditMode { newAtomName } ->
+                    EditMode { operationMode, newAtomName } ->
                         [ el
                             [ width (fill |> maximum 200)
                             , centerX
                             ]
                             (viewNewAtomNameTextEdit newAtomName)
+                        , viewOperationModeSelector operationMode
                         ]
 
                     ProofMode { copyMode } ->

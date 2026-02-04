@@ -31,7 +31,7 @@ type InteractionMode
 
 
 type ProofInteraction
-    = Interacting InteractionMode
+    = Interacting
     | Justifying CopyMode -- Drag-and-Drop, store the copy mode defined before starting drag
 
 
@@ -41,7 +41,7 @@ type OperationMode
 
 
 type EditInteraction
-    = Operating OperationMode
+    = Operating
     | Reordering -- Drag-and-Drop
 
 
@@ -49,9 +49,11 @@ type ActionMode
     = ProofMode
         { interaction : ProofInteraction
         , copyMode : CopyMode
+        , interactionMode : InteractionMode
         }
     | EditMode
         { interaction : EditInteraction
+        , operationMode : OperationMode
         , newAtomName : String
         , insertions : Dict Id Int -- maps node IDs to corresponding insertion action IDs
         }
@@ -61,7 +63,8 @@ type ActionMode
 defaultProofMode : ActionMode
 defaultProofMode =
     ProofMode
-        { interaction = Interacting Expansion
+        { interaction = Interacting
+        , interactionMode = Expansion
         , copyMode = Iteration
         }
 
@@ -69,7 +72,8 @@ defaultProofMode =
 defaultEditMode : ActionMode
 defaultEditMode =
     EditMode
-        { interaction = Operating Insertion
+        { interaction = Operating
+        , operationMode = Insertion
         , newAtomName = ""
         , insertions = Dict.empty
         }
@@ -283,6 +287,20 @@ changeActionMode mode session =
             commitInsertions session
     in
     { newSession | actionMode = mode }
+
+
+changeOperationMode : OperationMode -> Session -> Session
+changeOperationMode mode session =
+    let
+        newActionMode =
+            case session.actionMode of
+                EditMode modeData ->
+                    EditMode { modeData | operationMode = mode }
+
+                _ ->
+                    session.actionMode
+    in
+    { session | actionMode = newActionMode }
 
 
 changeExecMode : ExecMode -> Session -> Session

@@ -26,6 +26,7 @@ type Msg
     | ExecAll
     | Step
     | ChangeActionMode ActionMode
+    | ChangeOperationMode OperationMode
     | ChangeExecMode ExecMode
     | ToggleRecording Bool
     | ToggleCopyMode Bool
@@ -96,10 +97,10 @@ handleDragDropMsg dndMsg model =
                                 defaultMode =
                                     case session.actionMode of
                                         ProofMode modeData ->
-                                            ProofMode { modeData | interaction = Interacting Expansion, copyMode = Iteration }
+                                            ProofMode { modeData | interaction = Interacting, copyMode = Iteration }
 
                                         EditMode modeData ->
-                                            EditMode { modeData | interaction = Operating Insertion }
+                                            EditMode { modeData | interaction = Operating }
 
                                         _ ->
                                             session.actionMode
@@ -192,6 +193,9 @@ update msg model =
 
         ChangeActionMode mode ->
             ( { model | playground = changeActionMode mode model.playground }, Cmd.none )
+
+        ChangeOperationMode mode ->
+            ( { model | playground = changeOperationMode mode model.playground }, Cmd.none )
 
         ChangeExecMode mode ->
             ( { model | playground = changeExecMode mode model.playground }, Cmd.none )
