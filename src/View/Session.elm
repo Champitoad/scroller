@@ -2,14 +2,13 @@ module View.Session exposing (..)
 
 import Color
 import Css
-import Css.Global exposing (children)
 import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
 import FeatherIcons as Icons
-import Html.Attributes exposing (title)
+import Html.Attributes
 import Html5.DragDrop as DnD
 import Model.App exposing (..)
 import Model.Formula as Formula exposing (..)
@@ -25,24 +24,22 @@ import View.Toolbar exposing (toolbarHeight)
 import View.Widgets as Widgets exposing (..)
 
 
-viewClickAction : Session -> Action -> Color -> String -> List (Attribute Msg)
-viewClickAction session action color titleText =
+viewClickAction : Session -> Shape -> Color -> Action -> List (Attribute Msg)
+viewClickAction session shape color action =
     case applicable action session of
         Err _ ->
             []
 
         Ok _ ->
-            Utils.Events.onClick (Apply session.route action)
-                :: (htmlAttribute <| title titleText)
-                :: (actionable (Apply session.route action) color).active
+            (actionable (Apply session.route action) shape color).active
 
 
 deleteAction : Session -> Id -> List (Attribute Msg)
 deleteAction session id =
     viewClickAction session
-        (Delete id)
+        (getShape id session.net)
         destroyColor
-        "Delete"
+        (Delete id)
 
 
 drawInsertedBorder : Bool -> List (Attribute msg)
@@ -173,18 +170,16 @@ viewNode dnd session ((TNode { id, node }) as tree) =
                 , el [ alignRight ] elimIndicator
                 ]
 
-        ( nodeShapeEl, nodeHeight, nodeBorderRadius ) =
+        ( nodeShapeEl, nodeHeight ) =
             case node.shape of
                 Formula form ->
                     ( viewFormula dnd session id form
                     , height shrink
-                    , styleAttr "border-radius" "none"
                     )
 
                 Sep _ _ ->
                     ( viewSep dnd session tree
                     , height fill
-                    , sepBorderRadius
                     )
 
         dragColor =
@@ -303,7 +298,7 @@ viewNode dnd session ((TNode { id, node }) as tree) =
                 ++ [ width fill
                    , centerY
                    , nodeHeight
-                   , nodeBorderRadius
+                   , shapeBorderRadius node.shape
                    , onClick DoNothing
                    ]
             )
@@ -359,9 +354,9 @@ viewFormula dnd session id formula =
 
                             _ ->
                                 viewClickAction session
-                                    (Decompose id)
+                                    (Formula formula)
                                     pink
-                                    "Decompose"
+                                    (Decompose id)
 
                     else
                         []
@@ -412,7 +407,7 @@ viewOutloop dnd session id content =
             case session.actionMode of
                 ProofMode { interaction } ->
                     if interaction == Interacting then
-                        viewClickAction session (Close id) collapseColor "Close"
+                        viewClickAction session (getShape id session.net) collapseColor (Close id)
 
                     else
                         []
@@ -887,6 +882,18 @@ viewNodes dnd session ctx trees =
                         )
                         none
 
+                leftDropZone pos =
+                    case session.actionMode of
+                        EditMode { interaction } ->
+                            if interaction == Reordering then
+                                [ onLeft (dropZone pos) ]
+
+                            else
+                                []
+
+                        _ ->
+                            []
+
                 sperse pos ((TNode { node }) as tree) =
                     let
                         lastDropzone =
@@ -901,8 +908,8 @@ viewNodes dnd session ctx trees =
                          , height fill
                          , centerX
                          , centerY
-                         , onLeft (dropZone pos)
                          ]
+                            ++ leftDropZone pos
                             ++ lastDropzone
                         )
                         (nodeEl tree)
@@ -929,7 +936,7 @@ viewNodes dnd session ctx trees =
                         _ ->
                             []
             in
-            wrappedRow attrs (nodesEls ++ addOTokenZone)
+            wrappedRow attrs nodesEls
 
         normal () =
             let

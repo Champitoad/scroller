@@ -4,6 +4,7 @@ import Color
 import Element exposing (..)
 import Element.Background as Background
 import Element.Font as Font
+import Element.Input as Input
 import Html.Attributes exposing (style)
 import Model.App exposing (..)
 import Model.Scroll exposing (..)
@@ -173,6 +174,16 @@ sepBorderRadius =
         )
 
 
+shapeBorderRadius : Shape -> Attribute msg
+shapeBorderRadius shape =
+    case shape of
+        Formula _ ->
+            styleAttr "border-radius" "none"
+
+        Sep _ _ ->
+            sepBorderRadius
+
+
 type alias ZoneStyle msg =
     { borderWidth : Int
     , active : List (Attribute msg)
@@ -180,8 +191,8 @@ type alias ZoneStyle msg =
     }
 
 
-actionable : msg -> Color -> ZoneStyle msg
-actionable msg color =
+actionable : msg -> Shape -> Color -> ZoneStyle msg
+actionable msg shape color =
     let
         borderWidth =
             5
@@ -189,28 +200,31 @@ actionable msg color =
         border =
             [ styleAttr "border-width" (String.fromInt borderWidth ++ "px")
             , styleAttr "border-style" "dotted"
-            , styleAttr "border-radius" (String.fromInt sepBorderRound ++ "px")
             , styleAttr "border-color" (color |> Utils.Color.fromElement |> Color.toCssString)
+            , shapeBorderRadius shape
             ]
 
-        mouseOverAttrs =
-            [ Background.color (color |> Utils.Color.fromElement |> Utils.Color.withAlpha 0.4 |> Utils.Color.toElement) ]
+        hoverColor =
+            color |> Utils.Color.fromElement |> Utils.Color.withAlpha 0.4
 
-        mouseDownAttrs =
-            [ Background.color (color |> Utils.Color.fromElement |> Utils.Color.withAlpha 0.6 |> Utils.Color.toElement) ]
+        activeColor =
+            color |> Utils.Color.fromElement |> Utils.Color.withAlpha 0.5
     in
     { borderWidth = borderWidth
     , active =
         inFront
-            (el
+            (Input.button
                 [ width fill
                 , height fill
+                , shapeBorderRadius shape
                 , pointer
-                , mouseOver mouseOverAttrs
-                , mouseDown mouseDownAttrs
+                , mouseDown [ Background.color (activeColor |> Utils.Color.toElement) ]
+                , mouseOver [ Background.color (hoverColor |> Utils.Color.toElement) ]
                 , Utils.Events.onClick msg
                 ]
-                none
+                { onPress = Just msg
+                , label = none
+                }
             )
             :: border
     , inactive = border

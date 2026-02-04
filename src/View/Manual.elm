@@ -4,11 +4,17 @@ import Element exposing (..)
 import Element.Input as Input
 import FeatherIcons as Icons
 import Model.App exposing (..)
+import Model.Formula as Formula
 import Model.Scroll exposing (..)
 import Model.Session exposing (..)
 import Update.App exposing (..)
 import View.Session exposing (..)
 import View.Style as Style exposing (..)
+
+
+dummyForm : Shape
+dummyForm =
+    Formula (Formula.atom "")
 
 
 mkIcon : Float -> Icons.Icon -> Element msg
@@ -158,14 +164,14 @@ body { manualExamples, dragDrop } =
             , par [ t "Flowers can be ", b "proved", t ", ", b "edited", t " and ", b "navigated", t "." ]
             , h1 proofIcon "Proof Mode"
             , h2 "QED"
-            , par [ t "Click on an ", el (actionable DoNothing green).active (text "empty inloop"), t " to erase its flower." ]
+            , par [ t "Click on an ", el (actionable DoNothing dummyForm green).active (text "empty inloop"), t " to erase its flower." ]
             , sandbox "QED"
             , par [ t "Note that emptiness is interpreted as ", b "truth", t "." ]
             , h2 "Justify"
-            , par [ t "Click on an ", el (actionable DoNothing green).active (text "atom"), t " to erase it." ]
+            , par [ t "Click on an ", el (actionable DoNothing dummyForm green).active (text "atom"), t " to erase it." ]
             , sandbox "Justify"
             , h2 "Unlock"
-            , par [ t "Click on an ", el (actionable DoNothing collapseColor).active (text "empty outloop"), t " to unlock its inloop." ]
+            , par [ t "Click on an ", el (actionable DoNothing dummyForm collapseColor).active (text "empty outloop"), t " to unlock its inloop." ]
             , sandbox "Unlock"
             , par [ t "Note that flowers can be ", b "nested", t " inside each other." ]
             , h2 "Import"
@@ -178,10 +184,10 @@ body { manualExamples, dragDrop } =
                 ]
             , sandbox "Import"
             , h2 "Case"
-            , par [ t "Click on an ", el (actionable DoNothing collapseColor).active (text "empty outloop"), t " to turn its attached inloops into outloops." ]
+            , par [ t "Click on an ", el (actionable DoNothing dummyForm collapseColor).active (text "empty outloop"), t " to turn its attached inloops into outloops." ]
             , sandbox "Case"
             , h2 "Decompose"
-            , par [ t "Click on a ", el (actionable DoNothing pink).active (text "symbolic formula"), t " to turn it into a flower." ]
+            , par [ t "Click on a ", el (actionable DoNothing dummyForm pink).active (text "symbolic formula"), t " to turn it into a flower." ]
             , sandbox "Decompose"
             , h1 editIcon "Edit Mode"
             , par [ t "Coming soon!" ]
