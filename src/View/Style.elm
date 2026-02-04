@@ -204,6 +204,9 @@ actionable msg shape color =
             , shapeBorderRadius shape
             ]
 
+        bgColor =
+            color |> Utils.Color.fromElement |> Utils.Color.withAlpha 0.1
+
         hoverColor =
             color |> Utils.Color.fromElement |> Utils.Color.withAlpha 0.4
 
@@ -218,6 +221,7 @@ actionable msg shape color =
                 , height fill
                 , shapeBorderRadius shape
                 , pointer
+                , Background.color (bgColor |> Utils.Color.toElement)
                 , mouseDown [ Background.color (activeColor |> Utils.Color.toElement) ]
                 , mouseOver [ Background.color (hoverColor |> Utils.Color.toElement) ]
                 , Utils.Events.onClick msg
