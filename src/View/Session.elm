@@ -339,23 +339,24 @@ viewFormula dnd session id formula =
         clickAction =
             case session.actionMode of
                 ProofMode { interaction } ->
-                    if interaction == Interacting then
-                        case formula of
-                            Atom _ ->
-                                []
+                    case interaction of
+                        Interacting _ ->
+                            case formula of
+                                Atom _ ->
+                                    []
 
-                            _ ->
-                                viewClickAction session
-                                    (Decompose id)
-                                    pinkActionable
-                                    "Decompose"
+                                _ ->
+                                    viewClickAction session
+                                        (Decompose id)
+                                        pinkActionable
+                                        "Decompose"
 
-                    else
-                        []
+                        _ ->
+                            []
 
                 EditMode { interaction } ->
                     case interaction of
-                        Operating ->
+                        Operating _ ->
                             deleteAction session id
 
                         _ ->
@@ -367,11 +368,12 @@ viewFormula dnd session id formula =
         dragAction =
             case session.actionMode of
                 ProofMode { interaction } ->
-                    if interaction == Interacting then
-                        View.Events.dragAction useColor dnd session.route id
+                    case interaction of
+                        Interacting _ ->
+                            View.Events.dragAction useColor dnd session.route id
 
-                    else
-                        []
+                        _ ->
+                            []
 
                 EditMode _ ->
                     View.Events.dragAction reorderColor dnd session.route id
@@ -406,15 +408,16 @@ viewOutloop dnd session id content =
         clickAction =
             case session.actionMode of
                 ProofMode { interaction } ->
-                    if interaction == Interacting then
-                        viewClickAction session (Close id) collapseActionable "Close"
+                    case interaction of
+                        Interacting _ ->
+                            viewClickAction session (Close id) collapseActionable "Close"
 
-                    else
-                        []
+                        _ ->
+                            []
 
                 EditMode { interaction } ->
                     case interaction of
-                        Operating ->
+                        Operating _ ->
                             deleteAction session id
 
                         _ ->

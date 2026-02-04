@@ -96,10 +96,10 @@ handleDragDropMsg dndMsg model =
                                 defaultMode =
                                     case session.actionMode of
                                         ProofMode modeData ->
-                                            ProofMode { modeData | interaction = Interacting, copyMode = Iteration }
+                                            ProofMode { modeData | interaction = Interacting Expansion, copyMode = Iteration }
 
                                         EditMode modeData ->
-                                            EditMode { modeData | interaction = Operating }
+                                            EditMode { modeData | interaction = Operating Insertion }
 
                                         _ ->
                                             session.actionMode

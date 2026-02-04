@@ -25,13 +25,23 @@ type CopyMode
     | Deiteration
 
 
+type InteractionMode
+    = Expansion
+    | Collapse
+
+
 type ProofInteraction
-    = Interacting
+    = Interacting InteractionMode
     | Justifying CopyMode -- Drag-and-Drop, store the copy mode defined before starting drag
 
 
+type OperationMode
+    = Insertion
+    | Deletion
+
+
 type EditInteraction
-    = Operating
+    = Operating OperationMode
     | Reordering -- Drag-and-Drop
 
 
@@ -51,7 +61,7 @@ type ActionMode
 defaultProofMode : ActionMode
 defaultProofMode =
     ProofMode
-        { interaction = Interacting
+        { interaction = Interacting Expansion
         , copyMode = Iteration
         }
 
@@ -59,7 +69,7 @@ defaultProofMode =
 defaultEditMode : ActionMode
 defaultEditMode =
     EditMode
-        { interaction = Operating
+        { interaction = Operating Insertion
         , newAtomName = ""
         , insertions = Dict.empty
         }

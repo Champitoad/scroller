@@ -173,7 +173,7 @@ viewActionModeSelector currentMode =
         [ item defaultProofMode Start
         , item
             (EditMode
-                { interaction = Operating
+                { interaction = Operating Insertion
                 , newAtomName = ""
                 , insertions = Dict.empty
                 }
