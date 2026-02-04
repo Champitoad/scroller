@@ -300,6 +300,8 @@ viewNode dnd session ((TNode { id, node }) as tree) =
                    , nodeHeight
                    , shapeBorderRadius node.shape
                    , onClick DoNothing
+                   , styleAttr "position" "relative"
+                   , styleAttr "z-index" "1"
                    ]
             )
             nodeShapeEl

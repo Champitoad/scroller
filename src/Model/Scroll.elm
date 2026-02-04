@@ -417,6 +417,11 @@ getPolarityContext ctx net =
             invert (getPolarity parentId net)
 
 
+getDepth : Id -> Net -> Int
+getDepth =
+    foldAncestors (\_ -> (+) 1) 0
+
+
 getLocation : Id -> Net -> Location
 getLocation id net =
     case getContext id net of
