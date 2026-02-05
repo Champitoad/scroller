@@ -1061,7 +1061,7 @@ removeSingleNode id net =
                 insertChildIds net.roots
 
             Inside _ ->
-                List.Extra.remove id net.roots
+                net.roots
     }
 
 

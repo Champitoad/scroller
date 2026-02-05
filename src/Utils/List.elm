@@ -30,11 +30,11 @@ pivot n l =
     let
         aux acc n_ l_ =
             case ( l_, n_ ) of
-                ( x :: t, _ ) ->
-                    aux (x :: acc) (n - 1) t
-
                 ( _, 0 ) ->
                     ( List.reverse acc, l_ )
+
+                ( x :: t, _ ) ->
+                    aux (x :: acc) (n_ - 1) t
 
                 ( [], _ ) ->
                     ( List.reverse acc, l_ )
