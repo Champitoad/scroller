@@ -90,19 +90,30 @@ viewNode dnd session ((TNode { id, node }) as tree) =
                                     False
 
                         commonAttrs =
-                            [ width (fill |> minimum 10)
-                            , height (indicatorHeight - 2 |> px)
-                            , foregroundColor node.polarity |> Utils.Color.elementAttr
+                            [ centerX
+                            , Utils.Color.elementAttr <| foregroundColor node.polarity
                             , nameFontFamily
+                            , styleAttr "z-index" "1"
                             ]
+
+                        approxCharWidth =
+                            13
+
+                        calculatedWidth =
+                            String.length node.name * approxCharWidth
+
+                        inputWidth =
+                            max 60 calculatedWidth
                     in
                     if isRenaming then
                         Input.text
                             (commonAttrs
-                                ++ [ padding 0
+                                ++ [ width (inputWidth |> px)
+                                   , paddingXY 0 2
                                    , Background.color Style.transparent
                                    , Border.width 0
                                    , htmlAttribute (Html.Attributes.id "renaming-input")
+                                   , Font.center
                                    ]
                             )
                             { onChange = Rename id
@@ -114,9 +125,13 @@ viewNode dnd session ((TNode { id, node }) as tree) =
                     else
                         el
                             (commonAttrs
-                                ++ [ Font.center
+                                ++ [ width (fill |> minimum 10)
+                                   , height (indicatorHeight |> px)
+                                   , Font.center
                                    , Utils.Events.onClick (StartRenaming id)
                                    , htmlAttribute (Html.Attributes.style "cursor" "text")
+                                   , mouseOver [ Background.color (rgba 0.5 0.5 0.5 0.2) ]
+                                   , styleAttr "padding" "3px 0 0 0"
                                    ]
                             )
                             (text <|
@@ -196,7 +211,7 @@ viewNode dnd session ((TNode { id, node }) as tree) =
                         none
             in
             row
-                [ width fill, spacing 10 ]
+                [ width fill, spacing 3 ]
                 [ el [ alignLeft ] introIndicator
                 , el [ width fill ] nameEl
                 , el [ alignRight ] elimIndicator

@@ -211,7 +211,7 @@ actionable msg shape color =
             color |> Utils.Color.fromElement |> Utils.Color.withAlpha 0.0
 
         hoverColor =
-            color |> Utils.Color.fromElement |> Utils.Color.withAlpha 0.1
+            color |> Utils.Color.fromElement |> Utils.Color.withAlpha 0.0
 
         activeColor =
             color |> Utils.Color.fromElement |> Utils.Color.withAlpha 0.5

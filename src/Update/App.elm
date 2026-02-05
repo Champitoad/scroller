@@ -167,7 +167,7 @@ update msg model =
                             focusRenamingInput
 
                         Nothing ->
-                            Cmd.none
+                            focusApp
             in
             ( setSessionWithHistory route newSession model, cmd )
 
