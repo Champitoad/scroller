@@ -1032,7 +1032,7 @@ removeSingleNode id net =
                 pos =
                     List.Extra.elemIndex id listIds
                         -- Dummy ID, should never happen
-                        |> Maybe.withDefault (Debug.log "" -1)
+                        |> Maybe.withDefault -1
             in
             listIds
                 |> List.Extra.removeAt pos
