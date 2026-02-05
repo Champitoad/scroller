@@ -603,7 +603,7 @@ applicable action session =
             if getPolarityContext dst.ctx session.net /= deletionPolarity session.execMode then
                 Err InvalidPolarity
 
-            else if not (scopes src dst.ctx session.net) then
+            else if not (scopes src dst.ctx (boundary session)) then
                 Err (OutOfScope src)
 
             else if isErased src session || isErasedContext dst.ctx session then
@@ -616,7 +616,7 @@ applicable action session =
             if getPolarity tgt session.net /= insertionPolarity session.execMode then
                 Err InvalidPolarity
 
-            else if src == tgt || not (scopes src (getContext tgt session.net) session.net) then
+            else if src == tgt || not (scopes src (getContext tgt session.net) (boundary session)) then
                 Err (OutOfScope src)
 
             else if isErased src session || isErased tgt session then
