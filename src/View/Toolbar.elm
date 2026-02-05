@@ -481,7 +481,7 @@ viewCopyModeToggle copyMode =
                     False
     in
     toggle
-        { color = modeSelectorColor
+        { color = useColor |> Utils.Color.toElement
         , iconOn = Icons.copy
         , iconOff = Icons.copy
         , title = "Deiterate"
