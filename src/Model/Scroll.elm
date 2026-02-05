@@ -1206,8 +1206,8 @@ freshName basename net =
 -}
 
 
-insert : Bool -> Location -> IToken -> Net -> Net
-insert self loc tok net =
+insert : Bool -> Maybe String -> Location -> IToken -> Net -> Net
+insert self name loc tok net =
     let
         newTree =
             hydrateIToken loc.ctx (getPolarityContext loc.ctx net) tok |> State.eval 0
@@ -1229,9 +1229,12 @@ insert self loc tok net =
                 ( ISep _, Pos ) ->
                     "Continuation"
 
+        nodeName =
+            Maybe.withDefault (freshName basename net) name
+
         ins =
             dehydrateTree newTree
-                |> updateName newId (\_ -> freshName basename net)
+                |> updateName newId (\_ -> nodeName)
                 |> updateJustif newId
                     (\j ->
                         if self then

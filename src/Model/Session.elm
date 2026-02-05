@@ -559,7 +559,7 @@ actionTransform execMode action =
             updateInteraction id (annotateExpansion (flipExecMode execMode))
 
         Insert loc tok ->
-            insert True loc tok
+            insert True Nothing loc tok
 
         Delete id ->
             delete id

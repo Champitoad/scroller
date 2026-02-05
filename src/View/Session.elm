@@ -35,7 +35,7 @@ viewClickAction session shape color action =
                     case action of
                         Insert loc tok ->
                             if existsAncestorContext (\ancId -> isInserted ancId session) loc.ctx session.net then
-                                Transform session.route (Session.map (insert False loc tok))
+                                Transform session.route (Session.map (insert False (Just "") loc tok))
 
                             else
                                 Apply session.route (Insert loc tok)
