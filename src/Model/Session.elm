@@ -570,8 +570,15 @@ actionTransform execMode action =
             graft loc openedScroll
 
         Close id ->
-            updateInteraction id (annotateExpansion (flipExecMode execMode))
+            \net ->
+                case getChildIds id net |> List.filter (\cid -> isInloop cid net) of
+                    [ inloopId ] ->
+                        updateInteraction inloopId (annotateExpansion (flipExecMode execMode)) net
 
+                    _ ->
+                        net
+
+        -- Do nothing, should never happen
         Insert loc tok ->
             insert True Nothing loc tok
 

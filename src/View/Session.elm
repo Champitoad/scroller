@@ -46,14 +46,6 @@ viewClickAction session shape color action =
             (actionable msg shape color).active
 
 
-deleteAction : Session -> Id -> List (Attribute Msg)
-deleteAction session id =
-    viewClickAction session
-        (Just (getShape id session.net))
-        destroyColor
-        (Delete id)
-
-
 drawInsertedBorder : Bool -> List (Attribute msg)
 drawInsertedBorder doit =
     if doit then
@@ -64,10 +56,10 @@ drawInsertedBorder doit =
 
 
 viewNode : DnD -> Session -> Tree -> Element Msg
-viewNode dnd session ((TNode { id, node }) as tree) =
+viewNode dnd session ((TNode { id, node, children }) as tree) =
     let
         debug =
-            False
+            True
 
         inForwardMode =
             case session.execMode of
@@ -343,13 +335,36 @@ viewNode dnd session ((TNode { id, node }) as tree) =
                     []
 
         clickAction =
+            let
+                viewAction =
+                    viewClickAction session (Just (getShape id session.net))
+            in
             case session.actionMode of
-                EditMode { interaction, operationMode } ->
-                    if interaction == Operating && operationMode == Deletion then
-                        deleteAction session id
+                ProofMode { interaction, interactionMode } ->
+                    case ( interaction, interactionMode ) of
+                        ( Interacting, Collapse ) ->
+                            viewAction collapseColor (Close id)
 
-                    else
-                        []
+                        _ ->
+                            []
+
+                EditMode { interaction, operationMode } ->
+                    case ( interaction, operationMode ) of
+                        ( Operating, IInsertion ) ->
+                            let
+                                loc =
+                                    { ctx = Inside id, pos = List.length children }
+
+                                tok =
+                                    ISep []
+                            in
+                            viewAction createColor (Insert loc tok)
+
+                        ( Operating, Deletion ) ->
+                            viewAction destroyColor (Delete id)
+
+                        _ ->
+                            []
 
                 _ ->
                     []
@@ -512,7 +527,7 @@ addButton params =
 newOToken : String -> OToken
 newOToken newAtomName =
     if String.isEmpty newAtomName then
-        emptyScroll
+        OSep []
 
     else
         case newAtomName of
@@ -691,22 +706,16 @@ viewNodes dnd session ctx trees =
                                 expandColor
                                 (Open newNodeLoc)
 
-                        -- ( Interacting, Collapse, Inside sepId ) ->
-                        --     viewClickAction session
-                        --         (Just (getShape sepId session.net))
-                        --         collapseColor
-                        --         (Close sepId)
                         _ ->
                             []
 
                 EditMode { interaction, operationMode, newAtomName } ->
                     case ( interaction, operationMode ) of
                         ( Operating, OInsertion ) ->
-                            Debug.log "" <|
-                                viewClickAction session
-                                    Nothing
-                                    createColor
-                                    (Insert newNodeLoc (ITok (newOToken newAtomName)))
+                            viewClickAction session
+                                Nothing
+                                createColor
+                                (Insert newNodeLoc (ITok (newOToken newAtomName)))
 
                         _ ->
                             []

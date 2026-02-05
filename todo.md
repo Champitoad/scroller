@@ -1,7 +1,5 @@
 # Next
 
-- Insert inner token actions
-- Fix `Close` actions
 - Fix `Reorder` actions
 
 # Features

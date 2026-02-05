@@ -1012,7 +1012,48 @@ netOfStruct =
 
 removeSingleNode : Id -> Net -> Net
 removeSingleNode id net =
-    { nodes = Dict.remove id net.nodes
+    { nodes =
+        let
+            ctx =
+                getContext id net
+
+            childIds =
+                getChildIds id net
+
+            withChildrenUpdated =
+                List.foldl
+                    (\childId acc ->
+                        updateContext childId (\_ -> ctx) acc
+                    )
+                    net
+                    childIds
+
+            withParentUpdated =
+                case ctx of
+                    Inside parentId ->
+                        case getShape parentId net of
+                            Sep neighborIds int ->
+                                let
+                                    pos =
+                                        List.Extra.elemIndex id neighborIds
+                                            -- Dummy ID, should never happen
+                                            |> Maybe.withDefault -1
+
+                                    newNeighborIds =
+                                        neighborIds
+                                            |> List.Extra.removeAt pos
+                                            |> Utils.List.insert pos childIds
+                                in
+                                withChildrenUpdated
+                                    |> updateShape parentId (\_ -> Sep newNeighborIds int)
+
+                            _ ->
+                                net
+
+                    TopLevel ->
+                        net
+        in
+        Dict.remove id withParentUpdated.nodes
     , roots = List.Extra.remove id net.roots
     }
 
@@ -1471,34 +1512,60 @@ forgetProof net =
         net.nodes
 
 
-premiss : Net -> Net
-premiss net =
+removeScrollNodes : Bool -> Id -> Net -> Net
+removeScrollNodes isForward id net =
+    case ( getInloopInteraction id net, getContext id net ) of
+        ( Just int, Inside outloopId ) ->
+            if
+                if isForward then
+                    int.closed
+
+                else
+                    int.opened
+            then
+                net
+                    |> removeSingleNode id
+                    |> removeSingleNode outloopId
+
+            else
+                net
+
+        _ ->
+            net
+
+
+boundary : Bool -> Net -> Net
+boundary isForward net =
     Dict.foldl
         (\id _ acc ->
-            if isCreated id net then
+            if
+                (if isForward then
+                    isDestroyed
+
+                 else
+                    isCreated
+                )
+                    id
+                    net
+            then
                 prune id acc
 
             else
-                acc
+                removeScrollNodes isForward id acc
         )
         net
         net.nodes
         |> forgetProof
+
+
+premiss : Net -> Net
+premiss =
+    boundary False
 
 
 conclusion : Net -> Net
-conclusion net =
-    Dict.foldl
-        (\id _ acc ->
-            if isDestroyed id net then
-                prune id acc
-
-            else
-                acc
-        )
-        net
-        net.nodes
-        |> forgetProof
+conclusion =
+    boundary True
 
 
 tokenOfTree : Tree -> IToken
@@ -1615,10 +1682,10 @@ stringOfJustification net { self, from } =
 
         fromText =
             case from of
-                Just copy ->
+                Just ((Direct _) as copy) ->
                     stringOfOrigin net copy ++ "/"
 
-                Nothing ->
+                _ ->
                     ""
     in
     fromText ++ selfText
