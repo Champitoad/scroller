@@ -7,7 +7,6 @@ import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
-import FeatherIcons as Icons
 import Html.Attributes
 import Html5.DragDrop as DnD
 import Model.App exposing (..)
@@ -21,7 +20,7 @@ import Utils.Events exposing (onClick)
 import View.Events
 import View.Style as Style exposing (..)
 import View.Toolbar exposing (toolbarHeight)
-import View.Widgets as Widgets exposing (..)
+import View.Widgets exposing (..)
 
 
 viewClickAction : Session -> Maybe Shape -> Color -> Action -> List (Attribute Msg)
@@ -31,7 +30,20 @@ viewClickAction session shape color action =
             []
 
         Ok _ ->
-            (actionable (Apply session.route action) shape color).active
+            let
+                msg =
+                    case action of
+                        Insert loc tok ->
+                            if existsAncestorContext (\ancId -> isInserted ancId session) loc.ctx session.net then
+                                Transform session.route (Session.map (insert False loc tok))
+
+                            else
+                                Apply session.route (Insert loc tok)
+
+                        _ ->
+                            Apply session.route action
+            in
+            (actionable msg shape color).active
 
 
 deleteAction : Session -> Id -> List (Attribute Msg)
@@ -482,59 +494,6 @@ addButton params =
     iconButton style params
 
 
-insertMsg : Session -> Location -> IToken -> Msg
-insertMsg session loc tok =
-    if existsAncestorContext (\ancId -> isInserted ancId session) loc.ctx session.net then
-        Transform session.route (Session.map (insert False loc tok))
-
-    else
-        Apply session.route (Insert loc tok)
-
-
-viewAddInloopZone : Session -> Id -> List (Element Msg)
-viewAddInloopZone session outloopId =
-    let
-        pos =
-            List.length (getChildIds outloopId session.net)
-
-        loc =
-            { ctx = Inside outloopId, pos = pos }
-
-        tok =
-            ISep []
-
-        kindStr =
-            case getPolarityContext loc.ctx session.net of
-                Pos ->
-                    "continuation"
-
-                Neg ->
-                    "branch"
-
-        addInloopButton =
-            addButton
-                { action = Msg (insertMsg session loc tok)
-                , title = "Insert new " ++ kindStr
-                , icon = Icons.plusSquare
-                , enabled = True
-                }
-    in
-    case ( session.actionMode, applicable (Insert loc tok) session ) of
-        ( EditMode _, Ok _ ) ->
-            [ el
-                [ width shrink
-                , height fill
-                , padding 10
-                , sepBorderRadius
-                , Background.color (backgroundColor (invert (getPolarity outloopId session.net)))
-                ]
-                addInloopButton
-            ]
-
-        _ ->
-            []
-
-
 newOToken : String -> OToken
 newOToken newAtomName =
     if String.isEmpty newAtomName then
@@ -571,54 +530,6 @@ newOToken newAtomName =
 
             _ ->
                 OForm (Formula.atom newAtomName)
-
-
-viewAddOTokenZone : Session -> Context -> String -> Element Msg
-viewAddOTokenZone session ctx newAtomName =
-    let
-        neighbors =
-            getChildIdsContext ctx session.net
-
-        loc =
-            { ctx = ctx, pos = List.length neighbors }
-
-        tok =
-            ITok (newOToken newAtomName)
-
-        kindStr =
-            case getPolarityContext ctx session.net of
-                Pos ->
-                    "value"
-
-                Neg ->
-                    "parameter"
-
-        addOTokenButton =
-            el
-                [ width fill
-                , height fill
-                ]
-                (addButton
-                    { action = Msg (insertMsg session loc tok)
-                    , title = "Insert new " ++ kindStr
-                    , icon = Icons.plus
-                    , enabled = True
-                    }
-                )
-    in
-    case ( session.actionMode, applicable (Insert loc tok) session ) of
-        ( EditMode _, Ok _ ) ->
-            column
-                [ width shrink
-                , height fill
-                , centerX
-                , sepBorderRadius
-                , Background.color Style.transparent
-                ]
-                [ addOTokenButton ]
-
-        _ ->
-            none
 
 
 isDeiterationTarget : DnD -> Session -> Id -> Bool
@@ -725,12 +636,16 @@ viewSep dnd session (TNode { id, node, children }) =
 
                 _ ->
                     List.map htmlAttribute <| DnD.droppable DragDropMsg Nothing
+
+        paddingValueStr =
+            "calc(5px + 2%)"
     in
     column
         ([ width fill
          , height fill
          , Background.color (foregroundColor node.polarity)
-         , sepBorderRadius
+         , shapeBorderRadius (Just node.shape)
+         , styleAttr "padding" ([ paddingValueStr, paddingValueStr, "0px", paddingValueStr ] |> List.intersperse " " |> String.concat)
          ]
             ++ sepDropAction
             ++ shadow
@@ -771,7 +686,7 @@ viewNodes dnd session ctx trees =
 
                 EditMode { interaction, operationMode, newAtomName } ->
                     case ( interaction, operationMode ) of
-                        ( Operating, Insertion ) ->
+                        ( Operating, OInsertion ) ->
                             Debug.log "" <|
                                 viewClickAction session
                                     Nothing
@@ -986,25 +901,6 @@ viewNodes dnd session ctx trees =
 
                 nodesEls =
                     List.indexedMap sperse trees
-
-                addOTokenZone =
-                    case session.actionMode of
-                        EditMode { newAtomName } ->
-                            let
-                                insertAction =
-                                    Insert
-                                        { ctx = ctx, pos = List.length neighbors }
-                                        (ITok (OForm (Formula.atom newAtomName)))
-                            in
-                            case applicable insertAction session of
-                                Ok _ ->
-                                    []
-
-                                Err _ ->
-                                    []
-
-                        _ ->
-                            []
             in
             wrappedRow attrs nodesEls
 
@@ -1069,4 +965,5 @@ viewSession dnd session =
             sessionEl ()
 
         _ ->
-            el [ sessionHeightAttr, centerX ] (Widgets.fullPageTextMessage "Working on it!")
+            -- el [ sessionHeightAttr, centerX ] (Widgets.fullPageTextMessage "Working on it!")
+            sessionEl ()

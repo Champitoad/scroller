@@ -208,17 +208,17 @@ actionable msg shape color =
             ]
 
         bgColor =
-            color |> Utils.Color.fromElement |> Utils.Color.withAlpha 0.1
+            color |> Utils.Color.fromElement |> Utils.Color.withAlpha 0.0
 
         hoverColor =
-            color |> Utils.Color.fromElement |> Utils.Color.withAlpha 0.4
+            color |> Utils.Color.fromElement |> Utils.Color.withAlpha 0.1
 
         activeColor =
             color |> Utils.Color.fromElement |> Utils.Color.withAlpha 0.5
     in
     { borderWidth = borderWidth
     , active =
-        inFront
+        [ inFront
             (Input.button
                 [ width fill
                 , height fill
@@ -233,7 +233,7 @@ actionable msg shape color =
                 , label = none
                 }
             )
-            :: border
+        ]
     , inactive = border
     }
 

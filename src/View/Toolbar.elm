@@ -157,18 +157,11 @@ viewActionModeSelector currentMode =
                     ++ changeAction
                 )
                 iconEl
-
-        borderColor =
-            rgb 0.6 0.6 0.6
     in
     row
         [ width shrink
         , height shrink
-        , spacing 1
-        , styleAttr "border-width" "0px"
-        , styleAttr "border-radius" (String.fromInt buttonBorderRadius ++ "px")
-        , styleAttr "border-color" "rgb(153, 153, 153)"
-        , Background.color borderColor
+        , spacing 2
         ]
         [ item defaultProofMode Start
         , item defaultEditMode Middle
@@ -186,7 +179,10 @@ viewOperationModeSelector currentMode =
 
                 selectedColor =
                     case mode of
-                        Insertion ->
+                        OInsertion ->
+                            createColor
+
+                        IInsertion ->
                             createColor
 
                         Deletion ->
@@ -203,8 +199,11 @@ viewOperationModeSelector currentMode =
                     let
                         ( title, icon ) =
                             case mode of
-                                Insertion ->
-                                    ( "Insert", Icons.plus )
+                                OInsertion ->
+                                    ( "Insert outer token", Icons.plus )
+
+                                IInsertion ->
+                                    ( "Insert inner token", Icons.plusSquare )
 
                                 Deletion ->
                                     ( "Delete", Icons.x )
@@ -242,20 +241,14 @@ viewOperationModeSelector currentMode =
                     ++ changeAction
                 )
                 iconEl
-
-        borderColor =
-            rgb 0.6 0.6 0.6
     in
     row
         [ width shrink
         , height shrink
-        , spacing 1
-        , styleAttr "border-width" "0px"
-        , styleAttr "border-radius" (String.fromInt buttonBorderRadius ++ "px")
-        , styleAttr "border-color" (borderColor |> Utils.Color.fromElement |> Color.toCssString)
-        , Background.color borderColor
+        , spacing 2
         ]
-        [ item Insertion Start
+        [ item OInsertion Start
+        , item IInsertion Middle
         , item Deletion End
         ]
 
@@ -340,18 +333,11 @@ viewExecModeSelector currentMode =
                     ++ changeAction
                 )
                 iconEl
-
-        borderColor =
-            rgb 0.6 0.6 0.6
     in
     row
         [ width shrink
         , height shrink
-        , spacing 1
-        , styleAttr "border-width" "0px"
-        , styleAttr "border-radius" (String.fromInt buttonBorderRadius ++ "px")
-        , styleAttr "border-color" "rgb(153, 153, 153)"
-        , Background.color borderColor
+        , spacing 2
         ]
         [ item Backward Start
         , item Forward End
@@ -405,8 +391,8 @@ toolbarHeight =
     defaultButtonSize + 2 * toolbarPadding
 
 
-viewCopyModeSelector : CopyMode -> Element Msg
-viewCopyModeSelector copyMode =
+viewCopyModeToggle : CopyMode -> Element Msg
+viewCopyModeToggle copyMode =
     let
         isDeiterating =
             case copyMode of
@@ -456,7 +442,7 @@ viewToolbar model =
                         ]
 
                     ProofMode { copyMode } ->
-                        [ viewCopyModeSelector copyMode ]
+                        [ viewCopyModeToggle copyMode ]
 
                     _ ->
                         []

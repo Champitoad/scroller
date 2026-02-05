@@ -36,7 +36,8 @@ type ProofInteraction
 
 
 type OperationMode
-    = Insertion
+    = OInsertion
+    | IInsertion
     | Deletion
 
 
@@ -73,7 +74,7 @@ defaultEditMode : ActionMode
 defaultEditMode =
     EditMode
         { interaction = Operating
-        , operationMode = Insertion
+        , operationMode = OInsertion
         , newAtomName = ""
         , insertions = Dict.empty
         }
