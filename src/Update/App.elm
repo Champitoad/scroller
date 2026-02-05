@@ -106,7 +106,7 @@ handleDragDropMsg dndMsg model =
                                 defaultMode =
                                     case session.actionMode of
                                         ProofMode modeData ->
-                                            ProofMode { modeData | interaction = Interacting, copyMode = Iteration }
+                                            ProofMode { modeData | interaction = Interacting }
 
                                         EditMode modeData ->
                                             EditMode { modeData | interaction = Operating }
@@ -300,9 +300,6 @@ update msg model =
 
         SetDragModifiers { alt } ->
             case model.playground.actionMode of
-                ProofMode _ ->
-                    update (ToggleCopyMode alt) model
-
                 EditMode _ ->
                     update (ToggleInsertionMode alt) model
 
