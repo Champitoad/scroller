@@ -1,7 +1,6 @@
 # Next
 
-- `Deiteration` actions
-- `Open` actions
+- Insert inner token actions
 - Fix `Close` actions
 - Fix `Reorder` actions
 

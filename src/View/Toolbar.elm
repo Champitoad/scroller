@@ -168,6 +168,83 @@ viewActionModeSelector currentMode =
         ]
 
 
+viewInteractionModeSelector : InteractionMode -> Element Msg
+viewInteractionModeSelector currentMode =
+    let
+        item mode position =
+            let
+                isSelected =
+                    mode == currentMode
+
+                selectedColor =
+                    case mode of
+                        Expansion ->
+                            expandColor
+
+                        Collapse ->
+                            collapseColor
+
+                ( bgColor, fgColor ) =
+                    if isSelected then
+                        ( selectedColor, rgb 1 1 1 )
+
+                    else
+                        ( rgb 1 1 1, rgb 0 0 0 )
+
+                ( iconEl, titleText ) =
+                    let
+                        ( title, icon ) =
+                            case mode of
+                                Expansion ->
+                                    ( "Open scroll", Icons.maximize2 )
+
+                                Collapse ->
+                                    ( "Close scroll", Icons.minimize2 )
+
+                        elem =
+                            el
+                                [ centerX, centerY ]
+                                (icon
+                                    |> Icons.withSize 30
+                                    |> Icons.toHtml
+                                        [ fgColor
+                                            |> Utils.Color.fromElement
+                                            |> Utils.Color.htmlAttr
+                                        ]
+                                    |> html
+                                )
+                    in
+                    ( elem, title )
+
+                borderRound =
+                    modeSelectorBorderRound position
+
+                changeAction =
+                    [ Events.onClick (ChangeInteractionMode mode)
+                    , pointer
+                    ]
+            in
+            el
+                ([ width (60 |> px)
+                 , height (defaultButtonSize |> px)
+                 , Background.color bgColor
+                 , styleAttr "border-radius" borderRound
+                 , htmlAttribute <| Html.Attributes.title titleText
+                 ]
+                    ++ changeAction
+                )
+                iconEl
+    in
+    row
+        [ width shrink
+        , height shrink
+        , spacing 2
+        ]
+        [ item Expansion Start
+        , item Collapse End
+        ]
+
+
 viewOperationModeSelector : OperationMode -> Element Msg
 viewOperationModeSelector currentMode =
     let
@@ -427,7 +504,7 @@ viewToolbar model =
         actionToolZone =
             row
                 [ paddingXY 15 0
-                , spacing 10
+                , spacing 20
                 , centerX
                 ]
                 (case model.playground.actionMode of
@@ -440,8 +517,10 @@ viewToolbar model =
                         , viewOperationModeSelector operationMode
                         ]
 
-                    ProofMode { copyMode } ->
-                        [ viewCopyModeToggle copyMode ]
+                    ProofMode { interactionMode, copyMode } ->
+                        [ viewCopyModeToggle copyMode
+                        , viewInteractionModeSelector interactionMode
+                        ]
 
                     _ ->
                         []

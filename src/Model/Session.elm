@@ -304,6 +304,20 @@ changeOperationMode mode session =
     { session | actionMode = newActionMode }
 
 
+changeInteractionMode : InteractionMode -> Session -> Session
+changeInteractionMode mode session =
+    let
+        newActionMode =
+            case session.actionMode of
+                ProofMode modeData ->
+                    ProofMode { modeData | interactionMode = mode }
+
+                _ ->
+                    session.actionMode
+    in
+    { session | actionMode = newActionMode }
+
+
 changeExecMode : ExecMode -> Session -> Session
 changeExecMode mode session =
     { session | execMode = mode }

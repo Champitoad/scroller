@@ -27,6 +27,7 @@ type Msg
     | Step
     | ChangeActionMode ActionMode
     | ChangeOperationMode OperationMode
+    | ChangeInteractionMode InteractionMode
     | ChangeExecMode ExecMode
     | ToggleRecording Bool
     | ToggleCopyMode Bool
@@ -196,6 +197,9 @@ update msg model =
 
         ChangeOperationMode mode ->
             ( { model | playground = changeOperationMode mode model.playground }, Cmd.none )
+
+        ChangeInteractionMode mode ->
+            ( { model | playground = changeInteractionMode mode model.playground }, Cmd.none )
 
         ChangeExecMode mode ->
             ( { model | playground = changeExecMode mode model.playground }, Cmd.none )
