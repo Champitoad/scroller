@@ -263,7 +263,7 @@ viewNode dnd session ((TNode { id, node, children }) as tree) =
                             [ width fill
                             , height fill
                             , shapeBorderRadius (Just node.shape)
-                            , Background.color (rgba 0.5 0.5 0.5 0.5)
+                            , Background.color (rgba 0.65 0.65 0.65 0.65)
                             , styleAttr "pointer-events" "none"
                             ]
                             none
@@ -349,8 +349,8 @@ viewNode dnd session ((TNode { id, node, children }) as tree) =
                             []
 
                 EditMode { interaction, operationMode } ->
-                    case ( interaction, operationMode ) of
-                        ( Operating, IInsertion ) ->
+                    case ( interaction, operationMode, node.shape ) of
+                        ( Operating, IInsertion, Sep _ _ ) ->
                             let
                                 loc =
                                     { ctx = Inside id, pos = List.length children }
@@ -360,7 +360,7 @@ viewNode dnd session ((TNode { id, node, children }) as tree) =
                             in
                             viewAction createColor (Insert loc tok)
 
-                        ( Operating, Deletion ) ->
+                        ( Operating, Deletion, _ ) ->
                             viewAction destroyColor (Delete id)
 
                         _ ->
