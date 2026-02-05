@@ -863,7 +863,6 @@ viewNodes dnd session ctx trees =
                          ]
                             ++ borderAttrs
                             ++ dropAction pos
-                            ++ clickAction
                         )
                         none
 
@@ -927,8 +926,12 @@ viewNodes dnd session ctx trees =
             wrappedRow attrs els
     in
     case session.actionMode of
-        EditMode _ ->
-            intersticial ()
+        EditMode { interaction } ->
+            if interaction == Reordering then
+                intersticial ()
+
+            else
+                normal ()
 
         _ ->
             normal ()

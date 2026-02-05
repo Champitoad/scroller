@@ -1,6 +1,5 @@
 module View.Toolbar exposing (..)
 
-import Color
 import Element exposing (..)
 import Element.Background as Background
 import Element.Events as Events
