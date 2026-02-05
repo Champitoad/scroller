@@ -79,6 +79,8 @@ viewNewAtomNameTextEdit newAtomName =
     Input.text
         [ styleAttr "border-radius" (String.fromInt sepBorderRound ++ "px")
         , onClick DoNothing
+        , Events.onFocus (SetNewAtomInputFocus True)
+        , Events.onLoseFocus (SetNewAtomInputFocus False)
         ]
         { onChange = UpdateNewAtomName
         , text = newAtomName

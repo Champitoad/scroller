@@ -9,6 +9,7 @@ import Json.Decode
 import Keyboard.Event exposing (KeyboardEvent, decodeKeyboardEvent)
 import Keyboard.Key
 import Model.App exposing (Model)
+import Model.Session exposing (isTyping)
 import Update.App exposing (..)
 import Utils.Color
 import View.Events
@@ -20,27 +21,40 @@ import View.Style exposing (..)
 import View.Toolbar exposing (..)
 
 
-keyboardListener : Html.Attribute Msg
-keyboardListener =
+keyboardListener : Bool -> Html.Attribute Msg
+keyboardListener typing =
     let
-        handleAndPrevent : KeyboardEvent -> ( Msg, Bool )
-        handleAndPrevent event =
+        detailedDecoder : Json.Decode.Decoder DetailedKeyboardEvent
+        detailedDecoder =
+            Json.Decode.map2 DetailedKeyboardEvent
+                decodeKeyboardEvent
+                (Json.Decode.maybe (Json.Decode.field "code" Json.Decode.string))
+
+        handleAndPrevent : DetailedKeyboardEvent -> ( Msg, Bool )
+        handleAndPrevent detailedEvent =
             let
+                event =
+                    detailedEvent.event
+
                 prevent =
-                    case ( event.keyCode, event.ctrlKey ) of
-                        ( Keyboard.Key.Tab, _ ) ->
-                            True
+                    if typing then
+                        False
 
-                        ( Keyboard.Key.R, True ) ->
-                            True
+                    else
+                        case ( event.keyCode, event.ctrlKey ) of
+                            ( Keyboard.Key.Tab, _ ) ->
+                                True
 
-                        _ ->
-                            False
+                            ( Keyboard.Key.R, True ) ->
+                                True
+
+                            _ ->
+                                False
             in
-            ( HandleKeyboardEvent event, prevent )
+            ( HandleKeyboardEvent detailedEvent, prevent )
     in
     preventDefaultOn "keydown" <|
-        Json.Decode.map handleAndPrevent decodeKeyboardEvent
+        Json.Decode.map handleAndPrevent detailedDecoder
 
 
 keyUpListener : Html.Attribute Msg
@@ -77,7 +91,7 @@ view model =
             { title = "Scroller Editor"
             , body =
                 [ div
-                    [ keyboardListener
+                    [ keyboardListener (isTyping model.playground)
                     , keyUpListener
                     , View.Events.trackDragModifiers
                     , id "app-container"

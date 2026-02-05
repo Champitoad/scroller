@@ -16,6 +16,12 @@ import Url
 import View.Route as Route
 
 
+type alias DetailedKeyboardEvent =
+    { event : KeyboardEvent
+    , code : Maybe String
+    }
+
+
 port dragstart : Value -> Cmd msg
 
 
@@ -31,10 +37,12 @@ type Msg
     | ChangeExecMode ExecMode
     | ToggleRecording Bool
     | ToggleCopyMode Bool
+    | ToggleInsertionMode Bool
     | Undo
     | Redo
     | Auto
     | UpdateNewAtomName String
+    | SetNewAtomInputFocus Bool
     | Rename Id String
     | StartRenaming Id
     | CommitRenaming
@@ -42,7 +50,7 @@ type Msg
     | DragDropMsg DnDMsg
     | SetDragModifiers { alt : Bool }
     | ResetSandbox SandboxID
-    | HandleKeyboardEvent KeyboardEvent
+    | HandleKeyboardEvent DetailedKeyboardEvent
     | HandleKeyUpEvent KeyboardEvent
     | HighlightOrigin (Maybe Id)
     | ConsoleLog String String
@@ -151,7 +159,7 @@ handleDragDropMsg dndMsg model =
                         Nothing ->
                             ( model, Cmd.none )
     in
-    ( { newModel | dragDrop = newDragDrop }, Cmd.batch [ cmd, nextCmd ] )
+    ( { newModel | dragDrop = newDragDrop }, Cmd.batch [ cmd, nextCmd, focusApp ] )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -177,47 +185,57 @@ update msg model =
                 newSession =
                     transform (getSession route model)
             in
-            ( setSessionWithHistory route newSession model, Cmd.none )
+            ( setSessionWithHistory route newSession model, focusApp )
 
         Exec route actionId ->
             let
                 newSession =
                     execute actionId (getSession route model)
             in
-            ( setSessionWithHistory route newSession model, Cmd.none )
+            ( setSessionWithHistory route newSession model, focusApp )
 
         ExecAll ->
-            ( setSessionWithHistory model.playground.route (execAll model.playground) model, Cmd.none )
+            ( setSessionWithHistory model.playground.route (execAll model.playground) model, focusApp )
 
         Step ->
             Debug.todo "Action stepping not implemented yet"
 
         ChangeActionMode mode ->
-            ( { model | playground = changeActionMode mode model.playground }, Cmd.none )
+            ( { model | playground = changeActionMode mode model.playground }, focusApp )
 
         ChangeOperationMode mode ->
-            ( { model | playground = changeOperationMode mode model.playground }, Cmd.none )
+            ( { model | playground = changeOperationMode mode model.playground }, focusApp )
 
         ChangeInteractionMode mode ->
-            ( { model | playground = changeInteractionMode mode model.playground }, Cmd.none )
+            ( { model | playground = changeInteractionMode mode model.playground }, focusApp )
 
         ChangeExecMode mode ->
-            ( { model | playground = changeExecMode mode model.playground }, Cmd.none )
+            ( { model | playground = changeExecMode mode model.playground }, focusApp )
 
         ToggleRecording recording ->
-            ( { model | playground = toggleRecording recording model.playground }, Cmd.none )
+            ( { model | playground = toggleRecording recording model.playground }, focusApp )
 
         Undo ->
-            ( undo model, Cmd.none )
+            ( undo model, focusApp )
 
         Redo ->
-            ( redo model, Cmd.none )
+            ( redo model, focusApp )
 
         Auto ->
             Debug.todo "Auto not implemented yet"
 
         UpdateNewAtomName name ->
             ( { model | playground = updateNewAtomName name model.playground }, Cmd.none )
+
+        SetNewAtomInputFocus focused ->
+            let
+                session =
+                    model.playground
+
+                newSession =
+                    setNewAtomInputFocus focused session
+            in
+            ( { model | playground = newSession }, Cmd.none )
 
         Rename id newName ->
             let
@@ -285,6 +303,9 @@ update msg model =
                 ProofMode _ ->
                     update (ToggleCopyMode alt) model
 
+                EditMode _ ->
+                    update (ToggleInsertionMode alt) model
+
                 _ ->
                     update DoNothing model
 
@@ -296,55 +317,106 @@ update msg model =
         ToggleCopyMode doit ->
             ( setSession Playground (toggleCopyMode doit model.playground) model, Cmd.none )
 
-        HandleKeyUpEvent _ ->
-            ( model, Cmd.none )
+        ToggleInsertionMode doit ->
+            ( setSession Playground (toggleInsertionMode doit model.playground) model, Cmd.none )
 
-        HandleKeyboardEvent { ctrlKey, altKey, shiftKey, key, keyCode } ->
-            case ( ( ctrlKey, altKey, shiftKey ), keyCode, key ) of
-                ( ( True, _, _ ), _, Just "z" ) ->
+        HandleKeyUpEvent { key } ->
+            case key of
+                Just "Alt" ->
+                    case model.playground.actionMode of
+                        EditMode _ ->
+                            update (ToggleInsertionMode False) model
+
+                        ProofMode _ ->
+                            update (ToggleCopyMode False) model
+
+                        _ ->
+                            ( model, Cmd.none )
+
+                _ ->
+                    ( model, Cmd.none )
+
+        HandleKeyboardEvent { event, code } ->
+            let
+                { ctrlKey, altKey, shiftKey, key } =
+                    event
+
+                noModifiers =
+                    not ctrlKey && not altKey && not shiftKey
+            in
+            case ( ( ctrlKey, altKey, shiftKey ), code, key ) of
+                ( ( _, _, _ ), _, Just "Alt" ) ->
+                    case model.playground.actionMode of
+                        EditMode _ ->
+                            update (ToggleInsertionMode True) model
+
+                        ProofMode _ ->
+                            update (ToggleCopyMode True) model
+
+                        _ ->
+                            ( model, Cmd.none )
+
+                ( ( True, False, False ), _, Just "z" ) ->
                     update Undo model
 
-                ( ( True, _, _ ), _, Just "y" ) ->
+                ( ( True, False, False ), _, Just "y" ) ->
                     update Redo model
 
-                ( ( True, _, _ ), Keyboard.Key.R, _ ) ->
-                    update (ToggleRecording (not model.playground.recording)) model
+                ( ( _, _, _ ), _, Just "Tab" ) ->
+                    if isTyping model.playground || not noModifiers then
+                        ( model, Cmd.none )
 
-                ( ( _, True, False ), Keyboard.Key.Tab, _ ) ->
-                    let
-                        newMode =
-                            case model.playground.actionMode of
-                                ProofMode _ ->
-                                    defaultEditMode
+                    else
+                        update (ChangeExecMode (flipExecMode model.playground.execMode)) model
 
-                                _ ->
-                                    defaultProofMode
-                    in
-                    update (ChangeActionMode newMode) model
+                ( ( _, _, _ ), Just "KeyR", _ ) ->
+                    if isTyping model.playground || not noModifiers then
+                        ( model, Cmd.none )
 
-                ( ( _, True, True ), Keyboard.Key.Tab, _ ) ->
-                    update (ChangeExecMode (flipExecMode model.playground.execMode)) model
+                    else
+                        update (ToggleRecording (not model.playground.recording)) model
 
-                ( ( _, True, _ ), Keyboard.Key.P, _ ) ->
-                    update (ChangeActionMode defaultProofMode) model
+                ( ( _, _, _ ), Just "KeyQ", _ ) ->
+                    if isTyping model.playground || not noModifiers then
+                        ( model, Cmd.none )
 
-                ( ( _, True, _ ), Keyboard.Key.E, _ ) ->
-                    update (ChangeActionMode defaultEditMode) model
+                    else
+                        update (ChangeActionMode defaultProofMode) model
 
-                ( ( _, True, _ ), Keyboard.Key.N, _ ) ->
-                    update (ChangeActionMode NavigationMode) model
+                ( ( _, _, _ ), Just "KeyW", _ ) ->
+                    if isTyping model.playground || not noModifiers then
+                        ( model, Cmd.none )
 
-                ( ( _, True, _ ), Keyboard.Key.B, _ ) ->
-                    update (ChangeExecMode Backward) model
+                    else
+                        update (ChangeActionMode defaultEditMode) model
 
-                ( ( _, True, _ ), Keyboard.Key.F, _ ) ->
-                    update (ChangeExecMode Forward) model
+                ( ( _, _, _ ), Just "KeyE", _ ) ->
+                    if isTyping model.playground || not noModifiers then
+                        ( model, Cmd.none )
+
+                    else
+                        update (ChangeActionMode NavigationMode) model
 
                 ( ( _, _, _ ), _, Just "Enter" ) ->
                     update CommitRenaming model
 
                 ( ( _, _, _ ), _, Just "Escape" ) ->
                     update CancelRenaming model
+
+                ( ( _, _, _ ), _, Just " " ) ->
+                    if isTyping model.playground then
+                        ( model, Cmd.none )
+
+                    else
+                        case model.playground.actionMode of
+                            EditMode _ ->
+                                update (Transform Playground (toggleEditMode altKey)) model
+
+                            ProofMode _ ->
+                                update (Transform Playground toggleProofMode) model
+
+                            _ ->
+                                ( model, Cmd.none )
 
                 _ ->
                     ( model, Cmd.none )

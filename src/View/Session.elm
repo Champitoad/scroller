@@ -59,7 +59,7 @@ viewNode : DnD -> Session -> Tree -> Element Msg
 viewNode dnd session ((TNode { id, node, children }) as tree) =
     let
         debug =
-            True
+            False
 
         inForwardMode =
             case session.execMode of

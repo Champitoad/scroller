@@ -1012,49 +1012,56 @@ netOfStruct =
 
 removeSingleNode : Id -> Net -> Net
 removeSingleNode id net =
+    let
+        ctx =
+            getContext id net
+
+        childIds =
+            getChildIds id net
+
+        withChildrenUpdated =
+            List.foldl
+                (\childId acc ->
+                    updateContext childId (\_ -> ctx) acc
+                )
+                net
+                childIds
+
+        insertChildIds listIds =
+            let
+                pos =
+                    List.Extra.elemIndex id listIds
+                        -- Dummy ID, should never happen
+                        |> Maybe.withDefault (Debug.log "" -1)
+            in
+            listIds
+                |> List.Extra.removeAt pos
+                |> Utils.List.insert pos childIds
+    in
     { nodes =
         let
-            ctx =
-                getContext id net
-
-            childIds =
-                getChildIds id net
-
-            withChildrenUpdated =
-                List.foldl
-                    (\childId acc ->
-                        updateContext childId (\_ -> ctx) acc
-                    )
-                    net
-                    childIds
-
-            withParentUpdated =
+            withParentAndChildrenUpdated =
                 case ctx of
                     Inside parentId ->
                         case getShape parentId net of
                             Sep neighborIds int ->
-                                let
-                                    pos =
-                                        List.Extra.elemIndex id neighborIds
-                                            -- Dummy ID, should never happen
-                                            |> Maybe.withDefault -1
-
-                                    newNeighborIds =
-                                        neighborIds
-                                            |> List.Extra.removeAt pos
-                                            |> Utils.List.insert pos childIds
-                                in
                                 withChildrenUpdated
-                                    |> updateShape parentId (\_ -> Sep newNeighborIds int)
+                                    |> updateShape parentId (\_ -> Sep (insertChildIds neighborIds) int)
 
                             _ ->
-                                net
+                                withChildrenUpdated
 
                     TopLevel ->
-                        net
+                        withChildrenUpdated
         in
-        Dict.remove id withParentUpdated.nodes
-    , roots = List.Extra.remove id net.roots
+        Dict.remove id withParentAndChildrenUpdated.nodes
+    , roots =
+        case ctx of
+            TopLevel ->
+                insertChildIds net.roots
+
+            Inside _ ->
+                List.Extra.remove id net.roots
     }
 
 

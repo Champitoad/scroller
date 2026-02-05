@@ -56,6 +56,7 @@ type ActionMode
         { interaction : EditInteraction
         , operationMode : OperationMode
         , newAtomName : String
+        , newAtomInputFocused : Bool
         , insertions : Dict Id Int -- maps node IDs to corresponding insertion action IDs
         }
     | NavigationMode
@@ -76,6 +77,7 @@ defaultEditMode =
         { interaction = Operating
         , operationMode = OInsertion
         , newAtomName = ""
+        , newAtomInputFocused = False
         , insertions = Dict.empty
         }
 
@@ -218,6 +220,30 @@ updateNewAtomName name session =
     { session | actionMode = updatedMode }
 
 
+setNewAtomInputFocus : Bool -> Session -> Session
+setNewAtomInputFocus focused session =
+    let
+        updatedMode =
+            case session.actionMode of
+                EditMode modeData ->
+                    EditMode { modeData | newAtomInputFocused = focused }
+
+                mode ->
+                    mode
+    in
+    { session | actionMode = updatedMode }
+
+
+isTyping : Session -> Bool
+isTyping session =
+    case session.actionMode of
+        EditMode { newAtomInputFocused } ->
+            newAtomInputFocused || (session.renaming /= Nothing)
+
+        _ ->
+            session.renaming /= Nothing
+
+
 
 -- Actions
 
@@ -349,29 +375,94 @@ flipCopyMode copyMode =
 
 
 toggleCopyMode : Bool -> Session -> Session
-toggleCopyMode doit session =
+toggleCopyMode isAlt session =
     case session.actionMode of
         ProofMode modeData ->
-            let
-                defaultCopyMode =
-                    case modeData.interaction of
-                        Justifying copyMode ->
-                            copyMode
-
-                        _ ->
-                            Iteration
-            in
             { session
                 | actionMode =
                     ProofMode
                         { modeData
                             | copyMode =
-                                if doit then
-                                    flipCopyMode defaultCopyMode
+                                if isAlt then
+                                    Deiteration
 
                                 else
-                                    defaultCopyMode
+                                    Iteration
                         }
+            }
+
+        _ ->
+            session
+
+
+toggleInsertionMode : Bool -> Session -> Session
+toggleInsertionMode isAlt session =
+    case session.actionMode of
+        EditMode ({ operationMode } as modeData) ->
+            let
+                newOpMode =
+                    case operationMode of
+                        Deletion ->
+                            Deletion
+
+                        _ ->
+                            if isAlt then
+                                IInsertion
+
+                            else
+                                OInsertion
+            in
+            { session
+                | actionMode =
+                    EditMode { modeData | operationMode = newOpMode }
+            }
+
+        _ ->
+            session
+
+
+toggleEditMode : Bool -> Session -> Session
+toggleEditMode isAlt session =
+    case session.actionMode of
+        EditMode ({ operationMode } as modeData) ->
+            let
+                newOpMode =
+                    case operationMode of
+                        Deletion ->
+                            if isAlt then
+                                IInsertion
+
+                            else
+                                OInsertion
+
+                        _ ->
+                            Deletion
+            in
+            { session
+                | actionMode =
+                    EditMode { modeData | operationMode = newOpMode }
+            }
+
+        _ ->
+            session
+
+
+toggleProofMode : Session -> Session
+toggleProofMode session =
+    case session.actionMode of
+        ProofMode ({ interactionMode } as modeData) ->
+            let
+                newInteractionMode =
+                    case interactionMode of
+                        Expansion ->
+                            Collapse
+
+                        Collapse ->
+                            Expansion
+            in
+            { session
+                | actionMode =
+                    ProofMode { modeData | interactionMode = newInteractionMode }
             }
 
         _ ->
