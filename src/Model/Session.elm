@@ -672,7 +672,7 @@ actionTransform execMode action =
 
         Close id ->
             \net ->
-                case getChildIds id net |> List.filter (\cid -> isInloop cid net) of
+                case net |> Scroll.boundary (isForward execMode) |> getChildIds id |> List.filter (\cid -> isInloop cid net) of
                     [ inloopId ] ->
                         updateInteraction inloopId (annotateExpansion (flipExecMode execMode)) net
 

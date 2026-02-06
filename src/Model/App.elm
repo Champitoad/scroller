@@ -54,7 +54,7 @@ type alias Model =
 
 init : Url.Url -> Browser.Navigation.Key -> Model
 init url key =
-    { playground = Session.fromNet (netOfStruct [])
+    { playground = Session.fromNet (netOfStruct [ curl [] [ [], [ a "Nat" ] ] ])
     , history = History { prev = Nothing, next = Nothing }
     , manualExamples = manualExamples
     , dragDrop = DnD.init

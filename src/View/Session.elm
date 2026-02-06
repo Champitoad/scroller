@@ -245,15 +245,7 @@ viewNode dnd session ((TNode { id, node, children }) as tree) =
                 []
 
         drawErased =
-            if
-                Session.isErased id session
-                    && (if inForwardMode then
-                            not (isCollapsedInloop id session.net)
-
-                        else
-                            not (isExpandedInloop id session.net)
-                       )
-            then
+            if Session.isErased id session then
                 if isFormula id session.net then
                     [ styleAttr "opacity" "0.5"
                     , styleAttr "pointer-events" "none"
