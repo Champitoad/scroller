@@ -1,10 +1,10 @@
 # Next
 
 - Fix `Scroll.deiterate` so that annotations get correctly merged additively
-- Implement `Model.Session.execute` to make the Step button work
 - Fix `Reorder` actions
 - Limit scope of (de)iteration for inloops to areas attached to the same scroll
 - Carefully choose which events are recorded in the undo/redo history
+- Implement `Model.Session.execute` to make the Step button work
 
 # Features
 
@@ -23,7 +23,8 @@
 - Navigation mode
   - Each context in the navigation stack has its own actions queue
 
-- Type/Program aliases
+- Type/Program aliases (or macro boxes)
+  - New constructor `Macro String Net` in the type `Scroll.Shape`
   - Use the double-box notation in folded form
   - Clicking on the name unfolds
   - Usual type aliases are just aliases for programs of type $\vdash \mathbf{Type}$ built with the broken cut
