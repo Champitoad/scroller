@@ -1,6 +1,6 @@
 # Next
 
-- Fix `Scroll.scopes`
+- Fix `Scroll.deiterate` so that annotations get correctly merged additively
 - Implement `Model.Session.execute` to make the Step button work
 - Fix `Reorder` actions
 

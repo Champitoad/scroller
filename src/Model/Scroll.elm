@@ -1308,13 +1308,13 @@ delete id net =
 {- Iterates node `id` at location `loc` in `net` by inserting a deep copy of the conclusion of `id`. -}
 
 
-iterate : Id -> Location -> Net -> Net
-iterate id loc net =
+iterate : Bool -> Id -> Location -> Net -> Net
+iterate isForward id loc net =
     let
         copy =
             net
                 |> getSubnet id
-                |> conclusion
+                |> boundary isForward
                 |> updateName id (\name -> "Copy of " ++ name)
                 |> deepcopy
     in
@@ -1339,14 +1339,14 @@ mergeInto s t =
 {- "Deiterates" node `tgt` from `src` in `net` by deep linking the conclusion of `tgt` back to that of `src`. -}
 
 
-deiterate : Id -> Id -> Net -> Net
-deiterate src tgt net =
+deiterate : Bool -> Id -> Id -> Net -> Net
+deiterate isForward src tgt net =
     let
         ( subnetSrc, subnetTgt ) =
             ( getSubnet src net, getSubnet tgt net )
 
         backlinkedTgtConclusion =
-            deeplink (conclusion subnetSrc) (conclusion subnetTgt)
+            deeplink (boundary isForward subnetSrc) (boundary isForward subnetTgt)
     in
     mergeInto backlinkedTgtConclusion net
 

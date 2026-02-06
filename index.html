@@ -5236,6 +5236,42 @@ var $elm$browser$Browser$application = _Browser_application;
 var $author$project$Model$App$History = function (a) {
 	return {$: 'History', a: a};
 };
+var $author$project$Model$Session$Forward = {$: 'Forward'};
+var $author$project$Model$Session$Playground = {$: 'Playground'};
+var $author$project$Model$Session$Expansion = {$: 'Expansion'};
+var $author$project$Model$Session$Interacting = {$: 'Interacting'};
+var $author$project$Model$Session$Iteration = {$: 'Iteration'};
+var $author$project$Model$Session$ProofMode = function (a) {
+	return {$: 'ProofMode', a: a};
+};
+var $author$project$Model$Session$defaultProofMode = $author$project$Model$Session$ProofMode(
+	{copyMode: $author$project$Model$Session$Iteration, interaction: $author$project$Model$Session$Interacting, interactionMode: $author$project$Model$Session$Expansion});
+var $noordstar$elm_iddict$Iddict$Iddict = function (a) {
+	return {$: 'Iddict', a: a};
+};
+var $miniBill$elm_fast_dict$Internal$Dict = F2(
+	function (a, b) {
+		return {$: 'Dict', a: a, b: b};
+	});
+var $miniBill$elm_fast_dict$Internal$Leaf = {$: 'Leaf'};
+var $miniBill$elm_fast_dict$FastDict$empty = A2($miniBill$elm_fast_dict$Internal$Dict, 0, $miniBill$elm_fast_dict$Internal$Leaf);
+var $noordstar$elm_iddict$Iddict$empty = $noordstar$elm_iddict$Iddict$Iddict(
+	{cursor: 0, dict: $miniBill$elm_fast_dict$FastDict$empty});
+var $owanturist$elm_queue$Queue$Empty = {$: 'Empty'};
+var $owanturist$elm_queue$Queue$empty = $owanturist$elm_queue$Queue$Empty;
+var $author$project$Model$Session$Initial = function (a) {
+	return {$: 'Initial', a: a};
+};
+var $author$project$Model$Scroll$TopLevel = {$: 'TopLevel'};
+var $author$project$Model$Session$initialNavigation = $author$project$Model$Session$Initial($author$project$Model$Scroll$TopLevel);
+var $author$project$Model$Session$fromNet = function (net) {
+	return {actionMode: $author$project$Model$Session$defaultProofMode, actions: $noordstar$elm_iddict$Iddict$empty, actionsQueue: $owanturist$elm_queue$Queue$empty, execMode: $author$project$Model$Session$Forward, hoveredOrigin: $elm$core$Maybe$Nothing, navigation: $author$project$Model$Session$initialNavigation, net: net, recording: true, renaming: $elm$core$Maybe$Nothing, route: $author$project$Model$Session$Playground};
+};
+var $norpan$elm_html5_drag_drop$Html5$DragDrop$NotDragging = {$: 'NotDragging'};
+var $norpan$elm_html5_drag_drop$Html5$DragDrop$init = $norpan$elm_html5_drag_drop$Html5$DragDrop$NotDragging;
+var $author$project$Model$Session$Manual = function (a) {
+	return {$: 'Manual', a: a};
+};
 var $author$project$Model$Formula$Atom = function (a) {
 	return {$: 'Atom', a: a};
 };
@@ -5278,42 +5314,6 @@ var $author$project$Model$Scroll$curl = F2(
 						$elm$core$List$map($author$project$Model$Scroll$ITok),
 						inloops))));
 	});
-var $author$project$Model$Session$Forward = {$: 'Forward'};
-var $author$project$Model$Session$Playground = {$: 'Playground'};
-var $author$project$Model$Session$Expansion = {$: 'Expansion'};
-var $author$project$Model$Session$Interacting = {$: 'Interacting'};
-var $author$project$Model$Session$Iteration = {$: 'Iteration'};
-var $author$project$Model$Session$ProofMode = function (a) {
-	return {$: 'ProofMode', a: a};
-};
-var $author$project$Model$Session$defaultProofMode = $author$project$Model$Session$ProofMode(
-	{copyMode: $author$project$Model$Session$Iteration, interaction: $author$project$Model$Session$Interacting, interactionMode: $author$project$Model$Session$Expansion});
-var $noordstar$elm_iddict$Iddict$Iddict = function (a) {
-	return {$: 'Iddict', a: a};
-};
-var $miniBill$elm_fast_dict$Internal$Dict = F2(
-	function (a, b) {
-		return {$: 'Dict', a: a, b: b};
-	});
-var $miniBill$elm_fast_dict$Internal$Leaf = {$: 'Leaf'};
-var $miniBill$elm_fast_dict$FastDict$empty = A2($miniBill$elm_fast_dict$Internal$Dict, 0, $miniBill$elm_fast_dict$Internal$Leaf);
-var $noordstar$elm_iddict$Iddict$empty = $noordstar$elm_iddict$Iddict$Iddict(
-	{cursor: 0, dict: $miniBill$elm_fast_dict$FastDict$empty});
-var $owanturist$elm_queue$Queue$Empty = {$: 'Empty'};
-var $owanturist$elm_queue$Queue$empty = $owanturist$elm_queue$Queue$Empty;
-var $author$project$Model$Session$Initial = function (a) {
-	return {$: 'Initial', a: a};
-};
-var $author$project$Model$Scroll$TopLevel = {$: 'TopLevel'};
-var $author$project$Model$Session$initialNavigation = $author$project$Model$Session$Initial($author$project$Model$Scroll$TopLevel);
-var $author$project$Model$Session$fromNet = function (net) {
-	return {actionMode: $author$project$Model$Session$defaultProofMode, actions: $noordstar$elm_iddict$Iddict$empty, actionsQueue: $owanturist$elm_queue$Queue$empty, execMode: $author$project$Model$Session$Forward, hoveredOrigin: $elm$core$Maybe$Nothing, navigation: $author$project$Model$Session$initialNavigation, net: net, recording: true, renaming: $elm$core$Maybe$Nothing, route: $author$project$Model$Session$Playground};
-};
-var $norpan$elm_html5_drag_drop$Html5$DragDrop$NotDragging = {$: 'NotDragging'};
-var $norpan$elm_html5_drag_drop$Html5$DragDrop$init = $norpan$elm_html5_drag_drop$Html5$DragDrop$NotDragging;
-var $author$project$Model$Session$Manual = function (a) {
-	return {$: 'Manual', a: a};
-};
 var $author$project$Model$Session$EditMode = function (a) {
 	return {$: 'EditMode', a: a};
 };
@@ -5961,25 +5961,7 @@ var $author$project$Model$App$init = F2(
 			key: key,
 			manualExamples: $author$project$Model$Session$manualExamples,
 			playground: $author$project$Model$Session$fromNet(
-				$author$project$Model$Scroll$netOfStruct(
-					_List_fromArray(
-						[
-							$author$project$Model$Scroll$a('a'),
-							$author$project$Model$Scroll$modusPonensCurryfied,
-							A2(
-							$author$project$Model$Scroll$curl,
-							_List_fromArray(
-								[
-									$author$project$Model$Scroll$a('a')
-								]),
-							_List_fromArray(
-								[
-									_List_fromArray(
-									[
-										$author$project$Model$Scroll$a('b')
-									])
-								]))
-						]))),
+				$author$project$Model$Scroll$netOfStruct(_List_Nil)),
 			url: url
 		};
 	});
@@ -6554,57 +6536,57 @@ var $author$project$Model$Session$execute = F2(
 						return _Debug_todo(
 							'Model.Session',
 							{
-								start: {line: 836, column: 29},
-								end: {line: 836, column: 39}
+								start: {line: 846, column: 29},
+								end: {line: 846, column: 39}
 							})('Open action execution not implemented yet.');
 					case 'Close':
 						return _Debug_todo(
 							'Model.Session',
 							{
-								start: {line: 839, column: 29},
-								end: {line: 839, column: 39}
+								start: {line: 849, column: 29},
+								end: {line: 849, column: 39}
 							})('Close action execution not implemented yet.');
 					case 'Insert':
 						return _Debug_todo(
 							'Model.Session',
 							{
-								start: {line: 842, column: 29},
-								end: {line: 842, column: 39}
+								start: {line: 852, column: 29},
+								end: {line: 852, column: 39}
 							})('Insert action execution not implemented yet.');
 					case 'Delete':
 						return _Debug_todo(
 							'Model.Session',
 							{
-								start: {line: 845, column: 29},
-								end: {line: 845, column: 39}
+								start: {line: 855, column: 29},
+								end: {line: 855, column: 39}
 							})('Delete action execution not implemented yet.');
 					case 'Iterate':
 						return _Debug_todo(
 							'Model.Session',
 							{
-								start: {line: 848, column: 29},
-								end: {line: 848, column: 39}
+								start: {line: 858, column: 29},
+								end: {line: 858, column: 39}
 							})('Iterate action execution not implemented yet.');
 					case 'Deiterate':
 						return _Debug_todo(
 							'Model.Session',
 							{
-								start: {line: 851, column: 29},
-								end: {line: 851, column: 39}
+								start: {line: 861, column: 29},
+								end: {line: 861, column: 39}
 							})('Deiterate action execution not implemented yet.');
 					case 'Reorder':
 						return _Debug_todo(
 							'Model.Session',
 							{
-								start: {line: 854, column: 29},
-								end: {line: 854, column: 39}
+								start: {line: 864, column: 29},
+								end: {line: 864, column: 39}
 							})('Reorder action execution not implemented yet');
 					default:
 						return _Debug_todo(
 							'Model.Session',
 							{
-								start: {line: 857, column: 29},
-								end: {line: 857, column: 39}
+								start: {line: 867, column: 29},
+								end: {line: 867, column: 39}
 							})('Decompose action execution not implemented yet.');
 				}
 			}();
@@ -7329,28 +7311,36 @@ var $author$project$Utils$List$pivot = F2(
 				aux:
 				while (true) {
 					var _v0 = _Utils_Tuple2(l_, n_);
-					if (_v0.a.b) {
-						var _v1 = _v0.a;
-						var x = _v1.a;
-						var t = _v1.b;
-						var $temp$acc = A2($elm$core$List$cons, x, acc),
-							$temp$n_ = n - 1,
-							$temp$l_ = t;
-						acc = $temp$acc;
-						n_ = $temp$n_;
-						l_ = $temp$l_;
-						continue aux;
-					} else {
-						if (!_v0.b) {
-							return _Utils_Tuple2(
-								$elm$core$List$reverse(acc),
-								l_);
+					_v0$0:
+					while (true) {
+						if (_v0.a.b) {
+							if (!_v0.b) {
+								break _v0$0;
+							} else {
+								var _v1 = _v0.a;
+								var x = _v1.a;
+								var t = _v1.b;
+								var $temp$acc = A2($elm$core$List$cons, x, acc),
+									$temp$n_ = n_ - 1,
+									$temp$l_ = t;
+								acc = $temp$acc;
+								n_ = $temp$n_;
+								l_ = $temp$l_;
+								continue aux;
+							}
 						} else {
-							return _Utils_Tuple2(
-								$elm$core$List$reverse(acc),
-								l_);
+							if (!_v0.b) {
+								break _v0$0;
+							} else {
+								return _Utils_Tuple2(
+									$elm$core$List$reverse(acc),
+									l_);
+							}
 						}
 					}
+					return _Utils_Tuple2(
+						$elm$core$List$reverse(acc),
+						l_);
 				}
 			});
 		return A3(aux, _List_Nil, n, l);
@@ -7568,7 +7558,7 @@ var $author$project$Model$Scroll$removeSingleNode = F2(
 					return A3(
 						$author$project$Model$Scroll$updateContext,
 						childId,
-						function (_v3) {
+						function (_v4) {
 							return ctx;
 						},
 						acc);
@@ -7595,15 +7585,21 @@ var $author$project$Model$Scroll$removeSingleNode = F2(
 								},
 								withChildrenUpdated);
 						} else {
-							return net;
+							return withChildrenUpdated;
 						}
 					} else {
-						return net;
+						return withChildrenUpdated;
 					}
 				}();
 				return A2($elm$core$Dict$remove, id, withParentAndChildrenUpdated.nodes);
 			}(),
-			roots: insertChildIds(net.roots)
+			roots: function () {
+				if (ctx.$ === 'TopLevel') {
+					return insertChildIds(net.roots);
+				} else {
+					return net.roots;
+				}
+			}()
 		};
 	});
 var $author$project$Model$Scroll$prune = F2(
@@ -7676,7 +7672,6 @@ var $author$project$Model$Scroll$boundary = F2(
 				net,
 				net.nodes));
 	});
-var $author$project$Model$Scroll$conclusion = $author$project$Model$Scroll$boundary(true);
 var $author$project$Model$Scroll$Direct = function (a) {
 	return {$: 'Direct', a: a};
 };
@@ -7784,8 +7779,8 @@ var $author$project$Model$Scroll$mergeInto = F2(
 			roots: t.roots
 		};
 	});
-var $author$project$Model$Scroll$deiterate = F3(
-	function (src, tgt, net) {
+var $author$project$Model$Scroll$deiterate = F4(
+	function (isForward, src, tgt, net) {
 		var _v0 = _Utils_Tuple2(
 			A2($author$project$Model$Scroll$getSubnet, src, net),
 			A2($author$project$Model$Scroll$getSubnet, tgt, net));
@@ -7793,8 +7788,8 @@ var $author$project$Model$Scroll$deiterate = F3(
 		var subnetTgt = _v0.b;
 		var backlinkedTgtConclusion = A2(
 			$author$project$Model$Scroll$deeplink,
-			$author$project$Model$Scroll$conclusion(subnetSrc),
-			$author$project$Model$Scroll$conclusion(subnetTgt));
+			A2($author$project$Model$Scroll$boundary, isForward, subnetSrc),
+			A2($author$project$Model$Scroll$boundary, isForward, subnetTgt));
 		return A2($author$project$Model$Scroll$mergeInto, backlinkedTgtConclusion, net);
 	});
 var $author$project$Model$Scroll$selfJustify = function (justif) {
@@ -8286,6 +8281,13 @@ var $author$project$Model$Scroll$interpretFormula = function (form) {
 				]);
 	}
 };
+var $author$project$Model$Session$isForward = function (execMode) {
+	if (execMode.$ === 'Forward') {
+		return true;
+	} else {
+		return false;
+	}
+};
 var $author$project$Model$Scroll$isInloop = F2(
 	function (id, net) {
 		var _v0 = A2($author$project$Model$Scroll$getShape, id, net);
@@ -8301,8 +8303,8 @@ var $author$project$Model$Scroll$deepcopy = function (net) {
 		net,
 		A2($author$project$Model$Scroll$freshify, net, net));
 };
-var $author$project$Model$Scroll$iterate = F3(
-	function (id, loc, net) {
+var $author$project$Model$Scroll$iterate = F4(
+	function (isForward, id, loc, net) {
 		var copy = $author$project$Model$Scroll$deepcopy(
 			A3(
 				$author$project$Model$Scroll$updateName,
@@ -8310,7 +8312,9 @@ var $author$project$Model$Scroll$iterate = F3(
 				function (name) {
 					return 'Copy of ' + name;
 				},
-				$author$project$Model$Scroll$conclusion(
+				A2(
+					$author$project$Model$Scroll$boundary,
+					isForward,
 					A2($author$project$Model$Scroll$getSubnet, id, net))));
 		return A3($author$project$Model$Scroll$graft, loc, copy, net);
 	});
@@ -8437,11 +8441,19 @@ var $author$project$Model$Session$actionTransform = F2(
 			case 'Iterate':
 				var src = action.a;
 				var dst = action.b;
-				return A2($author$project$Model$Scroll$iterate, src, dst);
+				return A3(
+					$author$project$Model$Scroll$iterate,
+					$author$project$Model$Session$isForward(execMode),
+					src,
+					dst);
 			case 'Deiterate':
 				var src = action.a;
 				var tgt = action.b;
-				return A2($author$project$Model$Scroll$deiterate, src, tgt);
+				return A3(
+					$author$project$Model$Scroll$deiterate,
+					$author$project$Model$Session$isForward(execMode),
+					src,
+					tgt);
 			case 'Reorder':
 				var id = action.a;
 				var tgtPos = action.b;
@@ -8708,6 +8720,7 @@ var $author$project$Model$Session$Insert = F2(
 	function (a, b) {
 		return {$: 'Insert', a: a, b: b};
 	});
+var $author$project$Model$Scroll$conclusion = $author$project$Model$Scroll$boundary(true);
 var $author$project$Model$Scroll$premiss = $author$project$Model$Scroll$boundary(false);
 var $author$project$Model$Session$boundary = function (session) {
 	var boundaryFunc = function () {
@@ -9678,18 +9691,18 @@ var $author$project$Update$App$handleDragDropMsg = F2(
 					},
 					$author$project$Update$App$dragstart),
 				dragStart));
-		var _v28 = A2($norpan$elm_html5_drag_drop$Html5$DragDrop$update, dndMsg, model.dragDrop);
-		var newDragDrop = _v28.a;
-		var result = _v28.b;
-		var _v29 = function () {
+		var _v27 = A2($norpan$elm_html5_drag_drop$Html5$DragDrop$update, dndMsg, model.dragDrop);
+		var newDragDrop = _v27.a;
+		var result = _v27.b;
+		var _v28 = function () {
 			if (dragStart.$ === 'Just') {
 				var dragId = dragStart.a.dragId;
 				var session = A2($author$project$Model$App$getSession, dragId.route, model);
 				var newMode = function () {
-					var _v31 = session.actionMode;
-					switch (_v31.$) {
+					var _v30 = session.actionMode;
+					switch (_v30.$) {
 						case 'ProofMode':
-							var modeData = _v31.a;
+							var modeData = _v30.a;
 							return $author$project$Model$Session$ProofMode(
 								_Utils_update(
 									modeData,
@@ -9697,7 +9710,7 @@ var $author$project$Update$App$handleDragDropMsg = F2(
 										interaction: $author$project$Model$Session$Justifying(modeData.copyMode)
 									}));
 						case 'EditMode':
-							var modeData = _v31.a;
+							var modeData = _v30.a;
 							return $author$project$Model$Session$EditMode(
 								_Utils_update(
 									modeData,
@@ -9717,21 +9730,21 @@ var $author$project$Update$App$handleDragDropMsg = F2(
 					$elm$core$Platform$Cmd$none);
 			} else {
 				if (result.$ === 'Just') {
-					var _v33 = result.a;
-					var drag = _v33.a;
-					var drop = _v33.b;
+					var _v32 = result.a;
+					var drag = _v32.a;
+					var drop = _v32.b;
 					var session = A2($author$project$Model$App$getSession, drag.route, model);
 					var defaultMode = function () {
-						var _v39 = session.actionMode;
-						switch (_v39.$) {
+						var _v38 = session.actionMode;
+						switch (_v38.$) {
 							case 'ProofMode':
-								var modeData = _v39.a;
+								var modeData = _v38.a;
 								return $author$project$Model$Session$ProofMode(
 									_Utils_update(
 										modeData,
-										{copyMode: $author$project$Model$Session$Iteration, interaction: $author$project$Model$Session$Interacting}));
+										{interaction: $author$project$Model$Session$Interacting}));
 							case 'EditMode':
-								var modeData = _v39.a;
+								var modeData = _v38.a;
 								return $author$project$Model$Session$EditMode(
 									_Utils_update(
 										modeData,
@@ -9740,47 +9753,47 @@ var $author$project$Update$App$handleDragDropMsg = F2(
 								return session.actionMode;
 						}
 					}();
-					var _v34 = drag.source;
-					var source = _v34.a;
+					var _v33 = drag.source;
+					var source = _v33.a;
 					var action = A2(
 						$elm$core$Maybe$andThen,
-						function (_v37) {
-							var destination = _v37.destination;
-							var _v38 = _Utils_Tuple2(session.actionMode, destination);
-							_v38$3:
+						function (_v36) {
+							var destination = _v36.destination;
+							var _v37 = _Utils_Tuple2(session.actionMode, destination);
+							_v37$3:
 							while (true) {
-								switch (_v38.a.$) {
+								switch (_v37.a.$) {
 									case 'ProofMode':
-										switch (_v38.b.$) {
+										switch (_v37.b.$) {
 											case 'DropNode':
-												var copyMode = _v38.a.a.copyMode;
-												var target = _v38.b.a;
+												var copyMode = _v37.a.a.copyMode;
+												var target = _v37.b.a;
 												return _Utils_eq(copyMode, $author$project$Model$Session$Deiteration) ? $elm$core$Maybe$Just(
 													A2($author$project$Model$Session$Deiterate, source, target)) : $elm$core$Maybe$Nothing;
 											case 'DropLocation':
-												var copyMode = _v38.a.a.copyMode;
-												var location = _v38.b.a;
+												var copyMode = _v37.a.a.copyMode;
+												var location = _v37.b.a;
 												return _Utils_eq(copyMode, $author$project$Model$Session$Iteration) ? $elm$core$Maybe$Just(
 													A2($author$project$Model$Session$Iterate, source, location)) : $elm$core$Maybe$Nothing;
 											default:
-												break _v38$3;
+												break _v37$3;
 										}
 									case 'EditMode':
-										if (_v38.b.$ === 'DropLocation') {
-											var location = _v38.b.a;
+										if (_v37.b.$ === 'DropLocation') {
+											var location = _v37.b.a;
 											return $elm$core$Maybe$Just(
 												A2($author$project$Model$Session$Reorder, source, location.pos));
 										} else {
-											break _v38$3;
+											break _v37$3;
 										}
 									default:
-										break _v38$3;
+										break _v37$3;
 								}
 							}
 							return $elm$core$Maybe$Nothing;
 						},
 						drop);
-					var _v35 = function () {
+					var _v34 = function () {
 						if (action.$ === 'Just') {
 							var action_ = action.a;
 							return A2(
@@ -9791,8 +9804,8 @@ var $author$project$Update$App$handleDragDropMsg = F2(
 							return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 						}
 					}();
-					var modelApplied = _v35.a;
-					var applyCmd = _v35.b;
+					var modelApplied = _v34.a;
+					var applyCmd = _v34.b;
 					var sessionApplied = A2($author$project$Model$App$getSession, drag.route, modelApplied);
 					return _Utils_Tuple2(
 						A3(
@@ -9808,8 +9821,8 @@ var $author$project$Update$App$handleDragDropMsg = F2(
 				}
 			}
 		}();
-		var newModel = _v29.a;
-		var nextCmd = _v29.b;
+		var newModel = _v28.a;
+		var nextCmd = _v28.b;
 		return _Utils_Tuple2(
 			_Utils_update(
 				newModel,
@@ -10028,25 +10041,18 @@ var $author$project$Update$App$update = F2(
 				case 'SetDragModifiers':
 					var alt = msg.a.alt;
 					var _v5 = model.playground.actionMode;
-					switch (_v5.$) {
-						case 'ProofMode':
-							var $temp$msg = $author$project$Update$App$ToggleCopyMode(alt),
-								$temp$model = model;
-							msg = $temp$msg;
-							model = $temp$model;
-							continue update;
-						case 'EditMode':
-							var $temp$msg = $author$project$Update$App$ToggleInsertionMode(alt),
-								$temp$model = model;
-							msg = $temp$msg;
-							model = $temp$model;
-							continue update;
-						default:
-							var $temp$msg = $author$project$Update$App$DoNothing,
-								$temp$model = model;
-							msg = $temp$msg;
-							model = $temp$model;
-							continue update;
+					if (_v5.$ === 'EditMode') {
+						var $temp$msg = $author$project$Update$App$ToggleInsertionMode(alt),
+							$temp$model = model;
+						msg = $temp$msg;
+						model = $temp$model;
+						continue update;
+					} else {
+						var $temp$msg = $author$project$Update$App$DoNothing,
+							$temp$model = model;
+						msg = $temp$msg;
+						model = $temp$model;
+						continue update;
 					}
 				case 'ResetSandbox':
 					var id = msg.a;
@@ -10106,211 +10112,333 @@ var $author$project$Update$App$update = F2(
 					var altKey = _v8.altKey;
 					var shiftKey = _v8.shiftKey;
 					var key = _v8.key;
-					var keyCode = _v8.keyCode;
+					var noModifiers = (!ctrlKey) && ((!altKey) && (!shiftKey));
 					var _v9 = _Utils_Tuple3(
 						_Utils_Tuple3(ctrlKey, altKey, shiftKey),
-						keyCode,
-						code);
-					_v9$2:
+						code,
+						key);
+					_v9$1:
 					while (true) {
-						_v9$11:
+						_v9$2:
 						while (true) {
-							if (_v9.c.$ === 'Just') {
-								switch (_v9.c.a) {
-									case 'KeyZ':
-										if (_v9.a.a) {
-											var _v10 = _v9.a;
-											var $temp$msg = $author$project$Update$App$Undo,
-												$temp$model = model;
-											msg = $temp$msg;
-											model = $temp$model;
-											continue update;
-										} else {
-											if (_v9.b.$ === 'Tab') {
-												break _v9$2;
-											} else {
-												break _v9$11;
-											}
-										}
-									case 'KeyY':
-										if (_v9.a.a) {
-											var _v11 = _v9.a;
-											var $temp$msg = $author$project$Update$App$Redo,
-												$temp$model = model;
-											msg = $temp$msg;
-											model = $temp$model;
-											continue update;
-										} else {
-											if (_v9.b.$ === 'Tab') {
-												break _v9$2;
-											} else {
-												break _v9$11;
-											}
-										}
-									case 'KeyR':
-										if (_v9.b.$ === 'Tab') {
-											break _v9$2;
-										} else {
-											var _v14 = _v9.a;
-											if ($author$project$Model$Session$isTyping(model.playground)) {
-												return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
-											} else {
-												var $temp$msg = $author$project$Update$App$ToggleRecording(!model.playground.recording),
+							_v9$4:
+							while (true) {
+								_v9$5:
+								while (true) {
+									_v9$6:
+									while (true) {
+										_v9$7:
+										while (true) {
+											_v9$8:
+											while (true) {
+												_v9$9:
+												while (true) {
+													_v9$10:
+													while (true) {
+														_v9$11:
+														while (true) {
+															if (_v9.c.$ === 'Just') {
+																switch (_v9.c.a) {
+																	case 'Alt':
+																		var _v10 = _v9.a;
+																		var _v11 = model.playground.actionMode;
+																		switch (_v11.$) {
+																			case 'EditMode':
+																				var $temp$msg = $author$project$Update$App$ToggleInsertionMode(true),
+																					$temp$model = model;
+																				msg = $temp$msg;
+																				model = $temp$model;
+																				continue update;
+																			case 'ProofMode':
+																				var $temp$msg = $author$project$Update$App$ToggleCopyMode(true),
+																					$temp$model = model;
+																				msg = $temp$msg;
+																				model = $temp$model;
+																				continue update;
+																			default:
+																				return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+																		}
+																	case 'z':
+																		if (_v9.b.$ === 'Just') {
+																			switch (_v9.b.a) {
+																				case 'KeyR':
+																					if ((_v9.a.a && (!_v9.a.b)) && (!_v9.a.c)) {
+																						break _v9$1;
+																					} else {
+																						break _v9$4;
+																					}
+																				case 'KeyQ':
+																					if ((_v9.a.a && (!_v9.a.b)) && (!_v9.a.c)) {
+																						break _v9$1;
+																					} else {
+																						break _v9$5;
+																					}
+																				case 'KeyW':
+																					if ((_v9.a.a && (!_v9.a.b)) && (!_v9.a.c)) {
+																						break _v9$1;
+																					} else {
+																						break _v9$6;
+																					}
+																				case 'KeyE':
+																					if ((_v9.a.a && (!_v9.a.b)) && (!_v9.a.c)) {
+																						break _v9$1;
+																					} else {
+																						break _v9$7;
+																					}
+																				default:
+																					if ((_v9.a.a && (!_v9.a.b)) && (!_v9.a.c)) {
+																						break _v9$1;
+																					} else {
+																						break _v9$11;
+																					}
+																			}
+																		} else {
+																			if ((_v9.a.a && (!_v9.a.b)) && (!_v9.a.c)) {
+																				break _v9$1;
+																			} else {
+																				break _v9$11;
+																			}
+																		}
+																	case 'y':
+																		if (_v9.b.$ === 'Just') {
+																			switch (_v9.b.a) {
+																				case 'KeyR':
+																					if ((_v9.a.a && (!_v9.a.b)) && (!_v9.a.c)) {
+																						break _v9$2;
+																					} else {
+																						break _v9$4;
+																					}
+																				case 'KeyQ':
+																					if ((_v9.a.a && (!_v9.a.b)) && (!_v9.a.c)) {
+																						break _v9$2;
+																					} else {
+																						break _v9$5;
+																					}
+																				case 'KeyW':
+																					if ((_v9.a.a && (!_v9.a.b)) && (!_v9.a.c)) {
+																						break _v9$2;
+																					} else {
+																						break _v9$6;
+																					}
+																				case 'KeyE':
+																					if ((_v9.a.a && (!_v9.a.b)) && (!_v9.a.c)) {
+																						break _v9$2;
+																					} else {
+																						break _v9$7;
+																					}
+																				default:
+																					if ((_v9.a.a && (!_v9.a.b)) && (!_v9.a.c)) {
+																						break _v9$2;
+																					} else {
+																						break _v9$11;
+																					}
+																			}
+																		} else {
+																			if ((_v9.a.a && (!_v9.a.b)) && (!_v9.a.c)) {
+																				break _v9$2;
+																			} else {
+																				break _v9$11;
+																			}
+																		}
+																	case 'Tab':
+																		var _v14 = _v9.a;
+																		if ($author$project$Model$Session$isTyping(model.playground) || (!noModifiers)) {
+																			return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+																		} else {
+																			var $temp$msg = $author$project$Update$App$ChangeExecMode(
+																				$author$project$Model$Session$flipExecMode(model.playground.execMode)),
+																				$temp$model = model;
+																			msg = $temp$msg;
+																			model = $temp$model;
+																			continue update;
+																		}
+																	case 'Enter':
+																		if (_v9.b.$ === 'Just') {
+																			switch (_v9.b.a) {
+																				case 'KeyR':
+																					break _v9$4;
+																				case 'KeyQ':
+																					break _v9$5;
+																				case 'KeyW':
+																					break _v9$6;
+																				case 'KeyE':
+																					break _v9$7;
+																				default:
+																					break _v9$8;
+																			}
+																		} else {
+																			break _v9$8;
+																		}
+																	case 'Escape':
+																		if (_v9.b.$ === 'Just') {
+																			switch (_v9.b.a) {
+																				case 'KeyR':
+																					break _v9$4;
+																				case 'KeyQ':
+																					break _v9$5;
+																				case 'KeyW':
+																					break _v9$6;
+																				case 'KeyE':
+																					break _v9$7;
+																				default:
+																					break _v9$9;
+																			}
+																		} else {
+																			break _v9$9;
+																		}
+																	case ' ':
+																		if (_v9.b.$ === 'Just') {
+																			switch (_v9.b.a) {
+																				case 'KeyR':
+																					break _v9$4;
+																				case 'KeyQ':
+																					break _v9$5;
+																				case 'KeyW':
+																					break _v9$6;
+																				case 'KeyE':
+																					break _v9$7;
+																				default:
+																					break _v9$10;
+																			}
+																		} else {
+																			break _v9$10;
+																		}
+																	default:
+																		if (_v9.b.$ === 'Just') {
+																			switch (_v9.b.a) {
+																				case 'KeyR':
+																					break _v9$4;
+																				case 'KeyQ':
+																					break _v9$5;
+																				case 'KeyW':
+																					break _v9$6;
+																				case 'KeyE':
+																					break _v9$7;
+																				default:
+																					break _v9$11;
+																			}
+																		} else {
+																			break _v9$11;
+																		}
+																}
+															} else {
+																if (_v9.b.$ === 'Just') {
+																	switch (_v9.b.a) {
+																		case 'KeyR':
+																			break _v9$4;
+																		case 'KeyQ':
+																			break _v9$5;
+																		case 'KeyW':
+																			break _v9$6;
+																		case 'KeyE':
+																			break _v9$7;
+																		default:
+																			break _v9$11;
+																	}
+																} else {
+																	break _v9$11;
+																}
+															}
+														}
+														return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+													}
+													var _v21 = _v9.a;
+													if ($author$project$Model$Session$isTyping(model.playground)) {
+														return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+													} else {
+														var _v22 = model.playground.actionMode;
+														switch (_v22.$) {
+															case 'EditMode':
+																var $temp$msg = A2(
+																	$author$project$Update$App$Transform,
+																	$author$project$Model$Session$Playground,
+																	$author$project$Model$Session$toggleEditMode(altKey)),
+																	$temp$model = model;
+																msg = $temp$msg;
+																model = $temp$model;
+																continue update;
+															case 'ProofMode':
+																var $temp$msg = A2($author$project$Update$App$Transform, $author$project$Model$Session$Playground, $author$project$Model$Session$toggleProofMode),
+																	$temp$model = model;
+																msg = $temp$msg;
+																model = $temp$model;
+																continue update;
+															default:
+																return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+														}
+													}
+												}
+												var _v20 = _v9.a;
+												var $temp$msg = $author$project$Update$App$CancelRenaming,
 													$temp$model = model;
 												msg = $temp$msg;
 												model = $temp$model;
 												continue update;
 											}
-										}
-									case 'KeyQ':
-										if (_v9.b.$ === 'Tab') {
-											break _v9$2;
-										} else {
-											var _v15 = _v9.a;
-											if ($author$project$Model$Session$isTyping(model.playground)) {
-												return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
-											} else {
-												var $temp$msg = $author$project$Update$App$ChangeActionMode($author$project$Model$Session$defaultProofMode),
-													$temp$model = model;
-												msg = $temp$msg;
-												model = $temp$model;
-												continue update;
-											}
-										}
-									case 'KeyW':
-										if (_v9.b.$ === 'Tab') {
-											break _v9$2;
-										} else {
-											var _v16 = _v9.a;
-											if ($author$project$Model$Session$isTyping(model.playground)) {
-												return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
-											} else {
-												var $temp$msg = $author$project$Update$App$ChangeActionMode($author$project$Model$Session$defaultEditMode),
-													$temp$model = model;
-												msg = $temp$msg;
-												model = $temp$model;
-												continue update;
-											}
-										}
-									case 'KeyE':
-										if (_v9.b.$ === 'Tab') {
-											break _v9$2;
-										} else {
-											var _v17 = _v9.a;
-											if ($author$project$Model$Session$isTyping(model.playground)) {
-												return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
-											} else {
-												var $temp$msg = $author$project$Update$App$ChangeActionMode($author$project$Model$Session$NavigationMode),
-													$temp$model = model;
-												msg = $temp$msg;
-												model = $temp$model;
-												continue update;
-											}
-										}
-									case 'Enter':
-										if (_v9.b.$ === 'Tab') {
-											break _v9$2;
-										} else {
-											var _v18 = _v9.a;
+											var _v19 = _v9.a;
 											var $temp$msg = $author$project$Update$App$CommitRenaming,
 												$temp$model = model;
 											msg = $temp$msg;
 											model = $temp$model;
 											continue update;
 										}
-									case 'Escape':
-										if (_v9.b.$ === 'Tab') {
-											break _v9$2;
+										var _v18 = _v9.a;
+										if ($author$project$Model$Session$isTyping(model.playground) || (!noModifiers)) {
+											return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 										} else {
-											var _v19 = _v9.a;
-											var $temp$msg = $author$project$Update$App$CancelRenaming,
+											var $temp$msg = $author$project$Update$App$ChangeActionMode($author$project$Model$Session$NavigationMode),
 												$temp$model = model;
 											msg = $temp$msg;
 											model = $temp$model;
 											continue update;
 										}
-									case ' ':
-										if (_v9.b.$ === 'Tab') {
-											break _v9$2;
-										} else {
-											var _v20 = _v9.a;
-											if ($author$project$Model$Session$isTyping(model.playground)) {
-												return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
-											} else {
-												var _v21 = model.playground.actionMode;
-												switch (_v21.$) {
-													case 'EditMode':
-														var $temp$msg = A2(
-															$author$project$Update$App$Transform,
-															$author$project$Model$Session$Playground,
-															$author$project$Model$Session$toggleEditMode(altKey)),
-															$temp$model = model;
-														msg = $temp$msg;
-														model = $temp$model;
-														continue update;
-													case 'ProofMode':
-														var $temp$msg = A2($author$project$Update$App$Transform, $author$project$Model$Session$Playground, $author$project$Model$Session$toggleProofMode),
-															$temp$model = model;
-														msg = $temp$msg;
-														model = $temp$model;
-														continue update;
-													default:
-														return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
-												}
-											}
-										}
-									case 'Alt':
-										if (_v9.b.$ === 'Tab') {
-											break _v9$2;
-										} else {
-											var _v22 = _v9.a;
-											var _v23 = model.playground.actionMode;
-											switch (_v23.$) {
-												case 'EditMode':
-													var $temp$msg = $author$project$Update$App$ToggleInsertionMode(true),
-														$temp$model = model;
-													msg = $temp$msg;
-													model = $temp$model;
-													continue update;
-												case 'ProofMode':
-													var $temp$msg = $author$project$Update$App$ToggleCopyMode(true),
-														$temp$model = model;
-													msg = $temp$msg;
-													model = $temp$model;
-													continue update;
-												default:
-													return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
-											}
-										}
-									default:
-										if (_v9.b.$ === 'Tab') {
-											break _v9$2;
-										} else {
-											break _v9$11;
-										}
+									}
+									var _v17 = _v9.a;
+									if ($author$project$Model$Session$isTyping(model.playground) || (!noModifiers)) {
+										return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+									} else {
+										var $temp$msg = $author$project$Update$App$ChangeActionMode($author$project$Model$Session$defaultEditMode),
+											$temp$model = model;
+										msg = $temp$msg;
+										model = $temp$model;
+										continue update;
+									}
 								}
-							} else {
-								if (_v9.b.$ === 'Tab') {
-									break _v9$2;
+								var _v16 = _v9.a;
+								if ($author$project$Model$Session$isTyping(model.playground) || (!noModifiers)) {
+									return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 								} else {
-									break _v9$11;
+									var $temp$msg = $author$project$Update$App$ChangeActionMode($author$project$Model$Session$defaultProofMode),
+										$temp$model = model;
+									msg = $temp$msg;
+									model = $temp$model;
+									continue update;
 								}
 							}
+							var _v15 = _v9.a;
+							if ($author$project$Model$Session$isTyping(model.playground) || (!noModifiers)) {
+								return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+							} else {
+								var $temp$msg = $author$project$Update$App$ToggleRecording(!model.playground.recording),
+									$temp$model = model;
+								msg = $temp$msg;
+								model = $temp$model;
+								continue update;
+							}
 						}
-						return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
-					}
-					var _v12 = _v9.a;
-					var _v13 = _v9.b;
-					if ($author$project$Model$Session$isTyping(model.playground)) {
-						return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
-					} else {
-						var $temp$msg = $author$project$Update$App$ChangeExecMode(
-							$author$project$Model$Session$flipExecMode(model.playground.execMode)),
+						var _v13 = _v9.a;
+						var $temp$msg = $author$project$Update$App$Redo,
 							$temp$model = model;
 						msg = $temp$msg;
 						model = $temp$model;
 						continue update;
 					}
+					var _v12 = _v9.a;
+					var $temp$msg = $author$project$Update$App$Undo,
+						$temp$model = model;
+					msg = $temp$msg;
+					model = $temp$model;
+					continue update;
 				case 'HighlightOrigin':
 					var maybeId = msg.a;
 					var session = model.playground;
@@ -10325,15 +10453,15 @@ var $author$project$Update$App$update = F2(
 				case 'ConsoleLog':
 					var tag = msg.a;
 					var message = msg.b;
-					var _v24 = A2($elm$core$Debug$log, tag, message);
+					var _v23 = A2($elm$core$Debug$log, tag, message);
 					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 				case 'DoNothing':
 					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 				case 'UrlChanged':
 					var url = msg.a;
 					var newModel = function () {
-						var _v25 = $author$project$View$Route$fromUrl(url);
-						if (_v25.$ === 'Manual') {
+						var _v24 = $author$project$View$Route$fromUrl(url);
+						if (_v24.$ === 'Manual') {
 							return _Utils_update(
 								model,
 								{
@@ -10353,8 +10481,8 @@ var $author$project$Update$App$update = F2(
 					if (urlRequest.$ === 'Internal') {
 						var url = urlRequest.a;
 						var newPath = function () {
-							var _v27 = url.host;
-							switch (_v27) {
+							var _v26 = url.host;
+							switch (_v26) {
 								case 'www.lix.polytechnique.fr':
 									return '/Labo/Pablo.DONATO/flowerprover' + url.path;
 								case 'pablogician.refl.fr':
@@ -18216,7 +18344,11 @@ var $author$project$Model$Session$applicable = F2(
 				var dst = action.b;
 				return (!_Utils_eq(
 					A2($author$project$Model$Scroll$getPolarityContext, dst.ctx, session.net),
-					$author$project$Model$Session$deletionPolarity(session.execMode))) ? $elm$core$Result$Err($author$project$Model$Session$InvalidPolarity) : ((!A3($author$project$Model$Scroll$scopes, src, dst.ctx, session.net)) ? $elm$core$Result$Err(
+					$author$project$Model$Session$deletionPolarity(session.execMode))) ? $elm$core$Result$Err($author$project$Model$Session$InvalidPolarity) : ((!A3(
+					$author$project$Model$Scroll$scopes,
+					src,
+					dst.ctx,
+					$author$project$Model$Session$boundary(session))) ? $elm$core$Result$Err(
 					$author$project$Model$Session$OutOfScope(src)) : ((A2($author$project$Model$Session$isErased, src, session) || A2($author$project$Model$Session$isErasedContext, dst.ctx, session)) ? $elm$core$Result$Err($author$project$Model$Session$Erased) : $elm$core$Result$Ok(_Utils_Tuple0)));
 			case 'Deiterate':
 				var src = action.a;
@@ -18227,7 +18359,7 @@ var $author$project$Model$Session$applicable = F2(
 					$author$project$Model$Scroll$scopes,
 					src,
 					A2($author$project$Model$Scroll$getContext, tgt, session.net),
-					session.net))) ? $elm$core$Result$Err(
+					$author$project$Model$Session$boundary(session)))) ? $elm$core$Result$Err(
 					$author$project$Model$Session$OutOfScope(src)) : ((A2($author$project$Model$Session$isErased, src, session) || A2($author$project$Model$Session$isErased, tgt, session)) ? $elm$core$Result$Err($author$project$Model$Session$Erased) : ((!A2(
 					$author$project$Model$Scroll$isEqualIToken,
 					A2(
@@ -20085,8 +20217,8 @@ var $author$project$View$Session$viewNode = F3(
 		var node = tree.a.node;
 		var children = tree.a.children;
 		var inForwardMode = function () {
-			var _v54 = session.execMode;
-			if (_v54.$ === 'Forward') {
+			var _v55 = session.execMode;
+			if (_v55.$ === 'Forward') {
 				return true;
 			} else {
 				return false;
@@ -20103,27 +20235,27 @@ var $author$project$View$Session$viewNode = F3(
 						{destination: dest, route: session.route})));
 		};
 		var dropAction = function () {
-			var _v48 = session.actionMode;
-			if (_v48.$ === 'ProofMode') {
-				var copyMode = _v48.a.copyMode;
+			var _v49 = session.actionMode;
+			if (_v49.$ === 'ProofMode') {
+				var copyMode = _v49.a.copyMode;
 				if (_Utils_eq(copyMode, $author$project$Model$Session$Deiteration)) {
-					var _v49 = $norpan$elm_html5_drag_drop$Html5$DragDrop$getDragId(dnd);
-					if (_v49.$ === 'Nothing') {
+					var _v50 = $norpan$elm_html5_drag_drop$Html5$DragDrop$getDragId(dnd);
+					if (_v50.$ === 'Nothing') {
 						return _List_Nil;
 					} else {
-						var source = _v49.a.source;
-						var _v50 = source;
-						var src = _v50.a;
+						var source = _v50.a.source;
+						var _v51 = source;
+						var src = _v51.a;
 						var deiterateAction = A2($author$project$Model$Session$Deiterate, src, id);
-						var _v51 = A2($author$project$Model$Session$applicable, deiterateAction, session);
-						if (_v51.$ === 'Err') {
+						var _v52 = A2($author$project$Model$Session$applicable, deiterateAction, session);
+						if (_v52.$ === 'Err') {
 							return _List_Nil;
 						} else {
 							var dropStyle = $author$project$View$Style$droppableNode($author$project$View$Style$useColor);
 							var dropTargetStyle = function () {
-								var _v52 = $norpan$elm_html5_drag_drop$Html5$DragDrop$getDropId(dnd);
-								if ((_v52.$ === 'Just') && (_v52.a.$ === 'Just')) {
-									var destination = _v52.a.a.destination;
+								var _v53 = $norpan$elm_html5_drag_drop$Html5$DragDrop$getDropId(dnd);
+								if ((_v53.$ === 'Just') && (_v53.a.$ === 'Just')) {
+									var destination = _v53.a.a.destination;
 									if (destination.$ === 'DropNode') {
 										var dropId = destination.a;
 										return _Utils_eq(dropId, id) ? dropStyle.active : dropStyle.inactive;
@@ -20174,14 +20306,14 @@ var $author$project$View$Session$viewNode = F3(
 							$author$project$View$Style$shapeBorderRadius(
 							$elm$core$Maybe$Just(node.shape)),
 							$mdgriffith$elm_ui$Element$Background$color(
-							A4($mdgriffith$elm_ui$Element$rgba, 0.5, 0.5, 0.5, 0.5)),
+							A4($mdgriffith$elm_ui$Element$rgba, 0.65, 0.65, 0.65, 0.65)),
 							A2($author$project$View$Style$styleAttr, 'pointer-events', 'none')
 						]),
 					$mdgriffith$elm_ui$Element$none))
 			])) : _List_Nil;
 		var dragColor = function () {
-			var _v47 = session.actionMode;
-			switch (_v47.$) {
+			var _v48 = session.actionMode;
+			switch (_v48.$) {
 				case 'ProofMode':
 					return $author$project$View$Style$useColor;
 				case 'EditMode':
@@ -20193,8 +20325,8 @@ var $author$project$View$Session$viewNode = F3(
 		var debug = false;
 		var statusBar = function () {
 			var polarity = function () {
-				var _v46 = session.execMode;
-				if (_v46.$ === 'Forward') {
+				var _v47 = session.execMode;
+				if (_v47.$ === 'Forward') {
 					return node.polarity;
 				} else {
 					return $author$project$Model$Scroll$invert(node.polarity);
@@ -20202,9 +20334,9 @@ var $author$project$View$Session$viewNode = F3(
 			}();
 			var nameEl = function () {
 				var isRenaming = function () {
-					var _v45 = session.renaming;
-					if (_v45.$ === 'Just') {
-						var renaming = _v45.a;
+					var _v46 = session.renaming;
+					if (_v46.$ === 'Just') {
+						var renaming = _v46.a;
 						return _Utils_eq(renaming.id, id);
 					} else {
 						return false;
@@ -20269,10 +20401,10 @@ var $author$project$View$Session$viewNode = F3(
 							debug ? ($elm$core$String$fromInt(id) + '#') : '',
 							node.name)));
 			}();
-			var _v43 = function () {
-				var _v44 = node.justif.from;
-				if (_v44.$ === 'Just') {
-					var origin = _v44.a;
+			var _v44 = function () {
+				var _v45 = node.justif.from;
+				if (_v45.$ === 'Just') {
+					var origin = _v45.a;
 					var oId = $author$project$Model$Scroll$originSourceId(origin);
 					return _Utils_Tuple3(
 						$elm$core$Maybe$Just(oId),
@@ -20284,9 +20416,9 @@ var $author$project$View$Session$viewNode = F3(
 					return _Utils_Tuple3($elm$core$Maybe$Nothing, '', false);
 				}
 			}();
-			var originId = _v43.a;
-			var originName = _v43.b;
-			var isHoveredOrigin = _v43.c;
+			var originId = _v44.a;
+			var originName = _v44.b;
+			var isHoveredOrigin = _v44.c;
 			var elimIndicator = A2($author$project$Model$Scroll$isDeletion, polarity, node.justif) ? $author$project$View$Widgets$deletionIndicator : (A2($author$project$Model$Scroll$isDeiteration, polarity, node.justif) ? A3($author$project$View$Widgets$deiterationIndicator, originId, originName, isHoveredOrigin) : (A2(
 				$elm$core$Maybe$withDefault,
 				false,
@@ -20362,26 +20494,31 @@ var $author$project$View$Session$viewNode = F3(
 				case 'EditMode':
 					var interaction = _v34.a.interaction;
 					var operationMode = _v34.a.operationMode;
-					var _v38 = _Utils_Tuple2(interaction, operationMode);
+					var _v38 = _Utils_Tuple3(interaction, operationMode, node.shape);
 					_v38$2:
 					while (true) {
 						if (_v38.a.$ === 'Operating') {
 							switch (_v38.b.$) {
 								case 'IInsertion':
-									var _v39 = _v38.a;
-									var _v40 = _v38.b;
-									var tok = $author$project$Model$Scroll$ISep(_List_Nil);
-									var loc = {
-										ctx: $author$project$Model$Scroll$Inside(id),
-										pos: $elm$core$List$length(children)
-									};
-									return A2(
-										viewAction,
-										$author$project$View$Style$createColor,
-										A2($author$project$Model$Session$Insert, loc, tok));
+									if (_v38.c.$ === 'Sep') {
+										var _v39 = _v38.a;
+										var _v40 = _v38.b;
+										var _v41 = _v38.c;
+										var tok = $author$project$Model$Scroll$ISep(_List_Nil);
+										var loc = {
+											ctx: $author$project$Model$Scroll$Inside(id),
+											pos: $elm$core$List$length(children)
+										};
+										return A2(
+											viewAction,
+											$author$project$View$Style$createColor,
+											A2($author$project$Model$Session$Insert, loc, tok));
+									} else {
+										break _v38$2;
+									}
 								case 'Deletion':
-									var _v41 = _v38.a;
-									var _v42 = _v38.b;
+									var _v42 = _v38.a;
+									var _v43 = _v38.b;
 									return A2(
 										viewAction,
 										$author$project$View$Style$destroyColor,
@@ -21673,7 +21810,13 @@ var $author$project$View$Toolbar$viewCopyModeToggle = function (copyMode) {
 	}();
 	return A2(
 		$author$project$View$Widgets$toggle,
-		{color: $author$project$View$Toolbar$modeSelectorColor, iconOff: $feathericons$elm_feather$FeatherIcons$copy, iconOn: $feathericons$elm_feather$FeatherIcons$copy, onChange: $author$project$Update$App$ToggleCopyMode, title: 'Deiterate'},
+		{
+			color: $author$project$Utils$Color$toElement($author$project$View$Style$useColor),
+			iconOff: $feathericons$elm_feather$FeatherIcons$copy,
+			iconOn: $feathericons$elm_feather$FeatherIcons$copy,
+			onChange: $author$project$Update$App$ToggleCopyMode,
+			title: 'Deiterate'
+		},
 		isDeiterating);
 };
 var $author$project$Update$App$ExecAll = {$: 'ExecAll'};

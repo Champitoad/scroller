@@ -469,6 +469,16 @@ toggleProofMode session =
             session
 
 
+isForward : ExecMode -> Bool
+isForward execMode =
+    case execMode of
+        Forward ->
+            True
+
+        Backward ->
+            False
+
+
 isErased : Id -> Session -> Bool
 isErased id session =
     case session.execMode of
@@ -677,10 +687,10 @@ actionTransform execMode action =
             delete id
 
         Iterate src dst ->
-            iterate src dst
+            iterate (isForward execMode) src dst
 
         Deiterate src tgt ->
-            deiterate src tgt
+            deiterate (isForward execMode) src tgt
 
         Reorder id tgtPos ->
             \net ->
