@@ -128,12 +128,12 @@ destroyColor =
 
 expandColor : Color
 expandColor =
-    rgb 0.3 0.8 0
+    createColor
 
 
 collapseColor : Color
 collapseColor =
-    rgb 1 0.6 0
+    destroyColor
 
 
 reorderColor : Color.Color
