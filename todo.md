@@ -3,53 +3,22 @@
 - Fix `Scroll.deiterate` so that annotations get correctly merged additively
 - Implement `Model.Session.execute` to make the Step button work
 - Fix `Reorder` actions
+- Limit scope of (de)iteration for inloops to areas attached to the same scroll
+- Carefully choose which events are recorded in the undo/redo history
 
 # Features
 
 - Execution of actions
   - "Step" button that dequeues and executes the next action
-  - The action at the head of the queue should always be highlighted at the location where it occurs in the goal
+  - The action at the head of the queue should always be highlighted at the location where it occurs in the session
   - **Free execution**:
-    - the user can execute actions in the order she wants by clicking directly on them in the goal. However, only actions which are _executable_ (and thus do not depend on other actions) can be executed:
+    - the user can execute actions in the order she wants by clicking directly on them in the session. However, only actions which are _executable_ (and thus do not depend on other actions) can be executed:
       - `Open`: the parent is neither introduced nor eliminated
       - `Insert`: the parent is neither introduced nor eliminated
       - `Iterate`: the target's parent is neither introduced nor eliminated, and the source is not introduced
       - `Close`: the scroll has exactly one inloop and no values in its outloop, and it is neither introduced nor used in a (de)iteration
       - `Delete`: the node is neither introduced nor used in a (de)iteration
       - `Deiterate`: the target is neither introduced nor used in a (de)iteration, and the source is not introduced
-
-- Proof mode
-  - For now, we still restrict deiteration to atoms (do we?). This limits us to first-order
-    functions without ADTs however. Later we will need to support deiteration on scrolls by either:
-    - implementing matching of scroll structures up to permutations. Then every deiteration needs to
-      either:
-      - record the permutation it used, so that it can be used for propagating information during
-        evaluation;
-      - apply the permutation immediately.
-
-      Also if we do not label every inloop and every judgment in outloops, there might be more than
-      one solution for permutation matching, and it is not clear if this should be presented to the
-      user (probably not).
-
-    - or we don't do it up to permutation. Then it puts more load on the user, but makes things
-      completely deterministic (and closer to traditional programming). We would still want to force
-      constructor labels on every inloop to actually match the semantics of ADTs.
-    - OR we admit that scroll structures are _hierarchical imperative states_: they hold variable names, and order does not matter
-
-  - Support for DnD actions on inloops
-
-- Edit mode
-  - Still just a means to perform the insertion and deletion rules
-  <!-- - Localize commit mechanism for insertion:
-    - Switching to Proof mode does not trigger a global commit anymore
-    - Only the root node is marked as "grown" (inserted)
-    - A `commit` button is added to grown nodes -->
-  - Implement the `Renaming` `EditInteraction`:
-    - When `goal.actionMode == EditMode (Renaming path) _`, the label of the value/inloop at `path`
-      becomes an input field
-    - Pressing the `Enter` (resp. `Esc`) key validates (resp. cancels) the renaming
-    - Pressing a +atom/scroll/inloop button immediately inserts the corresponding node and starts a `Renaming` interaction
-    - For +atom buttons, we can keep the input field for specifying the type name
 
 - Navigation mode
   - Each context in the navigation stack has its own actions queue
@@ -61,18 +30,14 @@
   - Global environment of aliases, essentially a dictionary from names to scroll nets
   - Unfolding is implemented by lookup in the global env
   - Two types of folding:
-    - Given an alias name, fold every occurrence of the alias body in the goal
-    - Given a subnet in the goal, fold with the alias found by reverse lookup
+    - Given an alias name, fold every occurrence of the alias body in the session
+    - Given a subnet in the session, fold with the alias found by reverse lookup
       (assuming we enforce the global env to be bijective)
   - Manipulating the global env
     - Search bar
     - Import (copy) a definition by dragging from the search results
-      - If premiss non-empty, need to match it with some conclusion in the goal (should work similarly to deiteration)
+      - If premiss non-empty, need to match it with some conclusion of a subnet located in some area (should work similarly to deiteration)
       - Actually, import may be implemented by iteration once we implement evaluation
-
-- Vertical generalization of the scroll
-  - `ScrollData.inloops` becomes a tree instead of a list
-  - Inloops can be iterated inside adjacent inloops
 
 - Linear mode
   - When enabled, auto-performs self-justification of source after (de)iteration, and
@@ -80,41 +45,11 @@
 
 # Brainstorming
 
-- It seems we don't need to distinguish between judgment and constructor identifiers for inloops in the (bi-)intuitionistic case, since they will always be (de)iterated in the same scroll. Classical logic might require this distinction though, because inloops can become outloops (and vice versa); or we could just drop constructor identifiers altogether since there is no purpose in distinguishing between inloops and outloops, in the same way that one can go one-sided in classical sequent calculus (and thus drop the distinction between _term_ and _continuation_ variables).
-
-- Maybe things would be simpler if there was only the cut construct, and inloops are just special cuts that are marked as "attached" or "continuations", i.e.:
-
-  ```elm
-  type alias Struct
-    = List ONode
-
-  type ONode
-    = OForm Formula
-    | OCut (List INode)
-
-  type INode
-    = IVal ONode
-    | ICont Struct
-  ```
-
-  This gives $n$-scroll structures. To get generalized scroll structures:
-
-  ```elm
-  type alias Struct
-    = List ONode
-
-  type ONode
-    = OForm Formula
-    | OCut (List INode)
-
-  type INode
-    = IVal ONode
-    | ICont (List INode)
-  ```
-
 ## Names
 
 ### Variables
+
+Note: this is currently irrelevant/obsolete, since we do not have variables, only identifiers + non-semantic names. I just keep the discussion in case this design decision turns out to be untenable.
 
 - Two options for shadowing:
   1. **Yes:** name uniqueness is only required locally or "horizontally", i.e. in the same area/address space. Then in order to still allow every (well-scoped) iteration, we should use a named De Bruijn representation, where a variable $(x, n)$ refers to the variable $x$ occurring in the $n$-th outer cut area. **We also need to ensure operations that insert or remove nodes update indices accordingly**. Frontend-wise, the index should be visible but unobtrusive, maybe using an on-demand disambiguation mechanism like source hover on highlighting. Then there is no shadowing stricto sensu, but we can achieve an observationally indistinguishable user experience by hiding the index $n$ if there is no bound variable with name $x$ in the $i$-th outer cut area for every $i < n$.
