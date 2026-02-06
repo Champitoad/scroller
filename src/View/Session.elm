@@ -5,6 +5,7 @@ import Css
 import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
+import Element.Events
 import Element.Font as Font
 import Element.Input as Input
 import Html.Attributes
@@ -105,6 +106,7 @@ viewNode dnd session ((TNode { id, node, children }) as tree) =
                                    , Background.color Style.transparent
                                    , Border.width 0
                                    , htmlAttribute (Html.Attributes.id "renaming-input")
+                                   , Element.Events.onLoseFocus CommitRenaming
                                    , Font.center
                                    ]
                             )
