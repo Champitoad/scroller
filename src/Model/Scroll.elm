@@ -473,7 +473,7 @@ getOutloopInteractions id net =
                             Dict.insert childId interaction acc
 
                         _ ->
-                            Dict.empty
+                            acc
                 )
                 Dict.empty
                 childIds
