@@ -180,30 +180,16 @@ type alias Id =
 -- Scroll nets
 
 
-type Origin
-    = Direct Id
-    | Indirect { anc : Id, src : Id }
-
-
-originSourceId : Origin -> Id
-originSourceId origin =
-    case origin of
-        Direct id ->
-            id
-
-        Indirect { src } ->
-            src
-
-
 type alias Justification =
     { self : Bool
-    , from : Maybe Origin
+    , copy : Maybe Id
+    , subcopy : Maybe { anc : Id, src : Id }
     }
 
 
 assumption : Justification
 assumption =
-    { self = False, from = Nothing }
+    { self = False, copy = Nothing, subcopy = Nothing }
 
 
 selfJustify : Justification -> Justification
@@ -211,9 +197,9 @@ selfJustify justif =
     { justif | self = True }
 
 
-justifyFrom : Origin -> Justification -> Justification
+justifyFrom : Id -> Justification -> Justification
 justifyFrom origin justif =
-    { justif | from = Just origin }
+    { justif | copy = Just origin }
 
 
 type alias Interaction =
@@ -735,20 +721,10 @@ idMapShape f shape =
             Sep (List.map f childIds) interaction
 
 
-idMapOrigin : (Id -> Id) -> Origin -> Origin
-idMapOrigin f copy =
-    case copy of
-        Direct src ->
-            Direct (f src)
-
-        Indirect j ->
-            Indirect { j | anc = f j.anc, src = f j.src }
-
-
 idMapJustif : (Id -> Id) -> Justification -> Justification
 idMapJustif f justif =
     { justif
-        | from = Maybe.map (idMapOrigin f) justif.from
+        | copy = Maybe.map f justif.copy
     }
 
 
@@ -1190,17 +1166,17 @@ deeplinkTree source target =
                 tgtJustif =
                     tgtNode.justif
 
-                ( copy, acc ) =
+                ( justif, acc ) =
                     case ancId of
                         Nothing ->
-                            ( Direct srcId, Just srcId )
+                            ( { tgtJustif | copy = Just srcId }, Just srcId )
 
                         Just id ->
-                            ( Indirect { anc = id, src = srcId }, Just id )
+                            ( { tgtJustif | subcopy = Just { anc = id, src = srcId } }, Just id )
             in
             TNode
                 { id = getTreeId tgt
-                , node = { tgtNode | justif = { tgtJustif | from = Just copy } }
+                , node = { tgtNode | justif = justif }
                 , children = List.map2 (aux acc) (getTreeChildren src) (getTreeChildren tgt)
                 }
     in
@@ -1321,34 +1297,120 @@ iterate isForward id loc net =
     graft loc copy net
 
 
+unionJustification : Justification -> Justification -> Justification
+unionJustification _ _ =
+    -- { self = justif1.self || justif2.self
+    -- , copy =
+    --     case ( justif1.from, justif2.from ) of
+    --         ( Just origin1, Just origin2 ) ->
+    --             if origin1 == origin2 then
+    --                 Just origin1
+    --             else
+    --                 -- should never happen
+    --                 Nothing
+    --         ( Just origin1, Nothing ) ->
+    --             Just origin1
+    --         ( Nothing, Just origin2 ) ->
+    --             Just origin2
+    --         ( Nothing, Nothing ) ->
+    --             Nothing
+    -- }
+    Debug.todo "Justification union not implemented yet"
 
-{- Updates the content of `t.nodes` with that of `s.nodes`, assuming the IDs of `s` form a subset of
-   those of `t`. If this assumption is false, the result will be a non-sensical union with the roots
-   of `t`.
+
+unionInteraction : Interaction -> Interaction -> Interaction
+unionInteraction int1 int2 =
+    { opened = int1.opened || int2.opened, closed = int1.closed || int2.closed }
+
+
+
+{- Returns a node resulting from the union of the annotations (justification + interaction) of two
+   nodes, assuming they have the same shape. Metadata like `name` and `context` are taken from
+   `node2`.
+-}
+
+
+mergeNodes : Node -> Node -> Node
+mergeNodes node1 node2 =
+    { shape =
+        case ( node1.shape, node2.shape ) of
+            ( Sep _ int1, Sep childIds2 int2 ) ->
+                Sep childIds2
+                    (case ( int1, int2 ) of
+                        ( Just int1_, Just int2_ ) ->
+                            Just (unionInteraction int1_ int2_)
+
+                        ( Just int1_, Nothing ) ->
+                            Just int1_
+
+                        ( Nothing, Just int2_ ) ->
+                            Just int2_
+
+                        ( Nothing, Nothing ) ->
+                            Nothing
+                    )
+
+            _ ->
+                node2.shape
+    , name =
+        node2.name
+    , justif =
+        unionJustification node1.justif node2.justif
+    , context =
+        node2.context
+    , polarity =
+        node2.polarity
+    }
+
+
+
+{- Merges the annotations of `s.nodes` into `t.nodes`, assuming the IDs of `s` form a subset of
+   those of `t`.
 -}
 
 
 mergeInto : Net -> Net -> Net
 mergeInto s t =
-    { nodes = Dict.union s.nodes t.nodes
+    { nodes =
+        Dict.foldl
+            (\id node acc ->
+                Dict.update id (Maybe.map (mergeNodes node)) acc
+            )
+            t.nodes
+            s.nodes
     , roots = t.roots
     }
 
 
 
-{- "Deiterates" node `tgt` from `src` in `net` by deep linking the conclusion of `tgt` back to that of `src`. -}
+{- "Deiterates" node `tgt` from `src` in `net` by deep linking the boundary of `tgt` back to that of `src`. -}
 
 
 deiterate : Bool -> Id -> Id -> Net -> Net
 deiterate isForward src tgt net =
     let
-        ( subnetSrc, subnetTgt ) =
-            ( getSubnet src net, getSubnet tgt net )
+        boundaryNet =
+            boundary isForward net
 
-        backlinkedTgtConclusion =
-            deeplink (boundary isForward subnetSrc) (boundary isForward subnetTgt)
+        ( boundarySrc, boundaryTgt ) =
+            ( getSubnet src boundaryNet, getSubnet tgt boundaryNet )
+
+        backlinkedTgtBoundary =
+            deeplink boundarySrc boundaryTgt
+
+        updateOrigin id newJustif justif =
+            if id == tgt then
+                { justif | copy = newJustif.copy }
+
+            else
+                { justif | subcopy = newJustif.subcopy }
     in
-    mergeInto backlinkedTgtConclusion net
+    Dict.foldl
+        (\id node acc ->
+            updateJustif id (updateOrigin id node.justif) acc
+        )
+        net
+        backlinkedTgtBoundary.nodes
 
 
 
@@ -1367,8 +1429,8 @@ isDeletion polarity justif =
 
 isDirect : Justification -> Bool
 isDirect justif =
-    case justif.from of
-        Just (Direct _) ->
+    case justif.copy of
+        Just _ ->
             True
 
         _ ->
@@ -1667,18 +1729,8 @@ stringOfNode net content node =
         ++ stringOfShape content node.shape
 
 
-stringOfOrigin : Net -> Origin -> String
-stringOfOrigin net origin =
-    case origin of
-        Direct srcId ->
-            getName srcId net
-
-        _ ->
-            ""
-
-
 stringOfJustification : Net -> Justification -> String
-stringOfJustification net { self, from } =
+stringOfJustification net { self, copy } =
     let
         selfText =
             if self then
@@ -1688,9 +1740,9 @@ stringOfJustification net { self, from } =
                 ""
 
         fromText =
-            case from of
-                Just ((Direct _) as copy) ->
-                    stringOfOrigin net copy ++ "/"
+            case copy of
+                Just originId ->
+                    getName originId net ++ "/"
 
                 _ ->
                     ""

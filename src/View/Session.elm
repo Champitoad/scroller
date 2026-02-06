@@ -147,12 +147,8 @@ viewNode dnd session ((TNode { id, node, children }) as tree) =
                             invert node.polarity
 
                 ( originId, originName, isHoveredOrigin ) =
-                    case node.justif.from of
-                        Just origin ->
-                            let
-                                oId =
-                                    originSourceId origin
-                            in
+                    case node.justif.copy of
+                        Just oId ->
                             ( Just oId, getName oId session.net, session.hoveredOrigin == Just oId )
 
                         _ ->

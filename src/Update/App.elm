@@ -6,7 +6,6 @@ import Browser.Navigation
 import Html5.DragDrop as DnD
 import Json.Decode exposing (Value)
 import Keyboard.Event exposing (KeyboardEvent)
-import Keyboard.Key
 import Model.App exposing (..)
 import Model.Formula exposing (..)
 import Model.Scroll exposing (..)

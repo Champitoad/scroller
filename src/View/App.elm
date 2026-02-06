@@ -6,7 +6,7 @@ import Html exposing (div)
 import Html.Attributes exposing (id, style, tabindex)
 import Html.Events exposing (on, preventDefaultOn)
 import Json.Decode
-import Keyboard.Event exposing (KeyboardEvent, decodeKeyboardEvent)
+import Keyboard.Event exposing (decodeKeyboardEvent)
 import Keyboard.Key
 import Model.App exposing (Model)
 import Model.Session exposing (isTyping)
