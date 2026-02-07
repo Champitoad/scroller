@@ -183,6 +183,8 @@ type alias Session =
     , actionsQueue : Queue Int
     , renaming : Maybe { id : Id, originalName : String }
     , hoveredOrigin : Maybe Id
+    , selection : Selection
+    , selectionMode : Bool
     }
 
 
@@ -198,6 +200,8 @@ fromNet net =
     , actionsQueue = Queue.empty
     , renaming = Nothing
     , hoveredOrigin = Nothing
+    , selection = []
+    , selectionMode = False
     }
 
 
@@ -242,6 +246,29 @@ isTyping session =
 
         _ ->
             session.renaming /= Nothing
+
+
+setSelectionMode : Bool -> Session -> Session
+setSelectionMode mode session =
+    { session | selectionMode = mode }
+
+
+clearSelection : Session -> Session
+clearSelection session =
+    { session | selection = [] }
+
+
+toggleSelection : Id -> Session -> Session
+toggleSelection id session =
+    let
+        newSelection =
+            if List.member id session.selection then
+                List.filter (\x -> x /= id) session.selection
+
+            else
+                id :: session.selection
+    in
+    { session | selection = newSelection }
 
 
 
@@ -983,6 +1010,8 @@ manualExamples =
                 , actionsQueue = Queue.empty
                 , renaming = Nothing
                 , hoveredOrigin = Nothing
+                , selection = []
+                , selectionMode = False
                 }
 
         examples : List ( SandboxID, ActionMode, Net )

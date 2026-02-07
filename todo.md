@@ -1,6 +1,6 @@
 # Next
 
-- Implement selection mode to be able to open scroll around arbitrary contiguous sequence of nodes for Open action in backward mode (which adds a `closed` annotation)
+- Possibility to open scroll around arbitrary contiguous sequence of selected nodes for Open action in backward mode (which adds a `closed` annotation)
 - Dually, Close actions in backward mode should only be allowed on scrolls with empty inloop
 - Or to simplify the implementation and make things more symmetric, we could allow Open actions in Forward mode around contiguous sequences of nodes, but checking continuity in the full scroll net rather than its boundary to still avoid scroll overlap
 

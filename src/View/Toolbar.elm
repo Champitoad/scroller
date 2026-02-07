@@ -469,6 +469,18 @@ toolbarHeight =
     defaultButtonSize + 2 * toolbarPadding
 
 
+viewSelectionToggle : Bool -> Element Msg
+viewSelectionToggle enabled =
+    toggle
+        { color = modeSelectorColor
+        , iconOn = Icons.mousePointer
+        , iconOff = Icons.mousePointer
+        , title = "Select"
+        , onChange = ClickedSelectionToggle
+        }
+        enabled
+
+
 viewCopyModeToggle : CopyMode -> Element Msg
 viewCopyModeToggle copyMode =
     let
@@ -534,30 +546,40 @@ viewToolbar model =
                 , spacing 20
                 , centerX
                 ]
-                [ viewRecordToggle model.playground.recording
+                [ viewSelectionToggle model.playground.selectionMode
+                , viewRecordToggle model.playground.recording
                 , viewExecModeSelector model.playground.execMode
                 , viewExecButtons model.playground
                 ]
+
+        clearSelectionOnClick =
+            if model.playground.selectionMode then
+                [ Events.onClick ClearSelection ]
+
+            else
+                []
     in
     row
-        [ width fill
-        , height (toolbarHeight |> px)
-        , padding toolbarPadding
-        , spacing 100
-        , styleAttr "border-width" "1px 0px 0px 0px"
-        , styleAttr "border-style" "solid"
-        , styleAttr "border-color" "rgb(153, 153, 153)"
+        ([ width fill
+         , height (toolbarHeight |> px)
+         , padding toolbarPadding
+         , spacing 100
+         , styleAttr "border-width" "1px 0px 0px 0px"
+         , styleAttr "border-style" "solid"
+         , styleAttr "border-color" "rgb(153, 153, 153)"
 
-        -- , Border.shadow
-        --     { offset = (0, -3)
-        --     , size = 0.1
-        --     , blur = 5
-        --     , color = rgb 0.5 0.5 0.5 }
-        , Background.gradient
+         -- , Border.shadow
+         --     { offset = (0, -3)
+         --     , size = 0.1
+         --     , blur = 5
+         --     , color = rgb 0.5 0.5 0.5 }
+         , Background.gradient
             { angle = 0
             , steps = [ rgb 0.8 0.8 0.8, rgb 0.9 0.9 0.9 ]
             }
-        ]
+         ]
+            ++ clearSelectionOnClick
+        )
         [ el [ alignLeft ] helpButton
         , el [ width fill ] actionToolZone
         , el [ centerX ] actionModeSelector

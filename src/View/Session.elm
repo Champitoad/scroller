@@ -358,6 +358,43 @@ viewNode dnd session ((TNode { id, node, children }) as tree) =
 
                 _ ->
                     []
+
+        selectionStyle =
+            let
+                hoverColor =
+                    rgba 0.227 0.525 1 0.2
+
+                borderStyle =
+                    if List.member id session.selection then
+                        [ styleAttr "border-width" "6px"
+                        , styleAttr "border-style" "solid"
+                        , styleAttr "border-color" "rgba(129, 177, 255, 1)"
+                        ]
+
+                    else
+                        []
+
+                overlay =
+                    [ inFront
+                        (Input.button
+                            ([ width fill
+                             , height fill
+                             , shapeBorderRadius (Just node.shape)
+                             , mouseOver [ Background.color hoverColor ]
+                             ]
+                                ++ borderStyle
+                            )
+                            { onPress = Just (ToggleSelection id)
+                            , label = none
+                            }
+                        )
+                    ]
+            in
+            if session.selectionMode then
+                overlay
+
+            else
+                borderStyle
     in
     column
         [ width fill, nodeHeight, centerX, centerY ]
@@ -369,6 +406,7 @@ viewNode dnd session ((TNode { id, node, children }) as tree) =
                 ++ drawErased
                 ++ dropAction
                 ++ clickAction
+                ++ selectionStyle
                 ++ [ width fill
                    , centerY
                    , nodeHeight

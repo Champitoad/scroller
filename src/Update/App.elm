@@ -48,6 +48,10 @@ type Msg
     | CancelRenaming
     | DragDropMsg DnDMsg
     | SetDragModifiers { alt : Bool }
+    | SetSelectionMode Bool
+    | ClickedSelectionToggle Bool
+    | ToggleSelection Id
+    | ClearSelection
     | ResetSandbox SandboxID
     | HandleKeyboardEvent DetailedKeyboardEvent
     | HandleKeyUpEvent KeyboardEvent
@@ -310,6 +314,29 @@ update msg model =
             , Cmd.none
             )
 
+        SetSelectionMode mode ->
+            ( setSession Playground (setSelectionMode mode model.playground) model, focusApp )
+
+        ClickedSelectionToggle mode ->
+            let
+                session =
+                    model.playground
+
+                newSession =
+                    if mode then
+                        setSelectionMode True session
+
+                    else
+                        setSelectionMode False session
+            in
+            ( setSession Playground newSession model, Cmd.none )
+
+        ClearSelection ->
+            ( setSession Playground (clearSelection model.playground) model, Cmd.none )
+
+        ToggleSelection id ->
+            ( setSession Playground (toggleSelection id model.playground) model, Cmd.none )
+
         ToggleCopyMode doit ->
             ( setSession Playground (toggleCopyMode doit model.playground) model, Cmd.none )
 
@@ -328,6 +355,9 @@ update msg model =
 
                         _ ->
                             ( model, Cmd.none )
+
+                Just "Shift" ->
+                    update (SetSelectionMode False) model
 
                 _ ->
                     ( model, Cmd.none )
@@ -351,6 +381,9 @@ update msg model =
 
                         _ ->
                             ( model, Cmd.none )
+
+                ( ( _, _, _ ), _, Just "Shift" ) ->
+                    update (SetSelectionMode True) model
 
                 ( ( True, False, False ), _, Just "z" ) ->
                     update Undo model
@@ -397,7 +430,11 @@ update msg model =
                     update CommitRenaming model
 
                 ( ( _, _, _ ), _, Just "Escape" ) ->
-                    update CancelRenaming model
+                    if shiftKey then
+                        update ClearSelection model
+
+                    else
+                        update CancelRenaming model
 
                 ( ( _, _, _ ), _, Just " " ) ->
                     if isTyping model.playground then
