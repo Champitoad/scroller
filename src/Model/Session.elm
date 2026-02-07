@@ -2,6 +2,7 @@ module Model.Session exposing (..)
 
 import Dict exposing (Dict)
 import Iddict exposing (Iddict)
+import List.Extra
 import Model.Scroll as Scroll exposing (..)
 import Queue exposing (Queue)
 import Utils.List
@@ -302,6 +303,7 @@ type ActionError
     | NonSingleInloop Id
     | OutOfScope Id
     | IncompatibleBoundaries Id Id
+    | NonContiguousSelection
 
 
 boundary : Session -> Net
@@ -595,7 +597,22 @@ applicable action session =
                 Err Erased
 
             else
-                Ok ()
+                let
+                    childIds =
+                        getChildIdsContext loc.ctx session.net
+
+                    isSelectionContiguous () =
+                        let
+                            sortedSelection =
+                                List.sortBy (\id -> Scroll.getPosition id session.net) session.selection
+                        in
+                        List.Extra.isSubsequenceOf sortedSelection childIds
+                in
+                if not (List.isEmpty session.selection || isSelectionContiguous ()) then
+                    Err NonContiguousSelection
+
+                else
+                    Ok ()
 
         Close id ->
             if isErased id session then
@@ -682,20 +699,34 @@ annotateExpansion execMode =
             makeClosed
 
 
-actionTransform : ExecMode -> Action -> Net -> Net
-actionTransform execMode action =
+actionTransform : Selection -> ExecMode -> Action -> Net -> Net
+actionTransform selection execMode action =
     case action of
         Open loc ->
-            let
-                unopenedScrollTree =
-                    emptyScroll |> hydrateOToken TopLevel Pos |> State.eval 0
+            if List.isEmpty selection then
+                let
+                    openedScroll =
+                        emptyScroll
+                            |> hydrateOToken TopLevel Pos
+                            |> State.eval 0
+                            |> dehydrateTree
+                            |> updateInteraction 1 (annotateExpansion execMode)
+                in
+                graft loc openedScroll
 
-                openedScroll =
-                    unopenedScrollTree
-                        |> dehydrateTree
-                        |> updateInteraction 1 (annotateExpansion execMode)
-            in
-            graft loc openedScroll
+            else
+                \net ->
+                    let
+                        sortedSelection =
+                            List.sortBy (\id -> Scroll.getPosition id net) selection
+
+                        ( inloopId, netWithInloop ) =
+                            Scroll.enclose sortedSelection (Just Scroll.attachment) net
+
+                        ( _, netWithOutloop ) =
+                            Scroll.enclose [ inloopId ] Nothing netWithInloop
+                    in
+                    Scroll.updateInteraction inloopId (annotateExpansion execMode) netWithOutloop
 
         Close id ->
             \net ->
@@ -786,7 +817,7 @@ record action session =
             Queue.enqueue actionId session.actionsQueue
 
         transformedNet =
-            actionTransform session.execMode action session.net
+            actionTransform session.selection session.execMode action session.net
 
         renamingData loc =
             let

@@ -966,13 +966,15 @@ hydrateIToken context polarity token =
 
 hydrateStruct : Struct -> List Tree
 hydrateStruct struct =
-    State.traverse (hydrateOToken TopLevel Pos) struct
+    struct
+        |> State.traverse (hydrateOToken TopLevel Pos)
         |> State.eval 0
 
 
 netOfITokens : Context -> Polarity -> List IToken -> Net
 netOfITokens context polarity tokens =
-    State.traverse (hydrateIToken context polarity) tokens
+    tokens
+        |> State.traverse (hydrateIToken context polarity)
         |> State.eval 0
         |> dehydrate
 
@@ -984,6 +986,95 @@ netOfStruct =
 
 
 -- Surgery
+{- Encloses a contiguous sequence of nodes `ids` in a new `Sep` node with the given `interaction`. -}
+
+
+enclose : List Id -> Maybe Interaction -> Net -> ( Id, Net )
+enclose ids interaction net =
+    case ids of
+        [] ->
+            -- Should not happen if preconditions are met
+            ( -1, net )
+
+        first :: _ ->
+            let
+                ctx =
+                    getContext first net
+
+                parentChildren =
+                    getChildIdsContext ctx net
+
+                idx =
+                    List.Extra.elemIndex first parentChildren
+                        |> Maybe.withDefault -1
+            in
+            if idx == -1 then
+                ( -1, net )
+
+            else
+                let
+                    count =
+                        List.length ids
+
+                    prefix =
+                        List.take idx parentChildren
+
+                    suffix =
+                        List.drop (idx + count) parentChildren
+
+                    newId =
+                        freshId net
+
+                    newChildrenList =
+                        prefix ++ newId :: suffix
+
+                    newNode =
+                        { shape = Sep ids interaction
+                        , name = ""
+                        , justif = assumption
+                        , context = ctx
+                        , polarity = getPolarityContext ctx net
+                        }
+
+                    netWithNode =
+                        { net | nodes = Dict.insert newId newNode net.nodes }
+
+                    -- Update context of enclosed nodes
+                    netWithUpdatedContexts =
+                        List.foldl
+                            (\id acc -> updateContext id (\_ -> Inside newId) acc)
+                            netWithNode
+                            ids
+
+                    -- Update polarity of enclosed nodes and their descendants
+                    allEnclosedIds =
+                        List.concatMap (\id -> getDescendentIds id netWithUpdatedContexts) ids
+
+                    netWithUpdatedPolarity =
+                        List.foldl
+                            (\id acc -> updatePolarity id invert acc)
+                            netWithUpdatedContexts
+                            allEnclosedIds
+
+                    -- Update parent to point to newId
+                    netFinal =
+                        case ctx of
+                            TopLevel ->
+                                { netWithUpdatedPolarity | roots = newChildrenList }
+
+                            Inside parentId ->
+                                updateShape parentId
+                                    (\shape ->
+                                        case shape of
+                                            Sep _ int ->
+                                                Sep newChildrenList int
+
+                                            _ ->
+                                                shape
+                                    )
+                                    netWithUpdatedPolarity
+                in
+                ( newId, netFinal )
 
 
 removeSingleNode : Id -> Net -> Net
