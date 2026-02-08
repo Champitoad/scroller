@@ -1,8 +1,9 @@
 # Next
 
+- Fix Shift key captured for selection mode while typing in text input
 - Implement `Model.Session.execute` to make the Step button work
-- Fix `Reorder` actions
 - Limit scope of (de)iteration for inloops to areas attached to the same scroll
+- Fix `Reorder` actions
 - Carefully choose which events are recorded in the undo/redo history
 
 # Features

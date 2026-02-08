@@ -180,7 +180,7 @@ type alias Session =
     , actionMode : ActionMode
     , execMode : ExecMode
     , recording : Bool
-    , actions : Iddict Action
+    , actions : Iddict ( Action, Id )
     , actionsQueue : Queue Int
     , renaming : Maybe { id : Id, originalName : String }
     , hoveredOrigin : Maybe Id
@@ -375,7 +375,18 @@ changeInteractionMode mode session =
 
 changeExecMode : ExecMode -> Session -> Session
 changeExecMode mode session =
-    { session | execMode = mode }
+    let
+        newActions =
+            Debug.todo "TODO: dualize all recorded actions"
+
+        newActionsQueue =
+            if mode /= session.execMode then
+                Queue.reverse session.actionsQueue
+
+            else
+                session.actionsQueue
+    in
+    { session | execMode = mode, actions = newActions, actionsQueue = newActionsQueue }
 
 
 toggleRecording : Bool -> Session -> Session
@@ -538,6 +549,29 @@ isInserted id { actionMode } =
             False
 
 
+updateInsertion : Session -> Id -> Int -> Iddict ( Action, Id ) -> Iddict ( Action, Id )
+updateInsertion session ancId insertionActionId acc =
+    let
+        newToken =
+            boundary session
+                |> buildTree ancId
+                |> tokenOfTree
+    in
+    Iddict.update
+        insertionActionId
+        (Maybe.map
+            (\( action, locus ) ->
+                case action of
+                    Insert ancLoc _ ->
+                        ( Insert ancLoc newToken, locus )
+
+                    _ ->
+                        ( action, locus )
+            )
+        )
+        acc
+
+
 commitInsertions : Session -> Session
 commitInsertions session =
     { session
@@ -545,27 +579,7 @@ commitInsertions session =
             case session.actionMode of
                 EditMode { insertions } ->
                     Dict.foldl
-                        (\ancId insertionActionId acc ->
-                            let
-                                newToken =
-                                    boundary session
-                                        |> buildTree ancId
-                                        |> tokenOfTree
-                            in
-                            Iddict.update
-                                insertionActionId
-                                (Maybe.map
-                                    (\action ->
-                                        case action of
-                                            Insert ancLoc _ ->
-                                                Insert ancLoc newToken
-
-                                            _ ->
-                                                action
-                                    )
-                                )
-                                acc
-                        )
+                        (updateInsertion session)
                         session.actions
                         insertions
 
@@ -699,20 +713,27 @@ annotateExpansion execMode =
             makeClosed
 
 
-actionTransform : Selection -> ExecMode -> Action -> Net -> Net
+actionTransform : Selection -> ExecMode -> Action -> Net -> ( Id, Net )
 actionTransform selection execMode action =
     case action of
         Open loc ->
             if List.isEmpty selection then
-                let
-                    openedScroll =
-                        emptyScroll
-                            |> hydrateOToken TopLevel Pos
-                            |> State.eval 0
-                            |> dehydrateTree
-                            |> updateInteraction 1 (annotateExpansion execMode)
-                in
-                graft loc openedScroll
+                \net ->
+                    let
+                        openedScroll =
+                            emptyScroll
+                                |> hydrateOToken TopLevel Pos
+                                |> State.eval 0
+                                |> dehydrateTree
+                                |> updateInteraction 1 (annotateExpansion execMode)
+
+                        ( ids, newNet ) =
+                            graft loc openedScroll net
+                    in
+                    -- Dirty trick here, we rely on the fact that inloop ID == outloop ID + 1 from
+                    -- `hydrateOToken` implementation, as well as how `freshify` computes fresh IDs
+                    -- by shifting, thus preserving the above equality
+                    ( List.head ids |> Maybe.map ((+) 1) |> Maybe.withDefault -1, newNet )
 
             else
                 \net ->
@@ -726,29 +747,29 @@ actionTransform selection execMode action =
                         ( _, netWithOutloop ) =
                             Scroll.enclose [ inloopId ] Nothing netWithInloop
                     in
-                    Scroll.updateInteraction inloopId (annotateExpansion execMode) netWithOutloop
+                    ( inloopId, Scroll.updateInteraction inloopId (annotateExpansion execMode) netWithOutloop )
 
         Close id ->
             \net ->
                 case net |> Scroll.boundary (isForward execMode) |> getChildIds id |> List.filter (\cid -> isInloop cid net) of
                     [ inloopId ] ->
-                        updateInteraction inloopId (annotateExpansion (flipExecMode execMode)) net
+                        ( inloopId, updateInteraction inloopId (annotateExpansion (flipExecMode execMode)) net )
 
                     _ ->
-                        net
+                        -- Should never happen since we only allow correction actions
+                        ( id, net )
 
-        -- Do nothing, should never happen
         Insert loc tok ->
             insert True Nothing loc tok
 
         Delete id ->
-            delete id
+            \net -> ( id, delete id net )
 
         Iterate src dst ->
             iterate (isForward execMode) src dst
 
         Deiterate src tgt ->
-            deiterate (isForward execMode) src tgt
+            \net -> ( tgt, deiterate (isForward execMode) src tgt net )
 
         Reorder id tgtPos ->
             \net ->
@@ -758,24 +779,27 @@ actionTransform selection execMode action =
 
                     reorder =
                         Utils.List.move srcPos tgtPos
+
+                    newNet =
+                        case getContext id net of
+                            TopLevel ->
+                                { nodes = net.nodes
+                                , roots = reorder net.roots
+                                }
+
+                            Inside parentId ->
+                                updateShape parentId
+                                    (\shape ->
+                                        case shape of
+                                            Sep children interaction ->
+                                                Sep (reorder children) interaction
+
+                                            _ ->
+                                                shape
+                                    )
+                                    net
                 in
-                case getContext id net of
-                    TopLevel ->
-                        { nodes = net.nodes
-                        , roots = reorder net.roots
-                        }
-
-                    Inside parentId ->
-                        updateShape parentId
-                            (\shape ->
-                                case shape of
-                                    Sep children interaction ->
-                                        Sep (reorder children) interaction
-
-                                    _ ->
-                                        shape
-                            )
-                            net
+                ( id, newNet )
 
         Decompose id ->
             \net ->
@@ -790,10 +814,13 @@ actionTransform selection execMode action =
 
                     loc =
                         getLocation id net
+
+                    ( ids, newNet ) =
+                        net
+                            |> prune id
+                            |> graft loc formNet
                 in
-                net
-                    |> prune id
-                    |> graft loc formNet
+                ( List.head ids |> Maybe.withDefault -1, newNet )
 
 
 
@@ -810,14 +837,14 @@ actionTransform selection execMode action =
 record : Action -> Session -> ( Int, Session )
 record action session =
     let
+        ( locusId, transformedNet ) =
+            actionTransform session.selection session.execMode action session.net
+
         ( actionId, newActions ) =
-            Iddict.insert action session.actions
+            Iddict.insert ( action, locusId ) session.actions
 
         updatedActionsQueue =
             Queue.enqueue actionId session.actionsQueue
-
-        transformedNet =
-            actionTransform session.selection session.execMode action session.net
 
         renamingData loc =
             let
@@ -889,7 +916,7 @@ record action session =
 execute : Int -> Session -> Session
 execute actionId session =
     case Iddict.get actionId session.actions of
-        Just action ->
+        Just ( action, locusId ) ->
             let
                 newActions =
                     Iddict.remove actionId session.actions
@@ -897,23 +924,39 @@ execute actionId session =
                 newActionsQueue =
                     Queue.filter (\id -> id /= actionId) session.actionsQueue
 
-                newFocus : Net
-                newFocus =
+                newNet : Net
+                newNet =
                     case action of
                         Open _ ->
-                            Debug.todo "Open action execution not implemented yet."
+                            updateInteraction locusId
+                                (\int ->
+                                    if isForward session.execMode then
+                                        { int | opened = False }
+
+                                    else
+                                        { int | closed = False }
+                                )
+                                session.net
 
                         Close _ ->
-                            Debug.todo "Close action execution not implemented yet."
+                            removeScrollNodes (isForward session.execMode) locusId session.net
 
                         Insert _ _ ->
-                            Debug.todo "Insert action execution not implemented yet."
+                            updateJustif locusId (\justif -> { justif | self = False }) session.net
 
                         Delete _ ->
                             Debug.todo "Delete action execution not implemented yet."
 
                         Iterate _ _ ->
-                            Debug.todo "Iterate action execution not implemented yet."
+                            List.foldl
+                                (\subnodeId ->
+                                    updateJustif subnodeId
+                                        (\justif ->
+                                            { justif | copy = Nothing, subcopy = Nothing }
+                                        )
+                                )
+                                session.net
+                                (getDescendentIds locusId session.net)
 
                         Deiterate _ _ ->
                             Debug.todo "Deiterate action execution not implemented yet."
@@ -927,7 +970,7 @@ execute actionId session =
             { session
                 | actions = newActions
                 , actionsQueue = newActionsQueue
-                , net = newFocus
+                , net = newNet
             }
 
         Nothing ->
@@ -949,7 +992,7 @@ apply action session =
         newSession
 
     else
-        execute actionId session
+        execute actionId newSession
 
 
 

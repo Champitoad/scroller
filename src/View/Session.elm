@@ -36,7 +36,7 @@ viewClickAction session shape color action =
                     case action of
                         Insert loc tok ->
                             if existsAncestorContext (\ancId -> isInserted ancId session) loc.ctx session.net then
-                                Transform session.route (Session.map (insert False (Just "") loc tok))
+                                Transform session.route (Session.map (\net -> Tuple.second (insert False (Just "") loc tok net)))
 
                             else
                                 Apply session.route (Insert loc tok)
@@ -60,7 +60,7 @@ viewNode : DnD -> Session -> Tree -> Element Msg
 viewNode dnd session ((TNode { id, node, children }) as tree) =
     let
         debug =
-            False
+            True
 
         inForwardMode =
             case session.execMode of

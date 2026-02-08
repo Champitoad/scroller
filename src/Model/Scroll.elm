@@ -1176,64 +1176,67 @@ refreshPolarities net =
 {- Grafts net `src` onto net `tgt` at location `loc`. -}
 
 
-graft : Location -> Net -> Net -> Net
+graft : Location -> Net -> Net -> ( List Id, Net )
 graft loc src tgt =
     let
         srcFresh =
             freshify tgt src
-    in
-    refreshPolarities <|
-        { nodes =
-            Dict.foldl
-                (\srcNodeId srcNode acc ->
-                    let
-                        ( updatedSrcNode, srcRootIdx ) =
-                            case List.Extra.elemIndex srcNodeId srcFresh.roots of
-                                Just i ->
-                                    ( { srcNode | context = loc.ctx }, Just i )
 
-                                Nothing ->
-                                    ( srcNode, Nothing )
+        newNet =
+            refreshPolarities <|
+                { nodes =
+                    Dict.foldl
+                        (\srcNodeId srcNode acc ->
+                            let
+                                ( updatedSrcNode, srcRootIdx ) =
+                                    case List.Extra.elemIndex srcNodeId srcFresh.roots of
+                                        Just i ->
+                                            ( { srcNode | context = loc.ctx }, Just i )
 
-                        accWithSrcNode =
-                            Dict.insert srcNodeId updatedSrcNode acc
-                    in
+                                        Nothing ->
+                                            ( srcNode, Nothing )
+
+                                accWithSrcNode =
+                                    Dict.insert srcNodeId updatedSrcNode acc
+                            in
+                            case loc.ctx of
+                                -- If we graft at the top-level, just add the node
+                                TopLevel ->
+                                    accWithSrcNode
+
+                                -- If we graft in a sep and the node is a root,
+                                -- then we need to link the sep to its new child
+                                Inside parentId ->
+                                    accWithSrcNode
+                                        |> Dict.update parentId
+                                            (Maybe.map
+                                                (\parent ->
+                                                    let
+                                                        updatedShape =
+                                                            case ( parent.shape, srcRootIdx ) of
+                                                                --
+                                                                ( Sep childIds int, Just i ) ->
+                                                                    Sep (Utils.List.insert (loc.pos + i) [ srcNodeId ] childIds) int
+
+                                                                ( shape, _ ) ->
+                                                                    shape
+                                                    in
+                                                    { parent | shape = updatedShape }
+                                                )
+                                            )
+                        )
+                        tgt.nodes
+                        srcFresh.nodes
+                , roots =
                     case loc.ctx of
-                        -- If we graft at the top-level, just add the node
                         TopLevel ->
-                            accWithSrcNode
+                            Utils.List.insert loc.pos srcFresh.roots tgt.roots
 
-                        -- If we graft in a sep and the node is a root,
-                        -- then we need to link the sep to its new child
-                        Inside parentId ->
-                            accWithSrcNode
-                                |> Dict.update parentId
-                                    (Maybe.map
-                                        (\parent ->
-                                            let
-                                                updatedShape =
-                                                    case ( parent.shape, srcRootIdx ) of
-                                                        --
-                                                        ( Sep childIds int, Just i ) ->
-                                                            Sep (Utils.List.insert (loc.pos + i) [ srcNodeId ] childIds) int
-
-                                                        ( shape, _ ) ->
-                                                            shape
-                                            in
-                                            { parent | shape = updatedShape }
-                                        )
-                                    )
-                )
-                tgt.nodes
-                srcFresh.nodes
-        , roots =
-            case loc.ctx of
-                TopLevel ->
-                    Utils.List.insert loc.pos srcFresh.roots tgt.roots
-
-                _ ->
-                    tgt.roots
-        }
+                        _ ->
+                            tgt.roots
+                }
+    in
+    ( srcFresh.roots, newNet )
 
 
 
@@ -1321,14 +1324,11 @@ freshName basename net =
 -}
 
 
-insert : Bool -> Maybe String -> Location -> IToken -> Net -> Net
+insert : Bool -> Maybe String -> Location -> IToken -> Net -> ( Id, Net )
 insert self name loc tok net =
     let
         newTree =
             hydrateIToken loc.ctx (getPolarityContext loc.ctx net) tok |> State.eval 0
-
-        newId =
-            getTreeId newTree
 
         basename =
             case ( tok, getPolarityContext loc.ctx net ) of
@@ -1349,8 +1349,8 @@ insert self name loc tok net =
 
         ins =
             dehydrateTree newTree
-                |> updateName newId (\_ -> nodeName)
-                |> updateJustif newId
+                |> updateName 0 (\_ -> nodeName)
+                |> updateJustif 0
                     (\j ->
                         if self then
                             selfJustify j
@@ -1359,7 +1359,17 @@ insert self name loc tok net =
                             j
                     )
     in
-    graft loc ins net
+    let
+        ( newIds, newNet ) =
+            graft loc ins net
+    in
+    case newIds of
+        [ newId ] ->
+            ( newId, newNet )
+
+        _ ->
+            -- Dummy ID, should not happen
+            ( -1, newNet )
 
 
 
@@ -1375,7 +1385,7 @@ delete id net =
 {- Iterates node `id` at location `loc` in `net` by inserting a deep copy of the conclusion of `id`. -}
 
 
-iterate : Bool -> Id -> Location -> Net -> Net
+iterate : Bool -> Id -> Location -> Net -> ( Id, Net )
 iterate isForward id loc net =
     let
         copy =
@@ -1385,7 +1395,13 @@ iterate isForward id loc net =
                 |> updateName id (\name -> "Copy of " ++ name)
                 |> deepcopy
     in
-    graft loc copy net
+    case graft loc copy net of
+        ( [ newId ], newNet ) ->
+            ( newId, newNet )
+
+        ( _, newNet ) ->
+            -- Dummy ID, should never happen
+            ( -1, newNet )
 
 
 unionJustification : Justification -> Justification -> Justification

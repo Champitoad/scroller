@@ -10,6 +10,7 @@ import Model.App exposing (..)
 import Model.Formula exposing (..)
 import Model.Scroll exposing (..)
 import Model.Session exposing (..)
+import Queue
 import Task
 import Url
 import View.Route as Route
@@ -201,7 +202,13 @@ update msg model =
             ( setSessionWithHistory model.playground.route (execAll model.playground) model, focusApp )
 
         Step ->
-            Debug.todo "Action stepping not implemented yet"
+            case Queue.dequeue model.playground.actionsQueue of
+                Just ( actionId, _ ) ->
+                    update (Exec Playground actionId) model
+
+                Nothing ->
+                    -- Should never happen since the step should be disabled
+                    ( model, Cmd.none )
 
         ChangeActionMode mode ->
             ( { model | playground = changeActionMode mode model.playground }, focusApp )
