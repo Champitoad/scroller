@@ -1734,6 +1734,14 @@ boundary isForward net =
         |> forgetProof
 
 
+boundaryToken : Bool -> Id -> Net -> IToken
+boundaryToken isForward id net =
+    net
+        |> boundary isForward
+        |> buildTree id
+        |> tokenOfTree
+
+
 premiss : Net -> Net
 premiss =
     boundary False

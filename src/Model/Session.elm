@@ -1,10 +1,10 @@
 module Model.Session exposing (..)
 
+import Deque exposing (Deque)
 import Dict exposing (Dict)
-import Iddict exposing (Iddict)
 import List.Extra
 import Model.Scroll as Scroll exposing (..)
-import Queue exposing (Queue)
+import Set exposing (Set)
 import Utils.List
 import Utils.State as State
 
@@ -58,7 +58,7 @@ type ActionMode
         , operationMode : OperationMode
         , newAtomName : String
         , newAtomInputFocused : Bool
-        , insertions : Dict Id Int -- maps node IDs to corresponding insertion action IDs
+        , insertedNodes : Set Id -- maps node IDs to corresponding insertion action IDs
         }
     | NavigationMode
 
@@ -79,7 +79,7 @@ defaultEditMode =
         , operationMode = OInsertion
         , newAtomName = ""
         , newAtomInputFocused = False
-        , insertions = Dict.empty
+        , insertedNodes = Set.empty
         }
 
 
@@ -138,6 +138,44 @@ backtrack navigation =
 
 
 
+-- Actions
+
+
+type
+    Action
+    -- Open a scroll with an empty outloop and a single inloop around a selected contiguous sequence of nodes
+    = Open Location
+      -- Close a scroll with an empty outloop and a single inloop
+    | Close Id
+      -- Insert a token
+    | Insert Location IToken
+      -- Delete a node
+    | Delete Id
+      -- Iterate a node
+    | Iterate Id Location
+      -- Deiterate a node
+    | Deiterate Id Id
+      -- Reposition a node in the same area
+    | Reorder Id Int
+      -- Decompose a symbolic formula into the corresponding scroll structure
+    | Decompose Id
+
+
+type ActionError
+    = InvalidPolarity
+    | Erased
+    | NonEmptyOutloop Id
+    | NonSingleInloop Id
+    | OutOfScope Id
+    | IncompatibleBoundaries Id Id
+    | NonContiguousSelection
+
+
+type alias ActionDeque =
+    Deque ( Action, Id )
+
+
+
 -- Sessions
 
 
@@ -165,11 +203,15 @@ type Route
 
    - `recording`: a boolean determining whether actions are recorded
 
-   - `actions`: dictionary of all recorded actions pending for execution, accessed through unique IDs
-
-   - `actionsQueue`: queue of recorded actions IDs
+   - `actions`: two double-ended queues for recording actions in Forward and Backward modes
 
    - `renaming`: the state of the renaming interaction, if any (ID of the node and its original name)
+
+   - `hoveredOrigin`: ID of the origin of a hovered copy, if any
+
+   - `selection`: list of selected nodes
+
+   - `selecting`: whether the interface is in selection mode
 -}
 
 
@@ -180,12 +222,11 @@ type alias Session =
     , actionMode : ActionMode
     , execMode : ExecMode
     , recording : Bool
-    , actions : Iddict ( Action, Id )
-    , actionsQueue : Queue Int
+    , actions : { forward : ActionDeque, backward : ActionDeque }
     , renaming : Maybe { id : Id, originalName : String }
     , hoveredOrigin : Maybe Id
     , selection : Selection
-    , selectionMode : Bool
+    , selecting : Bool
     }
 
 
@@ -197,12 +238,11 @@ fromNet net =
     , actionMode = defaultProofMode
     , execMode = Forward
     , recording = True
-    , actions = Iddict.empty
-    , actionsQueue = Queue.empty
+    , actions = { forward = Deque.empty, backward = Deque.empty }
     , renaming = Nothing
     , hoveredOrigin = Nothing
     , selection = []
-    , selectionMode = False
+    , selecting = False
     }
 
 
@@ -251,7 +291,7 @@ isTyping session =
 
 setSelectionMode : Bool -> Session -> Session
 setSelectionMode mode session =
-    { session | selectionMode = mode }
+    { session | selecting = mode }
 
 
 clearSelection : Session -> Session
@@ -272,40 +312,6 @@ toggleSelection id session =
     { session | selection = newSelection }
 
 
-
--- Actions
-
-
-type
-    Action
-    -- Open a scroll with an empty outloop and a single empty inloop
-    = Open Location
-      -- Close a scroll with an empty outloop and a single inloop
-    | Close Id
-      -- Insert a token
-    | Insert Location IToken
-      -- Delete a node
-    | Delete Id
-      -- Iterate a node
-    | Iterate Id Location
-      -- Deiterate a node
-    | Deiterate Id Id
-      -- Reposition a node in the same area
-    | Reorder Id Int
-      -- Decompose a symbolic formula into the corresponding scroll structure
-    | Decompose Id
-
-
-type ActionError
-    = InvalidPolarity
-    | Erased
-    | NonEmptyOutloop Id
-    | NonSingleInloop Id
-    | OutOfScope Id
-    | IncompatibleBoundaries Id Id
-    | NonContiguousSelection
-
-
 boundary : Session -> Net
 boundary session =
     let
@@ -320,12 +326,16 @@ boundary session =
     boundaryFunc session.net
 
 
+boundaryToken : Id -> Session -> IToken
+boundaryToken id session =
+    Scroll.boundaryToken (isForward session.execMode) id session.net
+
+
 execAll : Session -> Session
 execAll session =
     { session
         | net = boundary session
-        , actions = Iddict.empty
-        , actionsQueue = Queue.empty
+        , actions = { forward = Deque.empty, backward = Deque.empty }
         , actionMode =
             case session.actionMode of
                 EditMode _ ->
@@ -375,18 +385,7 @@ changeInteractionMode mode session =
 
 changeExecMode : ExecMode -> Session -> Session
 changeExecMode mode session =
-    let
-        newActions =
-            Debug.todo "TODO: dualize all recorded actions"
-
-        newActionsQueue =
-            if mode /= session.execMode then
-                Queue.reverse session.actionsQueue
-
-            else
-                session.actionsQueue
-    in
-    { session | execMode = mode, actions = newActions, actionsQueue = newActionsQueue }
+    { session | execMode = mode }
 
 
 toggleRecording : Bool -> Session -> Session
@@ -542,24 +541,21 @@ isErasedContext ctx session =
 isInserted : Id -> Session -> Bool
 isInserted id { actionMode } =
     case actionMode of
-        EditMode { insertions } ->
-            Dict.member id insertions
+        EditMode { insertedNodes } ->
+            Set.member id insertedNodes
 
         _ ->
             False
 
 
-updateInsertion : Session -> Id -> Int -> Iddict ( Action, Id ) -> Iddict ( Action, Id )
-updateInsertion session ancId insertionActionId acc =
+updateInsertion : Session -> Id -> ActionDeque -> ActionDeque
+updateInsertion session ancId acc =
     let
         newToken =
-            boundary session
-                |> buildTree ancId
-                |> tokenOfTree
+            boundaryToken ancId session
     in
-    Iddict.update
-        insertionActionId
-        (Maybe.map
+    acc
+        |> Deque.map
             (\( action, locus ) ->
                 case action of
                     Insert ancLoc _ ->
@@ -568,8 +564,6 @@ updateInsertion session ancId insertionActionId acc =
                     _ ->
                         ( action, locus )
             )
-        )
-        acc
 
 
 commitInsertions : Session -> Session
@@ -577,11 +571,18 @@ commitInsertions session =
     { session
         | actions =
             case session.actionMode of
-                EditMode { insertions } ->
-                    Dict.foldl
-                        (updateInsertion session)
-                        session.actions
-                        insertions
+                EditMode { insertedNodes } ->
+                    { forward =
+                        Set.foldl
+                            (updateInsertion session)
+                            session.actions.forward
+                            insertedNodes
+                    , backward =
+                        Set.foldl
+                            (updateInsertion session)
+                            session.actions.backward
+                            insertedNodes
+                    }
 
                 _ ->
                     session.actions
@@ -825,26 +826,56 @@ actionTransform selection execMode action =
 
 
 {- `record action session` records `action` in `session` by:
-   - generating a new ID `id` and associating `action` to `id` in `session.actions`
-   - pushing `id` in `session.actionsQueue`
+   - enqueuing `action` and its dual in `session.actions`
    - decorating the scroll net `session.net` with the justification/interaction corresponding to `action`
-   - returning `id` for later usage (typically with `Session.execute`)
 
    This assumes that the action is indeed applicable in the session.
 -}
 
 
-record : Action -> Session -> ( Int, Session )
+record : Action -> Session -> Session
 record action session =
     let
-        ( locusId, transformedNet ) =
+        ( locus, transformedNet ) =
             actionTransform session.selection session.execMode action session.net
 
-        ( actionId, newActions ) =
-            Iddict.insert ( action, locusId ) session.actions
+        dualAction =
+            case action of
+                Open _ ->
+                    Close locus
 
-        updatedActionsQueue =
-            Queue.enqueue actionId session.actionsQueue
+                Close id ->
+                    Open (getLocation id (boundary session))
+
+                Insert _ _ ->
+                    Delete locus
+
+                Delete id ->
+                    Insert (getLocation id (boundary session)) (boundaryToken id session)
+
+                Iterate src _ ->
+                    Deiterate src locus
+
+                Deiterate src tgt ->
+                    Iterate src (getLocation tgt (boundary session))
+
+                Reorder id _ ->
+                    Reorder id (getPosition id (boundary session))
+
+                Decompose _ ->
+                    Debug.todo "dualAction: Decompose"
+
+        ( forwardPush, backwardPush ) =
+            if isForward session.execMode then
+                ( Deque.pushBack ( action, locus ), Deque.pushFront ( dualAction, locus ) )
+
+            else
+                ( Deque.pushFront ( dualAction, locus ), Deque.pushBack ( action, locus ) )
+
+        newActions =
+            { forward = forwardPush session.actions.forward
+            , backward = backwardPush session.actions.backward
+            }
 
         renamingData loc =
             let
@@ -870,14 +901,7 @@ record action session =
                             renamingData loc
                     in
                     ( netWithEmptyName
-                    , EditMode
-                        { editData
-                            | insertions =
-                                Dict.insert
-                                    id
-                                    actionId
-                                    editData.insertions
-                        }
+                    , EditMode { editData | insertedNodes = Set.insert id editData.insertedNodes }
                     , renaming
                     )
 
@@ -894,41 +918,79 @@ record action session =
                 _ ->
                     ( transformedNet, session.actionMode, Nothing )
     in
-    ( actionId
-    , { session
+    { session
         | actions = newActions
-        , actionsQueue = updatedActionsQueue
         , actionMode = updatedActionMode
         , net = finalNet
         , renaming = updatedRenaming
-      }
-    )
+    }
+
+
+getActionsDeque : ExecMode -> Session -> ActionDeque
+getActionsDeque execMode session =
+    case execMode of
+        Forward ->
+            session.actions.forward
+
+        Backward ->
+            session.actions.backward
+
+
+setActionsDeque : ExecMode -> ActionDeque -> Session -> Session
+setActionsDeque execMode actionsDeque session =
+    case execMode of
+        Forward ->
+            { session | actions = { forward = actionsDeque, backward = session.actions.backward } }
+
+        Backward ->
+            { session | actions = { backward = actionsDeque, forward = session.actions.forward } }
+
+
+getActionAtIndex : Int -> ActionDeque -> Maybe ( Action, Id )
+getActionAtIndex idx actionsDeque =
+    actionsDeque
+        |> Deque.toList
+        |> List.Extra.getAt idx
+
+
+removeActionAtIndex : Int -> ActionDeque -> ActionDeque
+removeActionAtIndex idx actionsDeque =
+    actionsDeque
+        |> Deque.toList
+        |> List.Extra.removeAt idx
+        |> Deque.fromList
 
 
 
-{- `execute actionId session` executes the action with ID `actionId` in `session` by:
-   - deleting the associated entry in `session.actions`
-   - deleting `actionId` from `session.actionsQueue` if not already done
+{- `execute actionIdx session` executes the action at index `actionIdx` in `session.actions` by:
+   - removing the associated entry in `session.actions`
    - applying the semantics of the action in `session.net`
 -}
 
 
 execute : Int -> Session -> Session
-execute actionId session =
-    case Iddict.get actionId session.actions of
-        Just ( action, locusId ) ->
-            let
-                newActions =
-                    Iddict.remove actionId session.actions
+execute actionIdx session =
+    let
+        currentActionsDeque =
+            getActionsDeque session.execMode session
 
-                newActionsQueue =
-                    Queue.filter (\id -> id /= actionId) session.actionsQueue
+        oppositeActionsDeque =
+            getActionsDeque (flipExecMode session.execMode) session
+    in
+    case currentActionsDeque |> getActionAtIndex actionIdx of
+        Just ( action, locus ) ->
+            let
+                newCurrentActionsDeque =
+                    removeActionAtIndex actionIdx currentActionsDeque
+
+                newOppositeActionsDeque =
+                    removeActionAtIndex (Deque.length oppositeActionsDeque - 1 - actionIdx) oppositeActionsDeque
 
                 newNet : Net
                 newNet =
                     case action of
                         Open _ ->
-                            updateInteraction locusId
+                            updateInteraction locus
                                 (\int ->
                                     if isForward session.execMode then
                                         { int | opened = False }
@@ -939,27 +1001,31 @@ execute actionId session =
                                 session.net
 
                         Close _ ->
-                            removeScrollNodes (isForward session.execMode) locusId session.net
+                            removeScrollNodes (isForward session.execMode) locus session.net
 
                         Insert _ _ ->
-                            updateJustif locusId (\justif -> { justif | self = False }) session.net
+                            updateJustif locus (\justif -> { justif | self = False }) session.net
 
                         Delete _ ->
-                            Debug.todo "Delete action execution not implemented yet."
+                            prune locus session.net
 
                         Iterate _ _ ->
                             List.foldl
                                 (\subnodeId ->
                                     updateJustif subnodeId
                                         (\justif ->
-                                            { justif | copy = Nothing, subcopy = Nothing }
+                                            if subnodeId == locus then
+                                                { justif | copy = Nothing }
+
+                                            else
+                                                { justif | subcopy = Nothing }
                                         )
                                 )
                                 session.net
-                                (getDescendentIds locusId session.net)
+                                (getDescendentIds locus session.net)
 
                         Deiterate _ _ ->
-                            Debug.todo "Deiterate action execution not implemented yet."
+                            prune locus session.net
 
                         Reorder _ _ ->
                             Debug.todo "Reorder action execution not implemented yet"
@@ -967,17 +1033,15 @@ execute actionId session =
                         Decompose _ ->
                             Debug.todo "Decompose action execution not implemented yet."
             in
-            { session
-                | actions = newActions
-                , actionsQueue = newActionsQueue
-                , net = newNet
-            }
+            { session | net = newNet }
+                |> setActionsDeque session.execMode newCurrentActionsDeque
+                |> setActionsDeque (flipExecMode session.execMode) newOppositeActionsDeque
 
         Nothing ->
             let
                 _ =
                     Debug.log
-                        "Error: trying to execute action with non-existing ID. Returning the session unchanged."
+                        "Error: trying to execute non-existing action. Returning the session unchanged."
             in
             session
 
@@ -985,14 +1049,14 @@ execute actionId session =
 apply : Action -> Session -> Session
 apply action session =
     let
-        ( actionId, newSession ) =
+        newSession =
             record action session
     in
     if session.recording then
         newSession
 
     else
-        execute actionId newSession
+        execute 0 newSession
 
 
 
@@ -1080,12 +1144,11 @@ manualExamples =
                 , actionMode = actionMode
                 , execMode = execMode
                 , recording = True
-                , actions = Iddict.empty
-                , actionsQueue = Queue.empty
+                , actions = { forward = Deque.empty, backward = Deque.empty }
                 , renaming = Nothing
                 , hoveredOrigin = Nothing
                 , selection = []
-                , selectionMode = False
+                , selecting = False
                 }
 
         examples : List ( SandboxID, ActionMode, Net )

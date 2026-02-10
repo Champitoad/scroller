@@ -60,15 +60,7 @@ viewNode : DnD -> Session -> Tree -> Element Msg
 viewNode dnd session ((TNode { id, node, children }) as tree) =
     let
         debug =
-            True
-
-        inForwardMode =
-            case session.execMode of
-                Forward ->
-                    True
-
-                Backward ->
-                    False
+            False
 
         statusBar =
             let
@@ -164,7 +156,7 @@ viewNode dnd session ((TNode { id, node, children }) as tree) =
                     else if
                         getInloopInteraction id session.net
                             |> Maybe.map
-                                (if inForwardMode then
+                                (if isForward session.execMode then
                                     .opened
 
                                  else
@@ -187,7 +179,7 @@ viewNode dnd session ((TNode { id, node, children }) as tree) =
                     else if
                         getInloopInteraction id session.net
                             |> Maybe.map
-                                (if inForwardMode then
+                                (if isForward session.execMode then
                                     .closed
 
                                  else
@@ -390,7 +382,7 @@ viewNode dnd session ((TNode { id, node, children }) as tree) =
                         )
                     ]
             in
-            if session.selectionMode then
+            if session.selecting then
                 overlay
 
             else

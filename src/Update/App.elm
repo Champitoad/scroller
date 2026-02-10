@@ -3,6 +3,7 @@ port module Update.App exposing (..)
 import Browser
 import Browser.Dom
 import Browser.Navigation
+import Deque
 import Html5.DragDrop as DnD
 import Json.Decode exposing (Value)
 import Keyboard.Event exposing (KeyboardEvent)
@@ -10,7 +11,6 @@ import Model.App exposing (..)
 import Model.Formula exposing (..)
 import Model.Scroll exposing (..)
 import Model.Session exposing (..)
-import Queue
 import Task
 import Url
 import View.Route as Route
@@ -191,10 +191,10 @@ update msg model =
             in
             ( setSessionWithHistory route newSession model, focusApp )
 
-        Exec route actionId ->
+        Exec route actionIdx ->
             let
                 newSession =
-                    execute actionId (getSession route model)
+                    execute actionIdx (getSession route model)
             in
             ( setSessionWithHistory route newSession model, focusApp )
 
@@ -202,11 +202,11 @@ update msg model =
             ( setSessionWithHistory model.playground.route (execAll model.playground) model, focusApp )
 
         Step ->
-            case Queue.dequeue model.playground.actionsQueue of
-                Just ( actionId, _ ) ->
-                    update (Exec Playground actionId) model
+            case model.playground |> getActionsDeque model.playground.execMode |> Deque.popFront of
+                ( Just _, _ ) ->
+                    update (Exec Playground 0) model
 
-                Nothing ->
+                ( Nothing, _ ) ->
                     -- Should never happen since the step should be disabled
                     ( model, Cmd.none )
 

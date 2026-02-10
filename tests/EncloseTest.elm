@@ -1,12 +1,8 @@
 module EncloseTest exposing (..)
 
-import Dict
 import Expect
-import List.Extra
-import Model.Formula as Formula
 import Model.Scroll as Scroll exposing (..)
 import Test exposing (..)
-import Utils.List
 
 
 suite : Test

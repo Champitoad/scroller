@@ -1,5 +1,6 @@
 module View.Toolbar exposing (..)
 
+import Deque
 import Element exposing (..)
 import Element.Background as Background
 import Element.Events as Events
@@ -8,7 +9,6 @@ import FeatherIcons as Icons
 import Html.Attributes
 import Model.App exposing (..)
 import Model.Session exposing (..)
-import Queue
 import Update.App exposing (..)
 import Utils.Color
 import Utils.Events exposing (..)
@@ -435,10 +435,10 @@ viewRecordToggle recording =
 
 
 viewExecButtons : Session -> Element Msg
-viewExecButtons { actionsQueue } =
+viewExecButtons session =
     let
         stepEnabled =
-            not (Queue.isEmpty actionsQueue)
+            not (Deque.isEmpty (getActionsDeque session.execMode session))
 
         stepButton =
             defaultButton
@@ -546,14 +546,14 @@ viewToolbar model =
                 , spacing 20
                 , centerX
                 ]
-                [ viewSelectionToggle model.playground.selectionMode
+                [ viewSelectionToggle model.playground.selecting
                 , viewRecordToggle model.playground.recording
                 , viewExecModeSelector model.playground.execMode
                 , viewExecButtons model.playground
                 ]
 
         clearSelectionOnClick =
-            if model.playground.selectionMode then
+            if model.playground.selecting then
                 [ Events.onClick ClearSelection ]
 
             else
