@@ -461,10 +461,10 @@ update msg model =
                     else
                         case model.playground.actionMode of
                             EditMode _ ->
-                                update (Transform Playground (toggleEditMode altKey)) model
+                                ( { model | playground = toggleEditMode altKey model.playground }, focusApp )
 
                             ProofMode _ ->
-                                update (Transform Playground toggleProofMode) model
+                                ( { model | playground = toggleProofMode model.playground }, focusApp )
 
                             _ ->
                                 ( model, Cmd.none )

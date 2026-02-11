@@ -87,9 +87,19 @@ setSessionWithHistory : Route -> Session -> Model -> Model
 setSessionWithHistory route session model =
     case route of
         Session.Playground ->
+            let
+                playground =
+                    model.playground
+
+                resetModel =
+                    { model
+                        | dragDrop = DnD.init
+                        , playground = { playground | stepButtonFocused = False }
+                    }
+            in
             { model
                 | playground = session
-                , history = History { prev = Just model, next = Nothing }
+                , history = History { prev = Just resetModel, next = Nothing }
             }
 
         Session.Manual sandboxID ->
