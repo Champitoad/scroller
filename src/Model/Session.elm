@@ -972,11 +972,21 @@ removeActionAtIndex idx actionsDeque =
         |> Deque.fromList
 
 
-findActionIndex : Session -> Id -> Maybe Int
-findActionIndex session id =
+findIntroIndex : Session -> Id -> Maybe Int
+findIntroIndex session id =
     getActionsDeque session.execMode session
         |> Deque.toList
         |> List.Extra.findIndex (\( _, locus ) -> locus == id)
+
+
+findElimIndex : Session -> Id -> Maybe Int
+findElimIndex session id =
+    getActionsDeque session.execMode session
+        |> Deque.toList
+        |> List.indexedMap Tuple.pair
+        |> List.filter (\( _, ( _, locus ) ) -> locus == id)
+        |> List.map Tuple.first
+        |> List.maximum
 
 
 

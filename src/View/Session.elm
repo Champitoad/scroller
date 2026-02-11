@@ -178,12 +178,20 @@ viewNode dnd session ((TNode { id, node, children }) as tree) =
                         Nothing ->
                             ( createColor, destroyColor )
 
+                introIndicatorMsg =
+                    Session.findIntroIndex session id
+                        |> Maybe.map (Exec session.route)
+
+                elimIndicatorMsg =
+                    Session.findElimIndex session id
+                        |> Maybe.map (Exec session.route)
+
                 introIndicator =
                     if isInsertion polarity node.justif then
-                        insertionIndicator introColor
+                        insertionIndicator introColor introIndicatorMsg
 
                     else if isIteration polarity node.justif then
-                        iterationIndicator introColor originId originName isHoveredOrigin
+                        iterationIndicator introColor originId originName isHoveredOrigin introIndicatorMsg
 
                     else if
                         getInloopInteraction id session.net
@@ -196,17 +204,17 @@ viewNode dnd session ((TNode { id, node, children }) as tree) =
                                 )
                             |> Maybe.withDefault False
                     then
-                        expansionIndicator introColor
+                        expansionIndicator introColor introIndicatorMsg
 
                     else
                         none
 
                 elimIndicator =
                     if isDeletion polarity node.justif then
-                        deletionIndicator elimColor
+                        deletionIndicator elimColor elimIndicatorMsg
 
                     else if isDeiteration polarity node.justif then
-                        deiterationIndicator elimColor originId originName isHoveredOrigin
+                        deiterationIndicator elimColor originId originName isHoveredOrigin elimIndicatorMsg
 
                     else if
                         getInloopInteraction id session.net
@@ -219,7 +227,7 @@ viewNode dnd session ((TNode { id, node, children }) as tree) =
                                 )
                             |> Maybe.withDefault False
                     then
-                        collapseIndicator elimColor
+                        collapseIndicator elimColor elimIndicatorMsg
 
                     else
                         none

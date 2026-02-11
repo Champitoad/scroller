@@ -94,7 +94,11 @@ setSessionWithHistory route session model =
                 resetModel =
                     { model
                         | dragDrop = DnD.init
-                        , playground = { playground | stepButtonFocused = False }
+                        , playground =
+                            { playground
+                                | stepButtonFocused = False
+                                , hoveredOrigin = Nothing
+                            }
                     }
             in
             { model

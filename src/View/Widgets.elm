@@ -246,28 +246,39 @@ indicatorIcon icon =
         |> html
 
 
-indicator : Color -> Element msg -> Element msg
-indicator color content =
+indicator : Color -> Element msg -> Maybe msg -> Element msg
+indicator color content maybeMsg =
+    let
+        attribs =
+            case maybeMsg of
+                Just msg ->
+                    [ Events.onClick msg, pointer ]
+
+                Nothing ->
+                    []
+    in
     el
-        [ width shrink
-        , height (indicatorHeight |> px)
-        , Background.color color
-        , styleAttr "padding-left" "5px"
-        , styleAttr "padding-right" "5px"
-        , styleAttr "border-radius" "0px"
-        , styleAttr "z-index" "1"
-        ]
+        ([ width shrink
+         , height (indicatorHeight |> px)
+         , Background.color color
+         , styleAttr "padding-left" "5px"
+         , styleAttr "padding-right" "5px"
+         , styleAttr "border-radius" "0px"
+         , styleAttr "z-index" "1"
+         ]
+            ++ attribs
+        )
         (centered content)
 
 
-insertionIndicator : Color -> Element msg
-insertionIndicator color =
-    indicator color (indicatorIcon Icons.plus)
+insertionIndicator : Color -> Maybe msg -> Element msg
+insertionIndicator color maybeMsg =
+    indicator color (indicatorIcon Icons.plus) maybeMsg
 
 
-deletionIndicator : Color -> Element msg
-deletionIndicator color =
-    indicator color (indicatorIcon Icons.x)
+deletionIndicator : Color -> Maybe msg -> Element msg
+deletionIndicator color maybeMsg =
+    indicator color (indicatorIcon Icons.x) maybeMsg
 
 
 iterationText : String -> Bool -> Element msg
@@ -304,8 +315,8 @@ iterationText originName isHovered =
     row [ spacing 7 ] [ symbolText, originText ]
 
 
-interactiveIndicator : Element.Color -> (Maybe Id -> msg) -> Maybe Id -> String -> Bool -> Element msg
-interactiveIndicator color mkMsg originId originName isHovered =
+interactiveIndicator : Element.Color -> (Maybe Id -> msg) -> Maybe Id -> String -> Bool -> Maybe msg -> Element msg
+interactiveIndicator color mkMsg originId originName isHovered maybeMsg =
     let
         backgroundColor =
             if isHovered then
@@ -315,7 +326,7 @@ interactiveIndicator color mkMsg originId originName isHovered =
                 color
 
         baseIndicator =
-            indicator backgroundColor (iterationText originName isHovered)
+            indicator backgroundColor (iterationText originName isHovered) maybeMsg
     in
     case originId of
         Just id ->
@@ -329,24 +340,24 @@ interactiveIndicator color mkMsg originId originName isHovered =
             baseIndicator
 
 
-iterationIndicator : Color -> Maybe Id -> String -> Bool -> Element Msg
-iterationIndicator color =
-    interactiveIndicator color HighlightOrigin
+iterationIndicator : Color -> Maybe Id -> String -> Bool -> Maybe Msg -> Element Msg
+iterationIndicator color originId originName isHovered maybeMsg =
+    interactiveIndicator color HighlightOrigin originId originName isHovered maybeMsg
 
 
-deiterationIndicator : Color -> Maybe Id -> String -> Bool -> Element Msg
-deiterationIndicator color =
-    interactiveIndicator color HighlightOrigin
+deiterationIndicator : Color -> Maybe Id -> String -> Bool -> Maybe Msg -> Element Msg
+deiterationIndicator color originId originName isHovered maybeMsg =
+    interactiveIndicator color HighlightOrigin originId originName isHovered maybeMsg
 
 
-expansionIndicator : Color -> Element msg
-expansionIndicator color =
-    indicator color (indicatorIcon Icons.maximize2)
+expansionIndicator : Color -> Maybe msg -> Element msg
+expansionIndicator color maybeMsg =
+    indicator color (indicatorIcon Icons.maximize2) maybeMsg
 
 
-collapseIndicator : Color -> Element msg
-collapseIndicator color =
-    indicator color (indicatorIcon Icons.minimize2)
+collapseIndicator : Color -> Maybe msg -> Element msg
+collapseIndicator color maybeMsg =
+    indicator color (indicatorIcon Icons.minimize2) maybeMsg
 
 
 
