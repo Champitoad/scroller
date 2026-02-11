@@ -1,6 +1,5 @@
 # Next
 
-- Limit scope of (de)iteration for inloops to areas attached to the same scroll
 - Fix `Reorder` actions
 
 # Features

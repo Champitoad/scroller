@@ -558,12 +558,9 @@ getSubnetContext ctx net =
 
 isOutloop : Id -> Net -> Bool
 isOutloop id net =
-    case getShape id net of
-        Sep _ Nothing ->
-            True
-
-        _ ->
-            False
+    net
+        |> getOutloopInteractions id
+        |> (not << Dict.isEmpty)
 
 
 isInloop : Id -> Net -> Bool
@@ -582,6 +579,11 @@ getOutloop id net =
         |> buildTree id
         |> getTreeChildren
         |> List.filter (\(TNode root) -> not (isInloop root.id net))
+
+
+getRootOutloop : Id -> Net -> Maybe Id
+getRootOutloop id net =
+    findAncestor (\ancId -> isOutloop ancId net && not (isInloop ancId net)) id net
 
 
 
@@ -616,16 +618,37 @@ inside src ctx net =
             src == parentId || existsAncestor ((==) src) parentId net
 
 
+sameRootOutloop : Id -> Id -> Net -> Bool
+sameRootOutloop sep1 sep2 net =
+    case ( getRootOutloop sep1 net, getRootOutloop sep2 net ) of
+        ( Just root1, Just root2 ) ->
+            root1 == root2
+
+        _ ->
+            False
+
+
 
 {- Whether context `dst` is in scope of node `src`.
 
-   Note: for now we forbid recursivity by requiring that nodes in `dst` are not inside `src`.
+   Note: for now we forbid recursivity by requiring that nodes in `dst` are not inside `src`. We
+   also enforce intuitionism by requiring that `dst` is attached to the same scroll as `src`.
 -}
 
 
 scopes : Id -> Context -> Net -> Bool
 scopes src dst net =
-    spans (getContext src net) dst net && not (inside src dst net)
+    spans (getContext src net) dst net
+        && not (inside src dst net)
+        && (case dst of
+                TopLevel ->
+                    True
+
+                Inside id ->
+                    not (isInloop src net)
+                        || not (isInloop id net)
+                        || sameRootOutloop src id net
+           )
 
 
 
