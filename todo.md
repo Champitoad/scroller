@@ -1,7 +1,7 @@
 # Next
 
 - Experiment with clickable indicators to execute actions in arbitrary order (don't care about dependencies/preserving boundary)
-- Fix Shift key captured for selection mode while typing in text input
+
 - Limit scope of (de)iteration for inloops to areas attached to the same scroll
 - Fix `Reorder` actions
 

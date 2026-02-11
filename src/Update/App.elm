@@ -375,7 +375,11 @@ update msg model =
                             ( model, Cmd.none )
 
                 Just "Shift" ->
-                    update (SetSelectionMode False) model
+                    if isTyping model.playground then
+                        ( model, Cmd.none )
+
+                    else
+                        update (SetSelectionMode False) model
 
                 _ ->
                     ( model, Cmd.none )
@@ -401,7 +405,11 @@ update msg model =
                             ( model, Cmd.none )
 
                 ( ( _, _, _ ), _, Just "Shift" ) ->
-                    update (SetSelectionMode True) model
+                    if isTyping model.playground then
+                        ( model, Cmd.none )
+
+                    else
+                        update (SetSelectionMode True) model
 
                 ( ( True, False, False ), _, Just "z" ) ->
                     update Undo model
