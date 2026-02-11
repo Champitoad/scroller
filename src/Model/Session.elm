@@ -1028,8 +1028,11 @@ execute actionIdx session =
                                 )
                                 session.net
 
-                        Close _ ->
-                            removeScrollNodes (isForward session.execMode) locus session.net
+                        Close outloopId ->
+                            List.foldl
+                                (\id acc -> prune id acc)
+                                (removeScrollNodes (isForward session.execMode) locus session.net)
+                                (getChildIds outloopId session.net)
 
                         Insert _ _ ->
                             updateJustif locus (\justif -> { justif | self = False }) session.net
@@ -1084,7 +1087,7 @@ apply action session =
         newSession
 
     else
-        execute 0 newSession
+        execute (Deque.length (getActionsDeque newSession.execMode newSession) - 1) newSession
 
 
 
