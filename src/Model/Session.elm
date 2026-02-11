@@ -250,15 +250,11 @@ fromNet net =
 
 getHighlightedAction : Session -> Maybe ( Action, Id )
 getHighlightedAction session =
-    let
-        actionsDeque =
-            getActionsDeque session.execMode session
-    in
     if session.stepButtonFocused then
-        getActionAtIndex 0 actionsDeque
+        session |> getActionsDeque session.execMode |> getActionAtIndex 0
 
     else
-        getActionAtIndex (Deque.length actionsDeque - 1) actionsDeque
+        Nothing
 
 
 map : (Net -> Net) -> Session -> Session
@@ -974,6 +970,13 @@ removeActionAtIndex idx actionsDeque =
         |> Deque.toList
         |> List.Extra.removeAt idx
         |> Deque.fromList
+
+
+findActionIndex : Session -> Id -> Maybe Int
+findActionIndex session id =
+    getActionsDeque session.execMode session
+        |> Deque.toList
+        |> List.Extra.findIndex (\( _, locus ) -> locus == id)
 
 
 
