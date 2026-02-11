@@ -7,6 +7,7 @@ import Element.Events as Events
 import Element.Input as Input
 import FeatherIcons as Icons
 import Html.Attributes
+import Html.Styled.Events as StyledEvents
 import Model.App exposing (..)
 import Model.Session exposing (..)
 import Update.App exposing (..)
@@ -61,6 +62,7 @@ viewAutoButton mode =
         , title = "Auto"
         , icon = Icons.zap
         , enabled = enabled
+        , attrs = []
         }
 
 
@@ -71,6 +73,7 @@ viewHelpButton =
         , title = "Help"
         , icon = Icons.helpCircle
         , enabled = True
+        , attrs = []
         }
 
 
@@ -181,10 +184,10 @@ viewInteractionModeSelector currentMode =
                 selectedColor =
                     case mode of
                         Expansion ->
-                            expandColor
+                            createColor
 
                         Collapse ->
-                            collapseColor
+                            destroyColor
 
                 ( bgColor, fgColor ) =
                     if isSelected then
@@ -343,12 +346,14 @@ viewUndoRedo (History history) =
             , title = "Undo"
             , icon = Icons.arrowLeft
             , enabled = undoEnabled
+            , attrs = []
             }
         , defaultButton
             { action = Msg Redo
             , title = "Redo"
             , icon = Icons.arrowRight
             , enabled = redoEnabled
+            , attrs = []
             }
         ]
 
@@ -446,6 +451,14 @@ viewExecButtons session =
                 , title = "Step"
                 , icon = Icons.play
                 , enabled = stepEnabled
+                , attrs =
+                    [ StyledEvents.onMouseOver (SetStepButtonFocus True)
+                    , StyledEvents.onMouseDown (SetStepButtonFocus True)
+                    , StyledEvents.onMouseLeave (SetStepButtonFocus False)
+                    , Utils.Events.onTouchStart (SetStepButtonFocus True)
+                    , Utils.Events.onTouchEnd (SetStepButtonFocus False)
+                    , Utils.Events.onTouchCancel (SetStepButtonFocus False)
+                    ]
                 }
 
         runButton =
@@ -454,6 +467,7 @@ viewExecButtons session =
                 , title = "Run"
                 , icon = Icons.skipForward
                 , enabled = True
+                , attrs = []
                 }
     in
     row [] [ stepButton, runButton ]

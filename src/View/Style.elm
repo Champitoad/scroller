@@ -126,16 +126,6 @@ destroyColor =
     rgb 1 0 0
 
 
-expandColor : Color
-expandColor =
-    createColor
-
-
-collapseColor : Color
-collapseColor =
-    destroyColor
-
-
 reorderColor : Color.Color
 reorderColor =
     Color.rgb 0.7 0.7 0.7
@@ -240,7 +230,7 @@ actionable msg shape color =
 
 green : Color
 green =
-    rgb 0.3 0.9 0.3
+    rgb 0.2 0.8 0.2
 
 
 pink : Color

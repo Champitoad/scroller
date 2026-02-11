@@ -1,6 +1,5 @@
 # Next
 
-- Highlight in green the indicator corresponding to the action in the back of the actions deque, or the one in the front if the Step button is focused (maybe also pressed for this to work on tablet?)
 - Experiment with clickable indicators to execute actions in arbitrary order (don't care about dependencies/preserving boundary)
 - Fix Shift key captured for selection mode while typing in text input
 - Limit scope of (de)iteration for inloops to areas attached to the same scroll

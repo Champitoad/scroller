@@ -27,6 +27,21 @@ onMouseUp =
     alwaysStopPropagationOn "mouseup"
 
 
+onTouchStart : msg -> Html.Styled.Attribute msg
+onTouchStart =
+    alwaysStopPropagationOnStyled "touchstart"
+
+
+onTouchEnd : msg -> Html.Styled.Attribute msg
+onTouchEnd =
+    alwaysStopPropagationOnStyled "touchend"
+
+
+onTouchCancel : msg -> Html.Styled.Attribute msg
+onTouchCancel =
+    alwaysStopPropagationOnStyled "touchcancel"
+
+
 onMouseMove : msg -> Attribute msg
 onMouseMove =
     alwaysStopPropagationOn "mousemove"

@@ -146,12 +146,44 @@ viewNode dnd session ((TNode { id, node, children }) as tree) =
                         _ ->
                             ( Nothing, "", False )
 
+                ( introColor, elimColor ) =
+                    case Session.getHighlightedAction session of
+                        Just ( action, locus ) ->
+                            if locus == id then
+                                case action of
+                                    Insert _ _ ->
+                                        ( green, destroyColor )
+
+                                    Iterate _ _ ->
+                                        ( green, destroyColor )
+
+                                    Open _ ->
+                                        ( green, destroyColor )
+
+                                    Delete _ ->
+                                        ( createColor, green )
+
+                                    Deiterate _ _ ->
+                                        ( createColor, green )
+
+                                    Close _ ->
+                                        ( createColor, green )
+
+                                    _ ->
+                                        ( createColor, destroyColor )
+
+                            else
+                                ( createColor, destroyColor )
+
+                        Nothing ->
+                            ( createColor, destroyColor )
+
                 introIndicator =
                     if isInsertion polarity node.justif then
-                        insertionIndicator
+                        insertionIndicator introColor
 
                     else if isIteration polarity node.justif then
-                        iterationIndicator originId originName isHoveredOrigin
+                        iterationIndicator introColor originId originName isHoveredOrigin
 
                     else if
                         getInloopInteraction id session.net
@@ -164,17 +196,17 @@ viewNode dnd session ((TNode { id, node, children }) as tree) =
                                 )
                             |> Maybe.withDefault False
                     then
-                        expansionIndicator
+                        expansionIndicator introColor
 
                     else
                         none
 
                 elimIndicator =
                     if isDeletion polarity node.justif then
-                        deletionIndicator
+                        deletionIndicator elimColor
 
                     else if isDeiteration polarity node.justif then
-                        deiterationIndicator originId originName isHoveredOrigin
+                        deiterationIndicator elimColor originId originName isHoveredOrigin
 
                     else if
                         getInloopInteraction id session.net
@@ -187,7 +219,7 @@ viewNode dnd session ((TNode { id, node, children }) as tree) =
                                 )
                             |> Maybe.withDefault False
                     then
-                        collapseIndicator
+                        collapseIndicator elimColor
 
                     else
                         none
@@ -325,7 +357,7 @@ viewNode dnd session ((TNode { id, node, children }) as tree) =
                 ProofMode { interaction, interactionMode } ->
                     case ( interaction, interactionMode ) of
                         ( Interacting, Collapse ) ->
-                            viewAction collapseColor (Close id)
+                            viewAction destroyColor (Close id)
 
                         _ ->
                             []
@@ -723,7 +755,7 @@ viewNodes dnd session ctx trees =
                         ( Interacting, Expansion ) ->
                             viewClickAction session
                                 Nothing
-                                expandColor
+                                createColor
                                 (Open newNodeLoc)
 
                         _ ->

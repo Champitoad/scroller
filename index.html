@@ -5288,26 +5288,31 @@ var $author$project$Model$Session$ProofMode = function (a) {
 };
 var $author$project$Model$Session$defaultProofMode = $author$project$Model$Session$ProofMode(
 	{copyMode: $author$project$Model$Session$Iteration, interaction: $author$project$Model$Session$Interacting, interactionMode: $author$project$Model$Session$Expansion});
-var $noordstar$elm_iddict$Iddict$Iddict = function (a) {
-	return {$: 'Iddict', a: a};
+var $folkertdev$elm_deque$Deque$Deque = function (a) {
+	return {$: 'Deque', a: a};
 };
-var $miniBill$elm_fast_dict$Internal$Dict = F2(
-	function (a, b) {
-		return {$: 'Dict', a: a, b: b};
-	});
-var $miniBill$elm_fast_dict$Internal$Leaf = {$: 'Leaf'};
-var $miniBill$elm_fast_dict$FastDict$empty = A2($miniBill$elm_fast_dict$Internal$Dict, 0, $miniBill$elm_fast_dict$Internal$Leaf);
-var $noordstar$elm_iddict$Iddict$empty = $noordstar$elm_iddict$Iddict$Iddict(
-	{cursor: 0, dict: $miniBill$elm_fast_dict$FastDict$empty});
-var $owanturist$elm_queue$Queue$Empty = {$: 'Empty'};
-var $owanturist$elm_queue$Queue$empty = $owanturist$elm_queue$Queue$Empty;
+var $folkertdev$elm_deque$Internal$empty = {front: _List_Nil, rear: _List_Nil, sizeF: 0, sizeR: 0};
+var $folkertdev$elm_deque$Deque$empty = $folkertdev$elm_deque$Deque$Deque($folkertdev$elm_deque$Internal$empty);
 var $author$project$Model$Session$Initial = function (a) {
 	return {$: 'Initial', a: a};
 };
 var $author$project$Model$Scroll$TopLevel = {$: 'TopLevel'};
 var $author$project$Model$Session$initialNavigation = $author$project$Model$Session$Initial($author$project$Model$Scroll$TopLevel);
 var $author$project$Model$Session$fromNet = function (net) {
-	return {actionMode: $author$project$Model$Session$defaultProofMode, actions: $noordstar$elm_iddict$Iddict$empty, actionsQueue: $owanturist$elm_queue$Queue$empty, execMode: $author$project$Model$Session$Forward, hoveredOrigin: $elm$core$Maybe$Nothing, navigation: $author$project$Model$Session$initialNavigation, net: net, recording: true, renaming: $elm$core$Maybe$Nothing, route: $author$project$Model$Session$Playground};
+	return {
+		actionMode: $author$project$Model$Session$defaultProofMode,
+		actions: {backward: $folkertdev$elm_deque$Deque$empty, forward: $folkertdev$elm_deque$Deque$empty},
+		execMode: $author$project$Model$Session$Forward,
+		hoveredOrigin: $elm$core$Maybe$Nothing,
+		navigation: $author$project$Model$Session$initialNavigation,
+		net: net,
+		recording: true,
+		renaming: $elm$core$Maybe$Nothing,
+		route: $author$project$Model$Session$Playground,
+		selecting: false,
+		selection: _List_Nil,
+		stepButtonFocused: false
+	};
 };
 var $norpan$elm_html5_drag_drop$Html5$DragDrop$NotDragging = {$: 'NotDragging'};
 var $norpan$elm_html5_drag_drop$Html5$DragDrop$init = $norpan$elm_html5_drag_drop$Html5$DragDrop$NotDragging;
@@ -5319,10 +5324,14 @@ var $author$project$Model$Session$EditMode = function (a) {
 };
 var $author$project$Model$Session$OInsertion = {$: 'OInsertion'};
 var $author$project$Model$Session$Operating = {$: 'Operating'};
+var $elm$core$Set$Set_elm_builtin = function (a) {
+	return {$: 'Set_elm_builtin', a: a};
+};
 var $elm$core$Dict$RBEmpty_elm_builtin = {$: 'RBEmpty_elm_builtin'};
 var $elm$core$Dict$empty = $elm$core$Dict$RBEmpty_elm_builtin;
+var $elm$core$Set$empty = $elm$core$Set$Set_elm_builtin($elm$core$Dict$empty);
 var $author$project$Model$Session$defaultEditMode = $author$project$Model$Session$EditMode(
-	{insertions: $elm$core$Dict$empty, interaction: $author$project$Model$Session$Operating, newAtomInputFocused: false, newAtomName: '', operationMode: $author$project$Model$Session$OInsertion});
+	{insertedNodes: $elm$core$Set$empty, interaction: $author$project$Model$Session$Operating, newAtomInputFocused: false, newAtomName: '', operationMode: $author$project$Model$Session$OInsertion});
 var $author$project$Model$Scroll$emptyScroll = A2(
 	$author$project$Model$Scroll$curl,
 	_List_Nil,
@@ -5587,7 +5596,7 @@ var $author$project$Utils$State$andThen = F2(
 			return A2(callback, value, newState);
 		};
 	});
-var $author$project$Model$Scroll$assumption = {from: $elm$core$Maybe$Nothing, self: false};
+var $author$project$Model$Scroll$assumption = {copy: $elm$core$Maybe$Nothing, self: false, subcopy: $elm$core$Maybe$Nothing};
 var $author$project$Model$Scroll$attachment = {closed: false, opened: false};
 var $author$project$Model$Scroll$getTreeId = function (_v0) {
 	var id = _v0.a.id;
@@ -5782,15 +5791,17 @@ var $author$project$Model$Session$manualExamples = function () {
 			return $author$project$Model$Session$mkSandbox(
 				{
 					actionMode: actionMode,
-					actions: $noordstar$elm_iddict$Iddict$empty,
-					actionsQueue: $owanturist$elm_queue$Queue$empty,
+					actions: {backward: $folkertdev$elm_deque$Deque$empty, forward: $folkertdev$elm_deque$Deque$empty},
 					execMode: execMode,
 					hoveredOrigin: $elm$core$Maybe$Nothing,
 					navigation: $author$project$Model$Session$initialNavigation,
 					net: net,
 					recording: true,
 					renaming: $elm$core$Maybe$Nothing,
-					route: $author$project$Model$Session$Manual(id)
+					route: $author$project$Model$Session$Manual(id),
+					selecting: false,
+					selection: _List_Nil,
+					stepButtonFocused: false
 				});
 		});
 	var examples = _List_fromArray(
@@ -6000,6 +6011,7 @@ var $author$project$Update$App$ChangeActionMode = function (a) {
 var $author$project$Update$App$ChangeExecMode = function (a) {
 	return {$: 'ChangeExecMode', a: a};
 };
+var $author$project$Update$App$ClearSelection = {$: 'ClearSelection'};
 var $author$project$Update$App$CommitRenaming = {$: 'CommitRenaming'};
 var $author$project$Model$Session$Deiterate = F2(
 	function (a, b) {
@@ -6007,6 +6019,10 @@ var $author$project$Model$Session$Deiterate = F2(
 	});
 var $author$project$Model$Session$Deiteration = {$: 'Deiteration'};
 var $author$project$Update$App$DoNothing = {$: 'DoNothing'};
+var $author$project$Update$App$Exec = F2(
+	function (a, b) {
+		return {$: 'Exec', a: a, b: b};
+	});
 var $author$project$Model$Session$Iterate = F2(
 	function (a, b) {
 		return {$: 'Iterate', a: a, b: b};
@@ -6021,6 +6037,9 @@ var $author$project$Model$Session$Reorder = F2(
 		return {$: 'Reorder', a: a, b: b};
 	});
 var $author$project$Model$Session$Reordering = {$: 'Reordering'};
+var $author$project$Update$App$SetSelectionMode = function (a) {
+	return {$: 'SetSelectionMode', a: a};
+};
 var $author$project$Update$App$ToggleCopyMode = function (a) {
 	return {$: 'ToggleCopyMode', a: a};
 };
@@ -6044,630 +6063,98 @@ var $elm$core$Maybe$andThen = F2(
 			return $elm$core$Maybe$Nothing;
 		}
 	});
-var $owanturist$elm_queue$Queue$Queue = F5(
-	function (a, b, c, d, e) {
-		return {$: 'Queue', a: a, b: b, c: c, d: d, e: e};
-	});
-var $owanturist$elm_queue$Queue$filterStep = F3(
-	function (fn, element, acc) {
-		var size = acc.a;
-		var list = acc.b;
-		return fn(element) ? _Utils_Tuple2(
-			size + 1,
-			A2($elm$core$List$cons, element, list)) : acc;
-	});
-var $owanturist$elm_queue$Queue$foldl = F3(
-	function (fn, acc, queue) {
-		if (queue.$ === 'Empty') {
-			return acc;
-		} else {
-			var peek = queue.a;
-			var input = queue.d;
-			var output = queue.e;
-			return A2(
-				fn,
-				peek,
-				A3(
-					$elm$core$List$foldr,
-					fn,
-					A3($elm$core$List$foldl, fn, acc, input),
-					output));
-		}
-	});
-var $owanturist$elm_queue$Queue$filter = F2(
-	function (fn, queue) {
-		var _v0 = A3(
-			$owanturist$elm_queue$Queue$foldl,
-			$owanturist$elm_queue$Queue$filterStep(fn),
-			_Utils_Tuple2(0, _List_Nil),
-			queue);
-		if (_v0.b.b) {
-			var size = _v0.a;
-			var _v1 = _v0.b;
-			var peek = _v1.a;
-			var output = _v1.b;
-			return A5($owanturist$elm_queue$Queue$Queue, peek, 0, size - 1, _List_Nil, output);
-		} else {
-			return $owanturist$elm_queue$Queue$Empty;
-		}
-	});
-var $miniBill$elm_fast_dict$FastDict$getInner = F2(
-	function (targetKey, dict) {
-		getInner:
-		while (true) {
-			if (dict.$ === 'Leaf') {
-				return $elm$core$Maybe$Nothing;
-			} else {
-				var key = dict.b;
-				var value = dict.c;
-				var left = dict.d;
-				var right = dict.e;
-				var _v1 = A2($elm$core$Basics$compare, targetKey, key);
-				switch (_v1.$) {
-					case 'LT':
-						var $temp$targetKey = targetKey,
-							$temp$dict = left;
-						targetKey = $temp$targetKey;
-						dict = $temp$dict;
-						continue getInner;
-					case 'EQ':
-						return $elm$core$Maybe$Just(value);
-					default:
-						var $temp$targetKey = targetKey,
-							$temp$dict = right;
-						targetKey = $temp$targetKey;
-						dict = $temp$dict;
-						continue getInner;
-				}
-			}
-		}
-	});
-var $miniBill$elm_fast_dict$FastDict$get = F2(
-	function (targetKey, _v0) {
-		var dict = _v0.b;
-		return A2($miniBill$elm_fast_dict$FastDict$getInner, targetKey, dict);
-	});
-var $noordstar$elm_iddict$Iddict$get = F2(
-	function (k, _v0) {
-		var dict = _v0.a.dict;
-		return A2($miniBill$elm_fast_dict$FastDict$get, k, dict);
-	});
-var $elm$core$Debug$log = _Debug_log;
-var $elm$core$Basics$neq = _Utils_notEqual;
-var $miniBill$elm_fast_dict$Internal$InnerNode = F5(
-	function (a, b, c, d, e) {
-		return {$: 'InnerNode', a: a, b: b, c: c, d: d, e: e};
-	});
-var $miniBill$elm_fast_dict$Internal$Black = {$: 'Black'};
-var $miniBill$elm_fast_dict$Internal$Red = {$: 'Red'};
-var $miniBill$elm_fast_dict$Internal$balance = F5(
-	function (color, key, value, left, right) {
-		if ((right.$ === 'InnerNode') && (right.a.$ === 'Red')) {
-			var _v1 = right.a;
-			var rK = right.b;
-			var rV = right.c;
-			var rLeft = right.d;
-			var rRight = right.e;
-			if ((left.$ === 'InnerNode') && (left.a.$ === 'Red')) {
-				var _v3 = left.a;
-				var lK = left.b;
-				var lV = left.c;
-				var lLeft = left.d;
-				var lRight = left.e;
-				return A5(
-					$miniBill$elm_fast_dict$Internal$InnerNode,
-					$miniBill$elm_fast_dict$Internal$Red,
-					key,
-					value,
-					A5($miniBill$elm_fast_dict$Internal$InnerNode, $miniBill$elm_fast_dict$Internal$Black, lK, lV, lLeft, lRight),
-					A5($miniBill$elm_fast_dict$Internal$InnerNode, $miniBill$elm_fast_dict$Internal$Black, rK, rV, rLeft, rRight));
-			} else {
-				return A5(
-					$miniBill$elm_fast_dict$Internal$InnerNode,
-					color,
-					rK,
-					rV,
-					A5($miniBill$elm_fast_dict$Internal$InnerNode, $miniBill$elm_fast_dict$Internal$Red, key, value, left, rLeft),
-					rRight);
-			}
-		} else {
-			if ((((left.$ === 'InnerNode') && (left.a.$ === 'Red')) && (left.d.$ === 'InnerNode')) && (left.d.a.$ === 'Red')) {
-				var _v5 = left.a;
-				var lK = left.b;
-				var lV = left.c;
-				var _v6 = left.d;
-				var _v7 = _v6.a;
-				var llK = _v6.b;
-				var llV = _v6.c;
-				var llLeft = _v6.d;
-				var llRight = _v6.e;
-				var lRight = left.e;
-				return A5(
-					$miniBill$elm_fast_dict$Internal$InnerNode,
-					$miniBill$elm_fast_dict$Internal$Red,
-					lK,
-					lV,
-					A5($miniBill$elm_fast_dict$Internal$InnerNode, $miniBill$elm_fast_dict$Internal$Black, llK, llV, llLeft, llRight),
-					A5($miniBill$elm_fast_dict$Internal$InnerNode, $miniBill$elm_fast_dict$Internal$Black, key, value, lRight, right));
-			} else {
-				return A5($miniBill$elm_fast_dict$Internal$InnerNode, color, key, value, left, right);
-			}
-		}
-	});
-var $miniBill$elm_fast_dict$FastDict$getMinInner = function (n) {
-	getMinInner:
-	while (true) {
-		if (n.$ === 'Leaf') {
-			return $elm$core$Maybe$Nothing;
-		} else {
-			if (n.d.$ === 'Leaf') {
-				var k = n.b;
-				var v = n.c;
-				var _v1 = n.d;
-				return $elm$core$Maybe$Just(
-					_Utils_Tuple2(k, v));
-			} else {
-				var l = n.d;
-				var $temp$n = l;
-				n = $temp$n;
-				continue getMinInner;
-			}
-		}
-	}
-};
-var $miniBill$elm_fast_dict$FastDict$moveRedLeft = F5(
-	function (clr, k, v, left, right) {
-		if (left.$ === 'InnerNode') {
-			var lK = left.b;
-			var lV = left.c;
-			var lLeft = left.d;
-			var lRight = left.e;
-			if (right.$ === 'InnerNode') {
-				if ((right.d.$ === 'InnerNode') && (right.d.a.$ === 'Red')) {
-					var rK = right.b;
-					var rV = right.c;
-					var _v2 = right.d;
-					var _v3 = _v2.a;
-					var rlK = _v2.b;
-					var rlV = _v2.c;
-					var rlL = _v2.d;
-					var rlR = _v2.e;
-					var rRight = right.e;
-					return {
-						color: $miniBill$elm_fast_dict$Internal$Red,
-						k: rlK,
-						left: A5(
-							$miniBill$elm_fast_dict$Internal$InnerNode,
-							$miniBill$elm_fast_dict$Internal$Black,
-							k,
-							v,
-							A5($miniBill$elm_fast_dict$Internal$InnerNode, $miniBill$elm_fast_dict$Internal$Red, lK, lV, lLeft, lRight),
-							rlL),
-						right: A5($miniBill$elm_fast_dict$Internal$InnerNode, $miniBill$elm_fast_dict$Internal$Black, rK, rV, rlR, rRight),
-						v: rlV
-					};
-				} else {
-					var rK = right.b;
-					var rV = right.c;
-					var rLeft = right.d;
-					var rRight = right.e;
-					return {
-						color: $miniBill$elm_fast_dict$Internal$Black,
-						k: k,
-						left: A5($miniBill$elm_fast_dict$Internal$InnerNode, $miniBill$elm_fast_dict$Internal$Red, lK, lV, lLeft, lRight),
-						right: A5($miniBill$elm_fast_dict$Internal$InnerNode, $miniBill$elm_fast_dict$Internal$Red, rK, rV, rLeft, rRight),
-						v: v
-					};
-				}
-			} else {
-				return {color: clr, k: k, left: left, right: right, v: v};
-			}
-		} else {
-			return {color: clr, k: k, left: left, right: right, v: v};
-		}
-	});
-var $miniBill$elm_fast_dict$FastDict$moveRedRight = function (key) {
-	return function (value) {
-		return function (lK) {
-			return function (lV) {
-				return function (lLeft) {
-					return function (lRight) {
-						return function (rK) {
-							return function (rV) {
-								return function (rLeft) {
-									return function (rRight) {
-										if ((lLeft.$ === 'InnerNode') && (lLeft.a.$ === 'Red')) {
-											var _v1 = lLeft.a;
-											var llK = lLeft.b;
-											var llV = lLeft.c;
-											var llLeft = lLeft.d;
-											var llRight = lLeft.e;
-											return A5(
-												$miniBill$elm_fast_dict$Internal$InnerNode,
-												$miniBill$elm_fast_dict$Internal$Red,
-												lK,
-												lV,
-												A5($miniBill$elm_fast_dict$Internal$InnerNode, $miniBill$elm_fast_dict$Internal$Black, llK, llV, llLeft, llRight),
-												A5(
-													$miniBill$elm_fast_dict$Internal$InnerNode,
-													$miniBill$elm_fast_dict$Internal$Black,
-													key,
-													value,
-													lRight,
-													A5($miniBill$elm_fast_dict$Internal$InnerNode, $miniBill$elm_fast_dict$Internal$Red, rK, rV, rLeft, rRight)));
-										} else {
-											return A5(
-												$miniBill$elm_fast_dict$Internal$InnerNode,
-												$miniBill$elm_fast_dict$Internal$Black,
-												key,
-												value,
-												A5($miniBill$elm_fast_dict$Internal$InnerNode, $miniBill$elm_fast_dict$Internal$Red, lK, lV, lLeft, lRight),
-												A5($miniBill$elm_fast_dict$Internal$InnerNode, $miniBill$elm_fast_dict$Internal$Red, rK, rV, rLeft, rRight));
-										}
-									};
-								};
-							};
-						};
-					};
-				};
-			};
-		};
-	};
-};
-var $miniBill$elm_fast_dict$FastDict$removeHelpPrepEQGT = F6(
-	function (dict, color, key, value, left, right) {
-		if (left.$ === 'InnerNode') {
-			if (left.a.$ === 'Red') {
-				var _v1 = left.a;
-				var lK = left.b;
-				var lV = left.c;
-				var lLeft = left.d;
-				var lRight = left.e;
-				return A5(
-					$miniBill$elm_fast_dict$Internal$InnerNode,
-					color,
-					lK,
-					lV,
-					lLeft,
-					A5($miniBill$elm_fast_dict$Internal$InnerNode, $miniBill$elm_fast_dict$Internal$Red, key, value, lRight, right));
-			} else {
-				var _v2 = left.a;
-				var lK = left.b;
-				var lV = left.c;
-				var lLeft = left.d;
-				var lRight = left.e;
-				_v3$2:
-				while (true) {
-					if ((right.$ === 'InnerNode') && (right.a.$ === 'Black')) {
-						if (right.d.$ === 'InnerNode') {
-							if (right.d.a.$ === 'Black') {
-								var _v4 = right.a;
-								var rK = right.b;
-								var rV = right.c;
-								var rLeft = right.d;
-								var _v5 = rLeft.a;
-								var rRight = right.e;
-								return $miniBill$elm_fast_dict$FastDict$moveRedRight(key)(value)(lK)(lV)(lLeft)(lRight)(rK)(rV)(rLeft)(rRight);
-							} else {
-								break _v3$2;
-							}
-						} else {
-							var _v6 = right.a;
-							var rK = right.b;
-							var rV = right.c;
-							var _v7 = right.d;
-							var rRight = right.e;
-							return $miniBill$elm_fast_dict$FastDict$moveRedRight(key)(value)(lK)(lV)(lLeft)(lRight)(rK)(rV)($miniBill$elm_fast_dict$Internal$Leaf)(rRight);
-						}
-					} else {
-						break _v3$2;
-					}
-				}
-				return dict;
-			}
-		} else {
-			return dict;
-		}
-	});
-var $miniBill$elm_fast_dict$FastDict$removeMin = function (dict) {
-	if ((dict.$ === 'InnerNode') && (dict.d.$ === 'InnerNode')) {
-		var color = dict.a;
-		var key = dict.b;
-		var value = dict.c;
-		var left = dict.d;
-		var lColor = left.a;
-		var lLeft = left.d;
-		var right = dict.e;
-		if (lColor.$ === 'Black') {
-			if ((lLeft.$ === 'InnerNode') && (lLeft.a.$ === 'Red')) {
-				var _v3 = lLeft.a;
-				return A5(
-					$miniBill$elm_fast_dict$Internal$InnerNode,
-					color,
-					key,
-					value,
-					$miniBill$elm_fast_dict$FastDict$removeMin(left),
-					right);
-			} else {
-				var res = A5($miniBill$elm_fast_dict$FastDict$moveRedLeft, color, key, value, left, right);
-				return A5(
-					$miniBill$elm_fast_dict$Internal$balance,
-					res.color,
-					res.k,
-					res.v,
-					$miniBill$elm_fast_dict$FastDict$removeMin(res.left),
-					res.right);
-			}
-		} else {
-			return A5(
-				$miniBill$elm_fast_dict$Internal$InnerNode,
-				color,
-				key,
-				value,
-				$miniBill$elm_fast_dict$FastDict$removeMin(left),
-				right);
-		}
-	} else {
-		return $miniBill$elm_fast_dict$Internal$Leaf;
-	}
-};
-var $miniBill$elm_fast_dict$FastDict$removeHelp = F2(
-	function (targetKey, dict) {
-		if (dict.$ === 'Leaf') {
-			return $elm$core$Maybe$Nothing;
-		} else {
-			var color = dict.a;
-			var key = dict.b;
-			var value = dict.c;
-			var left = dict.d;
-			var right = dict.e;
-			if (_Utils_cmp(targetKey, key) < 0) {
-				if ((left.$ === 'InnerNode') && (left.a.$ === 'Black')) {
-					var _v6 = left.a;
-					var lLeft = left.d;
-					if ((lLeft.$ === 'InnerNode') && (lLeft.a.$ === 'Red')) {
-						var _v8 = lLeft.a;
-						var _v9 = A2($miniBill$elm_fast_dict$FastDict$removeHelp, targetKey, left);
-						if (_v9.$ === 'Just') {
-							var newLeft = _v9.a;
-							return $elm$core$Maybe$Just(
-								A5($miniBill$elm_fast_dict$Internal$InnerNode, color, key, value, newLeft, right));
-						} else {
-							return $elm$core$Maybe$Nothing;
-						}
-					} else {
-						var res = A5($miniBill$elm_fast_dict$FastDict$moveRedLeft, color, key, value, left, right);
-						var _v10 = A2($miniBill$elm_fast_dict$FastDict$removeHelp, targetKey, res.left);
-						if (_v10.$ === 'Just') {
-							var newLeft = _v10.a;
-							return $elm$core$Maybe$Just(
-								A5($miniBill$elm_fast_dict$Internal$balance, res.color, res.k, res.v, newLeft, res.right));
-						} else {
-							return $elm$core$Maybe$Nothing;
-						}
-					}
-				} else {
-					var _v11 = A2($miniBill$elm_fast_dict$FastDict$removeHelp, targetKey, left);
-					if (_v11.$ === 'Just') {
-						var newLeft = _v11.a;
-						return $elm$core$Maybe$Just(
-							A5($miniBill$elm_fast_dict$Internal$InnerNode, color, key, value, newLeft, right));
-					} else {
-						return $elm$core$Maybe$Nothing;
-					}
-				}
-			} else {
-				return A2(
-					$miniBill$elm_fast_dict$FastDict$removeHelpEQGT,
-					targetKey,
-					A6($miniBill$elm_fast_dict$FastDict$removeHelpPrepEQGT, dict, color, key, value, left, right));
-			}
-		}
-	});
-var $miniBill$elm_fast_dict$FastDict$removeHelpEQGT = F2(
-	function (targetKey, dict) {
-		if (dict.$ === 'InnerNode') {
-			var color = dict.a;
-			var key = dict.b;
-			var value = dict.c;
-			var left = dict.d;
-			var right = dict.e;
-			if (_Utils_eq(targetKey, key)) {
-				var _v1 = $miniBill$elm_fast_dict$FastDict$getMinInner(right);
-				if (_v1.$ === 'Just') {
-					var _v2 = _v1.a;
-					var minKey = _v2.a;
-					var minValue = _v2.b;
-					return $elm$core$Maybe$Just(
-						A5(
-							$miniBill$elm_fast_dict$Internal$balance,
-							color,
-							minKey,
-							minValue,
-							left,
-							$miniBill$elm_fast_dict$FastDict$removeMin(right)));
-				} else {
-					return $elm$core$Maybe$Just($miniBill$elm_fast_dict$Internal$Leaf);
-				}
-			} else {
-				var _v3 = A2($miniBill$elm_fast_dict$FastDict$removeHelp, targetKey, right);
-				if (_v3.$ === 'Just') {
-					var newRight = _v3.a;
-					return $elm$core$Maybe$Just(
-						A5($miniBill$elm_fast_dict$Internal$balance, color, key, value, left, newRight));
-				} else {
-					return $elm$core$Maybe$Nothing;
-				}
-			}
-		} else {
-			return $elm$core$Maybe$Nothing;
-		}
-	});
-var $miniBill$elm_fast_dict$Internal$setRootBlack = function (dict) {
-	if ((dict.$ === 'InnerNode') && (dict.a.$ === 'Red')) {
-		var _v1 = dict.a;
-		var k = dict.b;
-		var v = dict.c;
-		var l = dict.d;
-		var r = dict.e;
-		return A5($miniBill$elm_fast_dict$Internal$InnerNode, $miniBill$elm_fast_dict$Internal$Black, k, v, l, r);
-	} else {
-		var x = dict;
-		return x;
-	}
-};
-var $miniBill$elm_fast_dict$FastDict$remove = F2(
-	function (key, orig) {
-		var sz = orig.a;
-		var dict = orig.b;
-		var _v0 = A2($miniBill$elm_fast_dict$FastDict$removeHelp, key, dict);
-		if (_v0.$ === 'Just') {
-			var result = _v0.a;
-			return A2(
-				$miniBill$elm_fast_dict$Internal$Dict,
-				sz - 1,
-				$miniBill$elm_fast_dict$Internal$setRootBlack(result));
-		} else {
-			return orig;
-		}
-	});
-var $noordstar$elm_iddict$Iddict$remove = F2(
-	function (k, _v0) {
-		var d = _v0.a;
-		return $noordstar$elm_iddict$Iddict$Iddict(
-			_Utils_update(
-				d,
-				{
-					dict: A2($miniBill$elm_fast_dict$FastDict$remove, k, d.dict)
-				}));
-	});
-var $elm$core$Debug$todo = _Debug_todo;
-var $author$project$Model$Session$execute = F2(
-	function (actionId, session) {
-		var _v0 = A2($noordstar$elm_iddict$Iddict$get, actionId, session.actions);
-		if (_v0.$ === 'Just') {
-			var action = _v0.a;
-			var newFocus = function () {
-				switch (action.$) {
-					case 'Open':
-						return _Debug_todo(
-							'Model.Session',
-							{
-								start: {line: 846, column: 29},
-								end: {line: 846, column: 39}
-							})('Open action execution not implemented yet.');
-					case 'Close':
-						return _Debug_todo(
-							'Model.Session',
-							{
-								start: {line: 849, column: 29},
-								end: {line: 849, column: 39}
-							})('Close action execution not implemented yet.');
-					case 'Insert':
-						return _Debug_todo(
-							'Model.Session',
-							{
-								start: {line: 852, column: 29},
-								end: {line: 852, column: 39}
-							})('Insert action execution not implemented yet.');
-					case 'Delete':
-						return _Debug_todo(
-							'Model.Session',
-							{
-								start: {line: 855, column: 29},
-								end: {line: 855, column: 39}
-							})('Delete action execution not implemented yet.');
-					case 'Iterate':
-						return _Debug_todo(
-							'Model.Session',
-							{
-								start: {line: 858, column: 29},
-								end: {line: 858, column: 39}
-							})('Iterate action execution not implemented yet.');
-					case 'Deiterate':
-						return _Debug_todo(
-							'Model.Session',
-							{
-								start: {line: 861, column: 29},
-								end: {line: 861, column: 39}
-							})('Deiterate action execution not implemented yet.');
-					case 'Reorder':
-						return _Debug_todo(
-							'Model.Session',
-							{
-								start: {line: 864, column: 29},
-								end: {line: 864, column: 39}
-							})('Reorder action execution not implemented yet');
-					default:
-						return _Debug_todo(
-							'Model.Session',
-							{
-								start: {line: 867, column: 29},
-								end: {line: 867, column: 39}
-							})('Decompose action execution not implemented yet.');
-				}
-			}();
-			var newActionsQueue = A2(
-				$owanturist$elm_queue$Queue$filter,
-				function (id) {
-					return !_Utils_eq(id, actionId);
-				},
-				session.actionsQueue);
-			var newActions = A2($noordstar$elm_iddict$Iddict$remove, actionId, session.actions);
-			return _Utils_update(
-				session,
-				{actions: newActions, actionsQueue: newActionsQueue, net: newFocus});
-		} else {
-			var _v2 = $elm$core$Debug$log('Error: trying to execute action with non-existing ID. Returning the session unchanged.');
-			return session;
-		}
-	});
-var $author$project$Model$Scroll$makeClosed = function (interaction) {
-	return _Utils_update(
-		interaction,
-		{closed: true});
-};
-var $author$project$Model$Scroll$makeOpened = function (interaction) {
-	return _Utils_update(
-		interaction,
-		{opened: true});
-};
-var $author$project$Model$Session$annotateExpansion = function (execMode) {
+var $author$project$Model$Session$Backward = {$: 'Backward'};
+var $author$project$Model$Session$flipExecMode = function (execMode) {
 	if (execMode.$ === 'Forward') {
-		return $author$project$Model$Scroll$makeOpened;
+		return $author$project$Model$Session$Backward;
 	} else {
-		return $author$project$Model$Scroll$makeClosed;
+		return $author$project$Model$Session$Forward;
 	}
 };
-var $author$project$Model$Scroll$forgetInteraction = function (shape) {
-	if ((shape.$ === 'Sep') && (shape.b.$ === 'Just')) {
-		var childIds = shape.a;
-		return A2(
-			$author$project$Model$Scroll$Sep,
-			childIds,
-			$elm$core$Maybe$Just($author$project$Model$Scroll$attachment));
-	} else {
-		return shape;
-	}
-};
-var $author$project$Model$Scroll$updateJustifNode = F2(
-	function (update, node) {
-		return _Utils_update(
-			node,
-			{
-				justif: update(node.justif)
-			});
-	});
-var $elm$core$Maybe$map = F2(
-	function (f, maybe) {
-		if (maybe.$ === 'Just') {
-			var value = maybe.a;
-			return $elm$core$Maybe$Just(
-				f(value));
-		} else {
-			return $elm$core$Maybe$Nothing;
+var $elm$core$List$drop = F2(
+	function (n, list) {
+		drop:
+		while (true) {
+			if (n <= 0) {
+				return list;
+			} else {
+				if (!list.b) {
+					return list;
+				} else {
+					var x = list.a;
+					var xs = list.b;
+					var $temp$n = n - 1,
+						$temp$list = xs;
+					n = $temp$n;
+					list = $temp$list;
+					continue drop;
+				}
+			}
 		}
 	});
+var $elm$core$List$head = function (list) {
+	if (list.b) {
+		var x = list.a;
+		var xs = list.b;
+		return $elm$core$Maybe$Just(x);
+	} else {
+		return $elm$core$Maybe$Nothing;
+	}
+};
+var $elm_community$list_extra$List$Extra$getAt = F2(
+	function (idx, xs) {
+		return (idx < 0) ? $elm$core$Maybe$Nothing : $elm$core$List$head(
+			A2($elm$core$List$drop, idx, xs));
+	});
+var $elm$core$Basics$composeL = F3(
+	function (g, f, x) {
+		return g(
+			f(x));
+	});
+var $folkertdev$elm_deque$Internal$toList = function (deque) {
+	return _Utils_ap(
+		deque.front,
+		$elm$core$List$reverse(deque.rear));
+};
+var $folkertdev$elm_deque$Deque$unwrap = function (_v0) {
+	var boundedDeque = _v0.a;
+	return boundedDeque;
+};
+var $folkertdev$elm_deque$Deque$toList = A2($elm$core$Basics$composeL, $folkertdev$elm_deque$Internal$toList, $folkertdev$elm_deque$Deque$unwrap);
+var $author$project$Model$Session$getActionAtIndex = F2(
+	function (idx, actionsDeque) {
+		return A2(
+			$elm_community$list_extra$List$Extra$getAt,
+			idx,
+			$folkertdev$elm_deque$Deque$toList(actionsDeque));
+	});
+var $author$project$Model$Session$getActionsDeque = F2(
+	function (execMode, session) {
+		if (execMode.$ === 'Forward') {
+			return session.actions.forward;
+		} else {
+			return session.actions.backward;
+		}
+	});
+var $elm$core$List$append = F2(
+	function (xs, ys) {
+		if (!ys.b) {
+			return xs;
+		} else {
+			return A3($elm$core$List$foldr, $elm$core$List$cons, ys, xs);
+		}
+	});
+var $elm$core$List$concat = function (lists) {
+	return A3($elm$core$List$foldr, $elm$core$List$append, _List_Nil, lists);
+};
+var $elm$core$List$concatMap = F2(
+	function (f, list) {
+		return $elm$core$List$concat(
+			A2($elm$core$List$map, f, list));
+	});
+var $author$project$Model$Formula$Image = function (a) {
+	return {$: 'Image', a: a};
+};
 var $elm$core$Dict$get = F2(
 	function (targetKey, dict) {
 		get:
@@ -6699,6 +6186,191 @@ var $elm$core$Dict$get = F2(
 			}
 		}
 	});
+var $author$project$Model$Scroll$stringOfId = $elm$core$String$fromInt;
+var $elm$core$Maybe$withDefault = F2(
+	function (_default, maybe) {
+		if (maybe.$ === 'Just') {
+			var value = maybe.a;
+			return value;
+		} else {
+			return _default;
+		}
+	});
+var $author$project$Model$Scroll$getNode = F2(
+	function (id, net) {
+		return A2(
+			$elm$core$Maybe$withDefault,
+			{
+				context: $author$project$Model$Scroll$TopLevel,
+				justif: $author$project$Model$Scroll$assumption,
+				name: 'Error 404',
+				polarity: $author$project$Model$Scroll$Pos,
+				shape: $author$project$Model$Scroll$Formula(
+					$author$project$Model$Formula$Atom(
+						$author$project$Model$Formula$Image(
+							{
+								description: 'Node ' + ($author$project$Model$Scroll$stringOfId(id) + ' not found!'),
+								src: '../../public/assets/img/node-not-found.png'
+							})))
+			},
+			A2($elm$core$Dict$get, id, net.nodes));
+	});
+var $author$project$Model$Scroll$getShape = F2(
+	function (id, net) {
+		return A2($author$project$Model$Scroll$getNode, id, net).shape;
+	});
+var $author$project$Model$Scroll$getChildIds = F2(
+	function (id, net) {
+		var _v0 = A2($author$project$Model$Scroll$getShape, id, net);
+		if (_v0.$ === 'Sep') {
+			var childIds = _v0.a;
+			return childIds;
+		} else {
+			return _List_Nil;
+		}
+	});
+var $author$project$Model$Scroll$getDescendentIds = F2(
+	function (id, net) {
+		return A2(
+			$elm$core$List$cons,
+			id,
+			A2(
+				$elm$core$List$concatMap,
+				function (cid) {
+					return A2($author$project$Model$Scroll$getDescendentIds, cid, net);
+				},
+				A2($author$project$Model$Scroll$getChildIds, id, net)));
+	});
+var $author$project$Model$Session$isForward = function (execMode) {
+	if (execMode.$ === 'Forward') {
+		return true;
+	} else {
+		return false;
+	}
+};
+var $folkertdev$elm_deque$Internal$length = function (deque) {
+	return deque.sizeF + deque.sizeR;
+};
+var $folkertdev$elm_deque$Deque$length = A2($elm$core$Basics$composeL, $folkertdev$elm_deque$Internal$length, $folkertdev$elm_deque$Deque$unwrap);
+var $elm$core$Debug$log = _Debug_log;
+var $author$project$Model$Scroll$getContext = F2(
+	function (id, net) {
+		return A2($author$project$Model$Scroll$getNode, id, net).context;
+	});
+var $elm_community$list_extra$List$Extra$reverseAppend = F2(
+	function (list1, list2) {
+		return A3($elm$core$List$foldl, $elm$core$List$cons, list2, list1);
+	});
+var $elm_community$list_extra$List$Extra$removeHelp = F4(
+	function (list, x, xs, previousElements) {
+		removeHelp:
+		while (true) {
+			if (!xs.b) {
+				return list;
+			} else {
+				var y = xs.a;
+				var ys = xs.b;
+				if (_Utils_eq(x, y)) {
+					return A2($elm_community$list_extra$List$Extra$reverseAppend, previousElements, ys);
+				} else {
+					var $temp$list = list,
+						$temp$x = x,
+						$temp$xs = ys,
+						$temp$previousElements = A2($elm$core$List$cons, y, previousElements);
+					list = $temp$list;
+					x = $temp$x;
+					xs = $temp$xs;
+					previousElements = $temp$previousElements;
+					continue removeHelp;
+				}
+			}
+		}
+	});
+var $elm_community$list_extra$List$Extra$remove = F2(
+	function (x, xs) {
+		return A4($elm_community$list_extra$List$Extra$removeHelp, xs, x, xs, _List_Nil);
+	});
+var $elm_community$list_extra$List$Extra$findIndexHelp = F3(
+	function (index, predicate, list) {
+		findIndexHelp:
+		while (true) {
+			if (!list.b) {
+				return $elm$core$Maybe$Nothing;
+			} else {
+				var x = list.a;
+				var xs = list.b;
+				if (predicate(x)) {
+					return $elm$core$Maybe$Just(index);
+				} else {
+					var $temp$index = index + 1,
+						$temp$predicate = predicate,
+						$temp$list = xs;
+					index = $temp$index;
+					predicate = $temp$predicate;
+					list = $temp$list;
+					continue findIndexHelp;
+				}
+			}
+		}
+	});
+var $elm_community$list_extra$List$Extra$findIndex = $elm_community$list_extra$List$Extra$findIndexHelp(0);
+var $elm_community$list_extra$List$Extra$elemIndex = function (x) {
+	return $elm_community$list_extra$List$Extra$findIndex(
+		$elm$core$Basics$eq(x));
+};
+var $author$project$Utils$List$pivot = F2(
+	function (n, l) {
+		var aux = F3(
+			function (acc, n_, l_) {
+				aux:
+				while (true) {
+					var _v0 = _Utils_Tuple2(l_, n_);
+					_v0$0:
+					while (true) {
+						if (_v0.a.b) {
+							if (!_v0.b) {
+								break _v0$0;
+							} else {
+								var _v1 = _v0.a;
+								var x = _v1.a;
+								var t = _v1.b;
+								var $temp$acc = A2($elm$core$List$cons, x, acc),
+									$temp$n_ = n_ - 1,
+									$temp$l_ = t;
+								acc = $temp$acc;
+								n_ = $temp$n_;
+								l_ = $temp$l_;
+								continue aux;
+							}
+						} else {
+							if (!_v0.b) {
+								break _v0$0;
+							} else {
+								return _Utils_Tuple2(
+									$elm$core$List$reverse(acc),
+									l_);
+							}
+						}
+					}
+					return _Utils_Tuple2(
+						$elm$core$List$reverse(acc),
+						l_);
+				}
+			});
+		return A3(aux, _List_Nil, n, l);
+	});
+var $author$project$Utils$List$insert = F3(
+	function (index, l, list) {
+		var _v0 = A2($author$project$Utils$List$pivot, index, list);
+		var front = _v0.a;
+		var back = _v0.b;
+		return _Utils_ap(
+			front,
+			_Utils_ap(l, back));
+	});
+var $elm$core$Basics$negate = function (n) {
+	return -n;
+};
 var $elm$core$Dict$getMin = function (dict) {
 	getMin:
 	while (true) {
@@ -7061,340 +6733,6 @@ var $elm$core$Dict$remove = F2(
 			return x;
 		}
 	});
-var $elm$core$Dict$update = F3(
-	function (targetKey, alter, dictionary) {
-		var _v0 = alter(
-			A2($elm$core$Dict$get, targetKey, dictionary));
-		if (_v0.$ === 'Just') {
-			var value = _v0.a;
-			return A3($elm$core$Dict$insert, targetKey, value, dictionary);
-		} else {
-			return A2($elm$core$Dict$remove, targetKey, dictionary);
-		}
-	});
-var $author$project$Model$Scroll$updateNode = F3(
-	function (id, update, net) {
-		return _Utils_update(
-			net,
-			{
-				nodes: A3(
-					$elm$core$Dict$update,
-					id,
-					$elm$core$Maybe$map(update),
-					net.nodes)
-			});
-	});
-var $author$project$Model$Scroll$updateJustif = F3(
-	function (id, update, net) {
-		return A3(
-			$author$project$Model$Scroll$updateNode,
-			id,
-			$author$project$Model$Scroll$updateJustifNode(update),
-			net);
-	});
-var $author$project$Model$Scroll$updateShapeNode = F2(
-	function (update, node) {
-		return _Utils_update(
-			node,
-			{
-				shape: update(node.shape)
-			});
-	});
-var $author$project$Model$Scroll$updateShape = F3(
-	function (id, update, net) {
-		return A3(
-			$author$project$Model$Scroll$updateNode,
-			id,
-			$author$project$Model$Scroll$updateShapeNode(update),
-			net);
-	});
-var $author$project$Model$Scroll$forgetProof = function (net) {
-	return A3(
-		$elm$core$Dict$foldl,
-		F3(
-			function (id, _v0, acc) {
-				return A3(
-					$author$project$Model$Scroll$updateShape,
-					id,
-					$author$project$Model$Scroll$forgetInteraction,
-					A3(
-						$author$project$Model$Scroll$updateJustif,
-						id,
-						function (_v1) {
-							return $author$project$Model$Scroll$assumption;
-						},
-						acc));
-			}),
-		net,
-		net.nodes);
-};
-var $author$project$Model$Formula$Image = function (a) {
-	return {$: 'Image', a: a};
-};
-var $author$project$Model$Scroll$stringOfId = $elm$core$String$fromInt;
-var $elm$core$Maybe$withDefault = F2(
-	function (_default, maybe) {
-		if (maybe.$ === 'Just') {
-			var value = maybe.a;
-			return value;
-		} else {
-			return _default;
-		}
-	});
-var $author$project$Model$Scroll$getNode = F2(
-	function (id, net) {
-		return A2(
-			$elm$core$Maybe$withDefault,
-			{
-				context: $author$project$Model$Scroll$TopLevel,
-				justif: $author$project$Model$Scroll$assumption,
-				name: 'Error 404',
-				polarity: $author$project$Model$Scroll$Pos,
-				shape: $author$project$Model$Scroll$Formula(
-					$author$project$Model$Formula$Atom(
-						$author$project$Model$Formula$Image(
-							{
-								description: 'Node ' + ($author$project$Model$Scroll$stringOfId(id) + ' not found!'),
-								src: '../../public/assets/img/node-not-found.png'
-							})))
-			},
-			A2($elm$core$Dict$get, id, net.nodes));
-	});
-var $author$project$Model$Scroll$getJustif = F2(
-	function (id, net) {
-		return A2($author$project$Model$Scroll$getNode, id, net).justif;
-	});
-var $author$project$Model$Scroll$getPolarity = F2(
-	function (id, net) {
-		return A2($author$project$Model$Scroll$getNode, id, net).polarity;
-	});
-var $author$project$Model$Scroll$isInsertion = F2(
-	function (polarity, justif) {
-		return _Utils_eq(polarity, $author$project$Model$Scroll$Neg) && justif.self;
-	});
-var $author$project$Model$Scroll$isDirect = function (justif) {
-	var _v0 = justif.from;
-	if ((_v0.$ === 'Just') && (_v0.a.$ === 'Direct')) {
-		return true;
-	} else {
-		return false;
-	}
-};
-var $author$project$Model$Scroll$isIteration = F2(
-	function (polarity, justif) {
-		return _Utils_eq(polarity, $author$project$Model$Scroll$Pos) && $author$project$Model$Scroll$isDirect(justif);
-	});
-var $author$project$Model$Scroll$isCreation = F2(
-	function (polarity, justif) {
-		return A2($author$project$Model$Scroll$isInsertion, polarity, justif) || A2($author$project$Model$Scroll$isIteration, polarity, justif);
-	});
-var $author$project$Model$Scroll$isCreated = F2(
-	function (id, net) {
-		return A2(
-			$author$project$Model$Scroll$isCreation,
-			A2($author$project$Model$Scroll$getPolarity, id, net),
-			A2($author$project$Model$Scroll$getJustif, id, net));
-	});
-var $author$project$Model$Scroll$isDeiteration = F2(
-	function (polarity, justif) {
-		return _Utils_eq(polarity, $author$project$Model$Scroll$Neg) && $author$project$Model$Scroll$isDirect(justif);
-	});
-var $author$project$Model$Scroll$isDeletion = F2(
-	function (polarity, justif) {
-		return _Utils_eq(polarity, $author$project$Model$Scroll$Pos) && justif.self;
-	});
-var $author$project$Model$Scroll$isDestruction = F2(
-	function (polarity, justif) {
-		return A2($author$project$Model$Scroll$isDeletion, polarity, justif) || A2($author$project$Model$Scroll$isDeiteration, polarity, justif);
-	});
-var $author$project$Model$Scroll$isDestroyed = F2(
-	function (id, net) {
-		return A2(
-			$author$project$Model$Scroll$isDestruction,
-			A2($author$project$Model$Scroll$getPolarity, id, net),
-			A2($author$project$Model$Scroll$getJustif, id, net));
-	});
-var $author$project$Model$Scroll$getContext = F2(
-	function (id, net) {
-		return A2($author$project$Model$Scroll$getNode, id, net).context;
-	});
-var $elm$core$List$append = F2(
-	function (xs, ys) {
-		if (!ys.b) {
-			return xs;
-		} else {
-			return A3($elm$core$List$foldr, $elm$core$List$cons, ys, xs);
-		}
-	});
-var $elm$core$List$concat = function (lists) {
-	return A3($elm$core$List$foldr, $elm$core$List$append, _List_Nil, lists);
-};
-var $elm$core$List$concatMap = F2(
-	function (f, list) {
-		return $elm$core$List$concat(
-			A2($elm$core$List$map, f, list));
-	});
-var $author$project$Model$Scroll$getShape = F2(
-	function (id, net) {
-		return A2($author$project$Model$Scroll$getNode, id, net).shape;
-	});
-var $author$project$Model$Scroll$getChildIds = F2(
-	function (id, net) {
-		var _v0 = A2($author$project$Model$Scroll$getShape, id, net);
-		if (_v0.$ === 'Sep') {
-			var childIds = _v0.a;
-			return childIds;
-		} else {
-			return _List_Nil;
-		}
-	});
-var $author$project$Model$Scroll$getDescendentIds = F2(
-	function (id, net) {
-		return A2(
-			$elm$core$List$cons,
-			id,
-			A2(
-				$elm$core$List$concatMap,
-				function (cid) {
-					return A2($author$project$Model$Scroll$getDescendentIds, cid, net);
-				},
-				A2($author$project$Model$Scroll$getChildIds, id, net)));
-	});
-var $elm_community$list_extra$List$Extra$reverseAppend = F2(
-	function (list1, list2) {
-		return A3($elm$core$List$foldl, $elm$core$List$cons, list2, list1);
-	});
-var $elm_community$list_extra$List$Extra$removeHelp = F4(
-	function (list, x, xs, previousElements) {
-		removeHelp:
-		while (true) {
-			if (!xs.b) {
-				return list;
-			} else {
-				var y = xs.a;
-				var ys = xs.b;
-				if (_Utils_eq(x, y)) {
-					return A2($elm_community$list_extra$List$Extra$reverseAppend, previousElements, ys);
-				} else {
-					var $temp$list = list,
-						$temp$x = x,
-						$temp$xs = ys,
-						$temp$previousElements = A2($elm$core$List$cons, y, previousElements);
-					list = $temp$list;
-					x = $temp$x;
-					xs = $temp$xs;
-					previousElements = $temp$previousElements;
-					continue removeHelp;
-				}
-			}
-		}
-	});
-var $elm_community$list_extra$List$Extra$remove = F2(
-	function (x, xs) {
-		return A4($elm_community$list_extra$List$Extra$removeHelp, xs, x, xs, _List_Nil);
-	});
-var $elm_community$list_extra$List$Extra$findIndexHelp = F3(
-	function (index, predicate, list) {
-		findIndexHelp:
-		while (true) {
-			if (!list.b) {
-				return $elm$core$Maybe$Nothing;
-			} else {
-				var x = list.a;
-				var xs = list.b;
-				if (predicate(x)) {
-					return $elm$core$Maybe$Just(index);
-				} else {
-					var $temp$index = index + 1,
-						$temp$predicate = predicate,
-						$temp$list = xs;
-					index = $temp$index;
-					predicate = $temp$predicate;
-					list = $temp$list;
-					continue findIndexHelp;
-				}
-			}
-		}
-	});
-var $elm_community$list_extra$List$Extra$findIndex = $elm_community$list_extra$List$Extra$findIndexHelp(0);
-var $elm_community$list_extra$List$Extra$elemIndex = function (x) {
-	return $elm_community$list_extra$List$Extra$findIndex(
-		$elm$core$Basics$eq(x));
-};
-var $author$project$Utils$List$pivot = F2(
-	function (n, l) {
-		var aux = F3(
-			function (acc, n_, l_) {
-				aux:
-				while (true) {
-					var _v0 = _Utils_Tuple2(l_, n_);
-					_v0$0:
-					while (true) {
-						if (_v0.a.b) {
-							if (!_v0.b) {
-								break _v0$0;
-							} else {
-								var _v1 = _v0.a;
-								var x = _v1.a;
-								var t = _v1.b;
-								var $temp$acc = A2($elm$core$List$cons, x, acc),
-									$temp$n_ = n_ - 1,
-									$temp$l_ = t;
-								acc = $temp$acc;
-								n_ = $temp$n_;
-								l_ = $temp$l_;
-								continue aux;
-							}
-						} else {
-							if (!_v0.b) {
-								break _v0$0;
-							} else {
-								return _Utils_Tuple2(
-									$elm$core$List$reverse(acc),
-									l_);
-							}
-						}
-					}
-					return _Utils_Tuple2(
-						$elm$core$List$reverse(acc),
-						l_);
-				}
-			});
-		return A3(aux, _List_Nil, n, l);
-	});
-var $author$project$Utils$List$insert = F3(
-	function (index, l, list) {
-		var _v0 = A2($author$project$Utils$List$pivot, index, list);
-		var front = _v0.a;
-		var back = _v0.b;
-		return _Utils_ap(
-			front,
-			_Utils_ap(l, back));
-	});
-var $elm$core$Basics$negate = function (n) {
-	return -n;
-};
-var $elm$core$List$drop = F2(
-	function (n, list) {
-		drop:
-		while (true) {
-			if (n <= 0) {
-				return list;
-			} else {
-				if (!list.b) {
-					return list;
-				} else {
-					var x = list.a;
-					var xs = list.b;
-					var $temp$n = n - 1,
-						$temp$list = xs;
-					n = $temp$n;
-					list = $temp$list;
-					continue drop;
-				}
-			}
-		}
-	});
 var $elm$core$List$takeReverse = F3(
 	function (n, list, kept) {
 		takeReverse:
@@ -7545,12 +6883,61 @@ var $author$project$Model$Scroll$updateContextNode = F2(
 				context: update(node.context)
 			});
 	});
+var $elm$core$Maybe$map = F2(
+	function (f, maybe) {
+		if (maybe.$ === 'Just') {
+			var value = maybe.a;
+			return $elm$core$Maybe$Just(
+				f(value));
+		} else {
+			return $elm$core$Maybe$Nothing;
+		}
+	});
+var $elm$core$Dict$update = F3(
+	function (targetKey, alter, dictionary) {
+		var _v0 = alter(
+			A2($elm$core$Dict$get, targetKey, dictionary));
+		if (_v0.$ === 'Just') {
+			var value = _v0.a;
+			return A3($elm$core$Dict$insert, targetKey, value, dictionary);
+		} else {
+			return A2($elm$core$Dict$remove, targetKey, dictionary);
+		}
+	});
+var $author$project$Model$Scroll$updateNode = F3(
+	function (id, update, net) {
+		return _Utils_update(
+			net,
+			{
+				nodes: A3(
+					$elm$core$Dict$update,
+					id,
+					$elm$core$Maybe$map(update),
+					net.nodes)
+			});
+	});
 var $author$project$Model$Scroll$updateContext = F3(
 	function (id, update, net) {
 		return A3(
 			$author$project$Model$Scroll$updateNode,
 			id,
 			$author$project$Model$Scroll$updateContextNode(update),
+			net);
+	});
+var $author$project$Model$Scroll$updateShapeNode = F2(
+	function (update, node) {
+		return _Utils_update(
+			node,
+			{
+				shape: update(node.shape)
+			});
+	});
+var $author$project$Model$Scroll$updateShape = F3(
+	function (id, update, net) {
+		return A3(
+			$author$project$Model$Scroll$updateNode,
+			id,
+			$author$project$Model$Scroll$updateShapeNode(update),
 			net);
 	});
 var $author$project$Model$Scroll$removeSingleNode = F2(
@@ -7648,6 +7035,56 @@ var $author$project$Model$Scroll$prune = F2(
 			withoutParent,
 			A2($author$project$Model$Scroll$getDescendentIds, id, net));
 	});
+var $folkertdev$elm_deque$Internal$rebalance = function (deque) {
+	var sizeF = deque.sizeF;
+	var sizeR = deque.sizeR;
+	var front = deque.front;
+	var rear = deque.rear;
+	var size1 = ((sizeF + sizeR) / 2) | 0;
+	var size2 = (sizeF + sizeR) - size1;
+	var balanceConstant = 4;
+	if ((sizeF + sizeR) < 2) {
+		return deque;
+	} else {
+		if (_Utils_cmp(sizeF, (balanceConstant * sizeR) + 1) > 0) {
+			var newRear = _Utils_ap(
+				rear,
+				$elm$core$List$reverse(
+					A2($elm$core$List$drop, size1, front)));
+			var newFront = A2($elm$core$List$take, size1, front);
+			return {front: newFront, rear: newRear, sizeF: size1, sizeR: size2};
+		} else {
+			if (_Utils_cmp(sizeR, (balanceConstant * sizeF) + 1) > 0) {
+				var newRear = A2($elm$core$List$take, size1, rear);
+				var newFront = _Utils_ap(
+					front,
+					$elm$core$List$reverse(
+						A2($elm$core$List$drop, size1, rear)));
+				return {front: newFront, rear: newRear, sizeF: size1, sizeR: size2};
+			} else {
+				return deque;
+			}
+		}
+	}
+};
+var $folkertdev$elm_deque$Internal$fromList = function (list) {
+	return $folkertdev$elm_deque$Internal$rebalance(
+		{
+			front: list,
+			rear: _List_Nil,
+			sizeF: $elm$core$List$length(list),
+			sizeR: 0
+		});
+};
+var $folkertdev$elm_deque$Deque$fromList = A2($elm$core$Basics$composeL, $folkertdev$elm_deque$Deque$Deque, $folkertdev$elm_deque$Internal$fromList);
+var $author$project$Model$Session$removeActionAtIndex = F2(
+	function (idx, actionsDeque) {
+		return $folkertdev$elm_deque$Deque$fromList(
+			A2(
+				$elm_community$list_extra$List$Extra$removeAt,
+				idx,
+				$folkertdev$elm_deque$Deque$toList(actionsDeque)));
+	});
 var $author$project$Model$Scroll$getInloopInteraction = F2(
 	function (id, net) {
 		var _v0 = A2($author$project$Model$Scroll$getShape, id, net);
@@ -7674,6 +7111,276 @@ var $author$project$Model$Scroll$removeScrollNodes = F3(
 			return net;
 		}
 	});
+var $author$project$Model$Session$setActionsDeque = F3(
+	function (execMode, actionsDeque, session) {
+		if (execMode.$ === 'Forward') {
+			return _Utils_update(
+				session,
+				{
+					actions: {backward: session.actions.backward, forward: actionsDeque}
+				});
+		} else {
+			return _Utils_update(
+				session,
+				{
+					actions: {backward: actionsDeque, forward: session.actions.forward}
+				});
+		}
+	});
+var $elm$core$Debug$todo = _Debug_todo;
+var $author$project$Model$Scroll$updateInteractionShape = F2(
+	function (update, shape) {
+		if ((shape.$ === 'Sep') && (shape.b.$ === 'Just')) {
+			var childIds = shape.a;
+			var interaction = shape.b.a;
+			return A2(
+				$author$project$Model$Scroll$Sep,
+				childIds,
+				$elm$core$Maybe$Just(
+					update(interaction)));
+		} else {
+			return shape;
+		}
+	});
+var $author$project$Model$Scroll$updateInteraction = F3(
+	function (id, update, net) {
+		return A3(
+			$author$project$Model$Scroll$updateShape,
+			id,
+			$author$project$Model$Scroll$updateInteractionShape(update),
+			net);
+	});
+var $author$project$Model$Scroll$updateJustifNode = F2(
+	function (update, node) {
+		return _Utils_update(
+			node,
+			{
+				justif: update(node.justif)
+			});
+	});
+var $author$project$Model$Scroll$updateJustif = F3(
+	function (id, update, net) {
+		return A3(
+			$author$project$Model$Scroll$updateNode,
+			id,
+			$author$project$Model$Scroll$updateJustifNode(update),
+			net);
+	});
+var $author$project$Model$Session$execute = F2(
+	function (actionIdx, session) {
+		var oppositeActionsDeque = A2(
+			$author$project$Model$Session$getActionsDeque,
+			$author$project$Model$Session$flipExecMode(session.execMode),
+			session);
+		var currentActionsDeque = A2($author$project$Model$Session$getActionsDeque, session.execMode, session);
+		var _v0 = A2($author$project$Model$Session$getActionAtIndex, actionIdx, currentActionsDeque);
+		if (_v0.$ === 'Just') {
+			var _v1 = _v0.a;
+			var action = _v1.a;
+			var locus = _v1.b;
+			var newOppositeActionsDeque = A2(
+				$author$project$Model$Session$removeActionAtIndex,
+				($folkertdev$elm_deque$Deque$length(oppositeActionsDeque) - 1) - actionIdx,
+				oppositeActionsDeque);
+			var newNet = function () {
+				switch (action.$) {
+					case 'Open':
+						return A3(
+							$author$project$Model$Scroll$updateInteraction,
+							locus,
+							function (_int) {
+								return $author$project$Model$Session$isForward(session.execMode) ? _Utils_update(
+									_int,
+									{opened: false}) : _Utils_update(
+									_int,
+									{closed: false});
+							},
+							session.net);
+					case 'Close':
+						return A3(
+							$author$project$Model$Scroll$removeScrollNodes,
+							$author$project$Model$Session$isForward(session.execMode),
+							locus,
+							session.net);
+					case 'Insert':
+						return A3(
+							$author$project$Model$Scroll$updateJustif,
+							locus,
+							function (justif) {
+								return _Utils_update(
+									justif,
+									{self: false});
+							},
+							session.net);
+					case 'Delete':
+						return A2($author$project$Model$Scroll$prune, locus, session.net);
+					case 'Iterate':
+						return A3(
+							$elm$core$List$foldl,
+							function (subnodeId) {
+								return A2(
+									$author$project$Model$Scroll$updateJustif,
+									subnodeId,
+									function (justif) {
+										return _Utils_eq(subnodeId, locus) ? _Utils_update(
+											justif,
+											{copy: $elm$core$Maybe$Nothing}) : _Utils_update(
+											justif,
+											{subcopy: $elm$core$Maybe$Nothing});
+									});
+							},
+							session.net,
+							A2($author$project$Model$Scroll$getDescendentIds, locus, session.net));
+					case 'Deiterate':
+						return A2($author$project$Model$Scroll$prune, locus, session.net);
+					case 'Reorder':
+						return _Debug_todo(
+							'Model.Session',
+							{
+								start: {line: 1046, column: 29},
+								end: {line: 1046, column: 39}
+							})('Reorder action execution not implemented yet');
+					default:
+						return _Debug_todo(
+							'Model.Session',
+							{
+								start: {line: 1049, column: 29},
+								end: {line: 1049, column: 39}
+							})('Decompose action execution not implemented yet.');
+				}
+			}();
+			var newCurrentActionsDeque = A2($author$project$Model$Session$removeActionAtIndex, actionIdx, currentActionsDeque);
+			return A3(
+				$author$project$Model$Session$setActionsDeque,
+				$author$project$Model$Session$flipExecMode(session.execMode),
+				newOppositeActionsDeque,
+				A3(
+					$author$project$Model$Session$setActionsDeque,
+					session.execMode,
+					newCurrentActionsDeque,
+					_Utils_update(
+						session,
+						{net: newNet})));
+		} else {
+			var _v3 = $elm$core$Debug$log('Error: trying to execute non-existing action. Returning the session unchanged.');
+			return session;
+		}
+	});
+var $author$project$Model$Session$Close = function (a) {
+	return {$: 'Close', a: a};
+};
+var $author$project$Model$Session$Delete = function (a) {
+	return {$: 'Delete', a: a};
+};
+var $author$project$Model$Session$Insert = F2(
+	function (a, b) {
+		return {$: 'Insert', a: a, b: b};
+	});
+var $author$project$Model$Session$Open = function (a) {
+	return {$: 'Open', a: a};
+};
+var $author$project$Model$Scroll$makeClosed = function (interaction) {
+	return _Utils_update(
+		interaction,
+		{closed: true});
+};
+var $author$project$Model$Scroll$makeOpened = function (interaction) {
+	return _Utils_update(
+		interaction,
+		{opened: true});
+};
+var $author$project$Model$Session$annotateExpansion = function (execMode) {
+	if (execMode.$ === 'Forward') {
+		return $author$project$Model$Scroll$makeOpened;
+	} else {
+		return $author$project$Model$Scroll$makeClosed;
+	}
+};
+var $author$project$Model$Scroll$forgetInteraction = function (shape) {
+	if ((shape.$ === 'Sep') && (shape.b.$ === 'Just')) {
+		var childIds = shape.a;
+		return A2(
+			$author$project$Model$Scroll$Sep,
+			childIds,
+			$elm$core$Maybe$Just($author$project$Model$Scroll$attachment));
+	} else {
+		return shape;
+	}
+};
+var $author$project$Model$Scroll$forgetProof = function (net) {
+	return A3(
+		$elm$core$Dict$foldl,
+		F3(
+			function (id, _v0, acc) {
+				return A3(
+					$author$project$Model$Scroll$updateShape,
+					id,
+					$author$project$Model$Scroll$forgetInteraction,
+					A3(
+						$author$project$Model$Scroll$updateJustif,
+						id,
+						function (_v1) {
+							return $author$project$Model$Scroll$assumption;
+						},
+						acc));
+			}),
+		net,
+		net.nodes);
+};
+var $author$project$Model$Scroll$getJustif = F2(
+	function (id, net) {
+		return A2($author$project$Model$Scroll$getNode, id, net).justif;
+	});
+var $author$project$Model$Scroll$getPolarity = F2(
+	function (id, net) {
+		return A2($author$project$Model$Scroll$getNode, id, net).polarity;
+	});
+var $author$project$Model$Scroll$isInsertion = F2(
+	function (polarity, justif) {
+		return _Utils_eq(polarity, $author$project$Model$Scroll$Neg) && justif.self;
+	});
+var $author$project$Model$Scroll$isDirect = function (justif) {
+	var _v0 = justif.copy;
+	if (_v0.$ === 'Just') {
+		return true;
+	} else {
+		return false;
+	}
+};
+var $author$project$Model$Scroll$isIteration = F2(
+	function (polarity, justif) {
+		return _Utils_eq(polarity, $author$project$Model$Scroll$Pos) && $author$project$Model$Scroll$isDirect(justif);
+	});
+var $author$project$Model$Scroll$isCreation = F2(
+	function (polarity, justif) {
+		return A2($author$project$Model$Scroll$isInsertion, polarity, justif) || A2($author$project$Model$Scroll$isIteration, polarity, justif);
+	});
+var $author$project$Model$Scroll$isCreated = F2(
+	function (id, net) {
+		return A2(
+			$author$project$Model$Scroll$isCreation,
+			A2($author$project$Model$Scroll$getPolarity, id, net),
+			A2($author$project$Model$Scroll$getJustif, id, net));
+	});
+var $author$project$Model$Scroll$isDeiteration = F2(
+	function (polarity, justif) {
+		return _Utils_eq(polarity, $author$project$Model$Scroll$Neg) && $author$project$Model$Scroll$isDirect(justif);
+	});
+var $author$project$Model$Scroll$isDeletion = F2(
+	function (polarity, justif) {
+		return _Utils_eq(polarity, $author$project$Model$Scroll$Pos) && justif.self;
+	});
+var $author$project$Model$Scroll$isDestruction = F2(
+	function (polarity, justif) {
+		return A2($author$project$Model$Scroll$isDeletion, polarity, justif) || A2($author$project$Model$Scroll$isDeiteration, polarity, justif);
+	});
+var $author$project$Model$Scroll$isDestroyed = F2(
+	function (id, net) {
+		return A2(
+			$author$project$Model$Scroll$isDestruction,
+			A2($author$project$Model$Scroll$getPolarity, id, net),
+			A2($author$project$Model$Scroll$getJustif, id, net));
+	});
 var $author$project$Model$Scroll$boundary = F2(
 	function (isForward, net) {
 		return $author$project$Model$Scroll$forgetProof(
@@ -7689,12 +7396,6 @@ var $author$project$Model$Scroll$boundary = F2(
 				net,
 				net.nodes));
 	});
-var $author$project$Model$Scroll$Direct = function (a) {
-	return {$: 'Direct', a: a};
-};
-var $author$project$Model$Scroll$Indirect = function (a) {
-	return {$: 'Indirect', a: a};
-};
 var $author$project$Model$Scroll$getTreeChildren = function (_v0) {
 	var children = _v0.a.children;
 	return children;
@@ -7713,17 +7414,25 @@ var $author$project$Model$Scroll$deeplinkTree = F2(
 				var _v0 = function () {
 					if (ancId.$ === 'Nothing') {
 						return _Utils_Tuple2(
-							$author$project$Model$Scroll$Direct(srcId),
+							_Utils_update(
+								tgtJustif,
+								{
+									copy: $elm$core$Maybe$Just(srcId)
+								}),
 							$elm$core$Maybe$Just(srcId));
 					} else {
 						var id = ancId.a;
 						return _Utils_Tuple2(
-							$author$project$Model$Scroll$Indirect(
-								{anc: id, src: srcId}),
+							_Utils_update(
+								tgtJustif,
+								{
+									subcopy: $elm$core$Maybe$Just(
+										{anc: id, src: srcId})
+								}),
 							$elm$core$Maybe$Just(id));
 					}
 				}();
-				var copy = _v0.a;
+				var justif = _v0.a;
 				var acc = _v0.b;
 				return $author$project$Model$Scroll$TNode(
 					{
@@ -7735,13 +7444,7 @@ var $author$project$Model$Scroll$deeplinkTree = F2(
 						id: $author$project$Model$Scroll$getTreeId(tgt),
 						node: _Utils_update(
 							tgtNode,
-							{
-								justif: _Utils_update(
-									tgtJustif,
-									{
-										from: $elm$core$Maybe$Just(copy)
-									})
-							})
+							{justif: justif})
 					});
 			});
 		return A3(aux, $elm$core$Maybe$Nothing, source, target);
@@ -7789,25 +7492,35 @@ var $author$project$Model$Scroll$getSubnet = function (id) {
 		$author$project$Model$Scroll$buildTree(id),
 		$author$project$Model$Scroll$dehydrateTree);
 };
-var $author$project$Model$Scroll$mergeInto = F2(
-	function (s, t) {
-		return {
-			nodes: A2($elm$core$Dict$union, s.nodes, t.nodes),
-			roots: t.roots
-		};
-	});
 var $author$project$Model$Scroll$deiterate = F4(
 	function (isForward, src, tgt, net) {
+		var updateOrigin = F3(
+			function (id, newJustif, justif) {
+				return _Utils_eq(id, tgt) ? _Utils_update(
+					justif,
+					{copy: newJustif.copy}) : _Utils_update(
+					justif,
+					{subcopy: newJustif.subcopy});
+			});
+		var boundaryNet = A2($author$project$Model$Scroll$boundary, isForward, net);
 		var _v0 = _Utils_Tuple2(
-			A2($author$project$Model$Scroll$getSubnet, src, net),
-			A2($author$project$Model$Scroll$getSubnet, tgt, net));
-		var subnetSrc = _v0.a;
-		var subnetTgt = _v0.b;
-		var backlinkedTgtConclusion = A2(
-			$author$project$Model$Scroll$deeplink,
-			A2($author$project$Model$Scroll$boundary, isForward, subnetSrc),
-			A2($author$project$Model$Scroll$boundary, isForward, subnetTgt));
-		return A2($author$project$Model$Scroll$mergeInto, backlinkedTgtConclusion, net);
+			A2($author$project$Model$Scroll$getSubnet, src, boundaryNet),
+			A2($author$project$Model$Scroll$getSubnet, tgt, boundaryNet));
+		var boundarySrc = _v0.a;
+		var boundaryTgt = _v0.b;
+		var backlinkedTgtBoundary = A2($author$project$Model$Scroll$deeplink, boundarySrc, boundaryTgt);
+		return A3(
+			$elm$core$Dict$foldl,
+			F3(
+				function (id, node, acc) {
+					return A3(
+						$author$project$Model$Scroll$updateJustif,
+						id,
+						A2(updateOrigin, id, node.justif),
+						acc);
+				}),
+			net,
+			backlinkedTgtBoundary.nodes);
 	});
 var $author$project$Model$Scroll$selfJustify = function (justif) {
 	return _Utils_update(
@@ -7817,6 +7530,138 @@ var $author$project$Model$Scroll$selfJustify = function (justif) {
 var $author$project$Model$Scroll$delete = F2(
 	function (id, net) {
 		return A3($author$project$Model$Scroll$updateJustif, id, $author$project$Model$Scroll$selfJustify, net);
+	});
+var $author$project$Model$Scroll$freshId = function (net) {
+	var maxId = function (nodeDict) {
+		return A3(
+			$elm$core$List$foldl,
+			$elm$core$Basics$max,
+			-1,
+			$elm$core$Dict$keys(nodeDict));
+	};
+	return maxId(net.nodes) + 1;
+};
+var $author$project$Model$Scroll$getChildIdsContext = F2(
+	function (ctx, net) {
+		if (ctx.$ === 'TopLevel') {
+			return net.roots;
+		} else {
+			var parentId = ctx.a;
+			return A2($author$project$Model$Scroll$getChildIds, parentId, net);
+		}
+	});
+var $author$project$Model$Scroll$getPolarityContext = F2(
+	function (ctx, net) {
+		if (ctx.$ === 'TopLevel') {
+			return $author$project$Model$Scroll$Pos;
+		} else {
+			var parentId = ctx.a;
+			return $author$project$Model$Scroll$invert(
+				A2($author$project$Model$Scroll$getPolarity, parentId, net));
+		}
+	});
+var $author$project$Model$Scroll$updatePolarityNode = F2(
+	function (update, node) {
+		return _Utils_update(
+			node,
+			{
+				polarity: update(node.polarity)
+			});
+	});
+var $author$project$Model$Scroll$updatePolarity = F3(
+	function (id, update, net) {
+		return A3(
+			$author$project$Model$Scroll$updateNode,
+			id,
+			$author$project$Model$Scroll$updatePolarityNode(update),
+			net);
+	});
+var $author$project$Model$Scroll$enclose = F3(
+	function (ids, interaction, net) {
+		if (!ids.b) {
+			return _Utils_Tuple2(-1, net);
+		} else {
+			var first = ids.a;
+			var ctx = A2($author$project$Model$Scroll$getContext, first, net);
+			var parentChildren = A2($author$project$Model$Scroll$getChildIdsContext, ctx, net);
+			var idx = A2(
+				$elm$core$Maybe$withDefault,
+				-1,
+				A2($elm_community$list_extra$List$Extra$elemIndex, first, parentChildren));
+			if (_Utils_eq(idx, -1)) {
+				return _Utils_Tuple2(-1, net);
+			} else {
+				var prefix = A2($elm$core$List$take, idx, parentChildren);
+				var newNode = {
+					context: ctx,
+					justif: $author$project$Model$Scroll$assumption,
+					name: '',
+					polarity: A2($author$project$Model$Scroll$getPolarityContext, ctx, net),
+					shape: A2($author$project$Model$Scroll$Sep, ids, interaction)
+				};
+				var newId = $author$project$Model$Scroll$freshId(net);
+				var netWithNode = _Utils_update(
+					net,
+					{
+						nodes: A3($elm$core$Dict$insert, newId, newNode, net.nodes)
+					});
+				var netWithUpdatedContexts = A3(
+					$elm$core$List$foldl,
+					F2(
+						function (id, acc) {
+							return A3(
+								$author$project$Model$Scroll$updateContext,
+								id,
+								function (_v3) {
+									return $author$project$Model$Scroll$Inside(newId);
+								},
+								acc);
+						}),
+					netWithNode,
+					ids);
+				var count = $elm$core$List$length(ids);
+				var suffix = A2($elm$core$List$drop, idx + count, parentChildren);
+				var newChildrenList = _Utils_ap(
+					prefix,
+					A2($elm$core$List$cons, newId, suffix));
+				var allEnclosedIds = A2(
+					$elm$core$List$concatMap,
+					function (id) {
+						return A2($author$project$Model$Scroll$getDescendentIds, id, netWithUpdatedContexts);
+					},
+					ids);
+				var netWithUpdatedPolarity = A3(
+					$elm$core$List$foldl,
+					F2(
+						function (id, acc) {
+							return A3($author$project$Model$Scroll$updatePolarity, id, $author$project$Model$Scroll$invert, acc);
+						}),
+					netWithUpdatedContexts,
+					allEnclosedIds);
+				var netFinal = function () {
+					if (ctx.$ === 'TopLevel') {
+						return _Utils_update(
+							netWithUpdatedPolarity,
+							{roots: newChildrenList});
+					} else {
+						var parentId = ctx.a;
+						return A3(
+							$author$project$Model$Scroll$updateShape,
+							parentId,
+							function (shape) {
+								if (shape.$ === 'Sep') {
+									var _int = shape.b;
+									return A2($author$project$Model$Scroll$Sep, newChildrenList, _int);
+								} else {
+									return shape;
+								}
+							},
+							netWithUpdatedPolarity);
+					}
+				}();
+				return _Utils_Tuple2(newId, netFinal);
+			}
+		}
 	});
 var $elm$core$List$filter = F2(
 	function (isGood, list) {
@@ -7829,14 +7674,6 @@ var $elm$core$List$filter = F2(
 			_List_Nil,
 			list);
 	});
-var $author$project$Model$Session$Backward = {$: 'Backward'};
-var $author$project$Model$Session$flipExecMode = function (execMode) {
-	if (execMode.$ === 'Forward') {
-		return $author$project$Model$Session$Backward;
-	} else {
-		return $author$project$Model$Session$Forward;
-	}
-};
 var $author$project$Model$Scroll$getLocation = F2(
 	function (id, net) {
 		var _v0 = A2($author$project$Model$Scroll$getContext, id, net);
@@ -7862,15 +7699,6 @@ var $author$project$Model$Scroll$getLocation = F2(
 			};
 		}
 	});
-var $author$project$Model$Scroll$getChildIdsContext = F2(
-	function (ctx, net) {
-		if (ctx.$ === 'TopLevel') {
-			return net.roots;
-		} else {
-			var parentId = ctx.a;
-			return A2($author$project$Model$Scroll$getChildIds, parentId, net);
-		}
-	});
 var $author$project$Model$Scroll$getPosition = F2(
 	function (id, net) {
 		var neighbors = A2(
@@ -7882,16 +7710,6 @@ var $author$project$Model$Scroll$getPosition = F2(
 			-1,
 			A2($elm_community$list_extra$List$Extra$elemIndex, id, neighbors));
 	});
-var $author$project$Model$Scroll$freshId = function (net) {
-	var maxId = function (nodeDict) {
-		return A3(
-			$elm$core$List$foldl,
-			$elm$core$Basics$max,
-			-1,
-			$elm$core$Dict$keys(nodeDict));
-	};
-	return maxId(net.nodes) + 1;
-};
 var $author$project$Model$Scroll$idMapDict = F3(
 	function (vmap, f, dict) {
 		return $elm$core$Dict$fromList(
@@ -7916,32 +7734,12 @@ var $author$project$Model$Scroll$idMapContext = F2(
 				f(parentId));
 		}
 	});
-var $author$project$Model$Scroll$idMapOrigin = F2(
-	function (f, copy) {
-		if (copy.$ === 'Direct') {
-			var src = copy.a;
-			return $author$project$Model$Scroll$Direct(
-				f(src));
-		} else {
-			var j = copy.a;
-			return $author$project$Model$Scroll$Indirect(
-				_Utils_update(
-					j,
-					{
-						anc: f(j.anc),
-						src: f(j.src)
-					}));
-		}
-	});
 var $author$project$Model$Scroll$idMapJustif = F2(
 	function (f, justif) {
 		return _Utils_update(
 			justif,
 			{
-				from: A2(
-					$elm$core$Maybe$map,
-					$author$project$Model$Scroll$idMapOrigin(f),
-					justif.from)
+				copy: A2($elm$core$Maybe$map, f, justif.copy)
 			});
 	});
 var $author$project$Model$Scroll$idMapShape = F2(
@@ -8015,22 +7813,6 @@ var $author$project$Model$Scroll$foldAncestors = F4(
 			}
 		}
 	});
-var $author$project$Model$Scroll$updatePolarityNode = F2(
-	function (update, node) {
-		return _Utils_update(
-			node,
-			{
-				polarity: update(node.polarity)
-			});
-	});
-var $author$project$Model$Scroll$updatePolarity = F3(
-	function (id, update, net) {
-		return A3(
-			$author$project$Model$Scroll$updateNode,
-			id,
-			$author$project$Model$Scroll$updatePolarityNode(update),
-			net);
-	});
 var $author$project$Model$Scroll$refreshPolarities = function (net) {
 	return A3(
 		$elm$core$Dict$foldl,
@@ -8057,7 +7839,7 @@ var $author$project$Model$Scroll$refreshPolarities = function (net) {
 var $author$project$Model$Scroll$graft = F3(
 	function (loc, src, tgt) {
 		var srcFresh = A2($author$project$Model$Scroll$freshify, tgt, src);
-		return $author$project$Model$Scroll$refreshPolarities(
+		var newNet = $author$project$Model$Scroll$refreshPolarities(
 			{
 				nodes: A3(
 					$elm$core$Dict$foldl,
@@ -8128,6 +7910,7 @@ var $author$project$Model$Scroll$graft = F3(
 					}
 				}()
 			});
+		return _Utils_Tuple2(srcFresh.roots, newNet);
 	});
 var $author$project$Model$Scroll$freshName = F2(
 	function (basename, net) {
@@ -8147,16 +7930,6 @@ var $author$project$Model$Scroll$freshName = F2(
 			0,
 			net.nodes);
 		return A2(generateName, basename, number);
-	});
-var $author$project$Model$Scroll$getPolarityContext = F2(
-	function (ctx, net) {
-		if (ctx.$ === 'TopLevel') {
-			return $author$project$Model$Scroll$Pos;
-		} else {
-			var parentId = ctx.a;
-			return $author$project$Model$Scroll$invert(
-				A2($author$project$Model$Scroll$getPolarity, parentId, net));
-		}
 	});
 var $author$project$Model$Scroll$updateNameNode = F2(
 	function (update, node) {
@@ -8184,25 +7957,24 @@ var $author$project$Model$Scroll$insert = F5(
 				loc.ctx,
 				A2($author$project$Model$Scroll$getPolarityContext, loc.ctx, net),
 				tok));
-		var newId = $author$project$Model$Scroll$getTreeId(newTree);
 		var basename = function () {
-			var _v1 = _Utils_Tuple2(
+			var _v3 = _Utils_Tuple2(
 				tok,
 				A2($author$project$Model$Scroll$getPolarityContext, loc.ctx, net));
-			if (_v1.a.$ === 'ITok') {
-				if (_v1.b.$ === 'Neg') {
-					var _v2 = _v1.b;
+			if (_v3.a.$ === 'ITok') {
+				if (_v3.b.$ === 'Neg') {
+					var _v4 = _v3.b;
 					return 'Param';
 				} else {
-					var _v3 = _v1.b;
+					var _v5 = _v3.b;
 					return 'Value';
 				}
 			} else {
-				if (_v1.b.$ === 'Neg') {
-					var _v4 = _v1.b;
+				if (_v3.b.$ === 'Neg') {
+					var _v6 = _v3.b;
 					return 'Branch';
 				} else {
-					var _v5 = _v1.b;
+					var _v7 = _v3.b;
 					return 'Continuation';
 				}
 			}
@@ -8213,18 +7985,26 @@ var $author$project$Model$Scroll$insert = F5(
 			name);
 		var ins = A3(
 			$author$project$Model$Scroll$updateJustif,
-			newId,
+			0,
 			function (j) {
 				return self ? $author$project$Model$Scroll$selfJustify(j) : j;
 			},
 			A3(
 				$author$project$Model$Scroll$updateName,
-				newId,
-				function (_v0) {
+				0,
+				function (_v2) {
 					return nodeName;
 				},
 				$author$project$Model$Scroll$dehydrateTree(newTree)));
-		return A3($author$project$Model$Scroll$graft, loc, ins, net);
+		var _v0 = A3($author$project$Model$Scroll$graft, loc, ins, net);
+		var newIds = _v0.a;
+		var newNet = _v0.b;
+		if (newIds.b && (!newIds.b.b)) {
+			var newId = newIds.a;
+			return _Utils_Tuple2(newId, newNet);
+		} else {
+			return _Utils_Tuple2(-1, newNet);
+		}
 	});
 var $author$project$Model$Scroll$interpretFormula = function (form) {
 	switch (form.$) {
@@ -8298,8 +8078,8 @@ var $author$project$Model$Scroll$interpretFormula = function (form) {
 				]);
 	}
 };
-var $author$project$Model$Session$isForward = function (execMode) {
-	if (execMode.$ === 'Forward') {
+var $elm$core$List$isEmpty = function (xs) {
+	if (!xs.b) {
 		return true;
 	} else {
 		return false;
@@ -8333,7 +8113,16 @@ var $author$project$Model$Scroll$iterate = F4(
 					$author$project$Model$Scroll$boundary,
 					isForward,
 					A2($author$project$Model$Scroll$getSubnet, id, net))));
-		return A3($author$project$Model$Scroll$graft, loc, copy, net);
+		var _v0 = A3($author$project$Model$Scroll$graft, loc, copy, net);
+		if (_v0.a.b && (!_v0.a.b.b)) {
+			var _v1 = _v0.a;
+			var newId = _v1.a;
+			var newNet = _v0.b;
+			return _Utils_Tuple2(newId, newNet);
+		} else {
+			var newNet = _v0.b;
+			return _Utils_Tuple2(-1, newNet);
+		}
 	});
 var $author$project$Utils$List$nth = F2(
 	function (n, l) {
@@ -8390,47 +8179,67 @@ var $author$project$Utils$List$move = F3(
 				A2($elm$core$List$cons, src, back));
 		}
 	});
-var $author$project$Model$Scroll$updateInteractionShape = F2(
-	function (update, shape) {
-		if ((shape.$ === 'Sep') && (shape.b.$ === 'Just')) {
-			var childIds = shape.a;
-			var interaction = shape.b.a;
-			return A2(
-				$author$project$Model$Scroll$Sep,
-				childIds,
-				$elm$core$Maybe$Just(
-					update(interaction)));
-		} else {
-			return shape;
-		}
-	});
-var $author$project$Model$Scroll$updateInteraction = F3(
-	function (id, update, net) {
-		return A3(
-			$author$project$Model$Scroll$updateShape,
-			id,
-			$author$project$Model$Scroll$updateInteractionShape(update),
-			net);
-	});
-var $author$project$Model$Session$actionTransform = F2(
-	function (execMode, action) {
+var $elm$core$List$sortBy = _List_sortBy;
+var $author$project$Model$Session$actionTransform = F3(
+	function (selection, execMode, action) {
 		switch (action.$) {
 			case 'Open':
 				var loc = action.a;
-				var unopenedScrollTree = A2(
-					$author$project$Utils$State$eval,
-					0,
-					A3($author$project$Model$Scroll$hydrateOToken, $author$project$Model$Scroll$TopLevel, $author$project$Model$Scroll$Pos, $author$project$Model$Scroll$emptyScroll));
-				var openedScroll = A3(
-					$author$project$Model$Scroll$updateInteraction,
-					1,
-					$author$project$Model$Session$annotateExpansion(execMode),
-					$author$project$Model$Scroll$dehydrateTree(unopenedScrollTree));
-				return A2($author$project$Model$Scroll$graft, loc, openedScroll);
+				return $elm$core$List$isEmpty(selection) ? function (net) {
+					var openedScroll = A3(
+						$author$project$Model$Scroll$updateInteraction,
+						1,
+						$author$project$Model$Session$annotateExpansion(execMode),
+						$author$project$Model$Scroll$dehydrateTree(
+							A2(
+								$author$project$Utils$State$eval,
+								0,
+								A3($author$project$Model$Scroll$hydrateOToken, $author$project$Model$Scroll$TopLevel, $author$project$Model$Scroll$Pos, $author$project$Model$Scroll$emptyScroll))));
+					var _v1 = A3($author$project$Model$Scroll$graft, loc, openedScroll, net);
+					var ids = _v1.a;
+					var newNet = _v1.b;
+					return _Utils_Tuple2(
+						A2(
+							$elm$core$Maybe$withDefault,
+							-1,
+							A2(
+								$elm$core$Maybe$map,
+								$elm$core$Basics$add(1),
+								$elm$core$List$head(ids))),
+						newNet);
+				} : function (net) {
+					var sortedSelection = A2(
+						$elm$core$List$sortBy,
+						function (id) {
+							return A2($author$project$Model$Scroll$getPosition, id, net);
+						},
+						selection);
+					var _v2 = A3(
+						$author$project$Model$Scroll$enclose,
+						sortedSelection,
+						$elm$core$Maybe$Just($author$project$Model$Scroll$attachment),
+						net);
+					var inloopId = _v2.a;
+					var netWithInloop = _v2.b;
+					var _v3 = A3(
+						$author$project$Model$Scroll$enclose,
+						_List_fromArray(
+							[inloopId]),
+						$elm$core$Maybe$Nothing,
+						netWithInloop);
+					var netWithOutloop = _v3.b;
+					return _Utils_Tuple2(
+						inloopId,
+						A3(
+							$author$project$Model$Scroll$updateInteraction,
+							inloopId,
+							$author$project$Model$Session$annotateExpansion(execMode),
+							netWithOutloop));
+				};
 			case 'Close':
 				var id = action.a;
 				return function (net) {
-					var _v1 = A2(
+					var _v4 = A2(
 						$elm$core$List$filter,
 						function (cid) {
 							return A2($author$project$Model$Scroll$isInloop, cid, net);
@@ -8442,16 +8251,18 @@ var $author$project$Model$Session$actionTransform = F2(
 								$author$project$Model$Scroll$boundary,
 								$author$project$Model$Session$isForward(execMode),
 								net)));
-					if (_v1.b && (!_v1.b.b)) {
-						var inloopId = _v1.a;
-						return A3(
-							$author$project$Model$Scroll$updateInteraction,
+					if (_v4.b && (!_v4.b.b)) {
+						var inloopId = _v4.a;
+						return _Utils_Tuple2(
 							inloopId,
-							$author$project$Model$Session$annotateExpansion(
-								$author$project$Model$Session$flipExecMode(execMode)),
-							net);
+							A3(
+								$author$project$Model$Scroll$updateInteraction,
+								inloopId,
+								$author$project$Model$Session$annotateExpansion(
+									$author$project$Model$Session$flipExecMode(execMode)),
+								net));
 					} else {
-						return net;
+						return _Utils_Tuple2(id, net);
 					}
 				};
 			case 'Insert':
@@ -8460,7 +8271,11 @@ var $author$project$Model$Session$actionTransform = F2(
 				return A4($author$project$Model$Scroll$insert, true, $elm$core$Maybe$Nothing, loc, tok);
 			case 'Delete':
 				var id = action.a;
-				return $author$project$Model$Scroll$delete(id);
+				return function (net) {
+					return _Utils_Tuple2(
+						id,
+						A2($author$project$Model$Scroll$delete, id, net));
+				};
 			case 'Iterate':
 				var src = action.a;
 				var dst = action.b;
@@ -8472,83 +8287,127 @@ var $author$project$Model$Session$actionTransform = F2(
 			case 'Deiterate':
 				var src = action.a;
 				var tgt = action.b;
-				return A3(
-					$author$project$Model$Scroll$deiterate,
-					$author$project$Model$Session$isForward(execMode),
-					src,
-					tgt);
+				return function (net) {
+					return _Utils_Tuple2(
+						tgt,
+						A4(
+							$author$project$Model$Scroll$deiterate,
+							$author$project$Model$Session$isForward(execMode),
+							src,
+							tgt,
+							net));
+				};
 			case 'Reorder':
 				var id = action.a;
 				var tgtPos = action.b;
 				return function (net) {
 					var srcPos = A2($author$project$Model$Scroll$getPosition, id, net);
 					var reorder = A2($author$project$Utils$List$move, srcPos, tgtPos);
-					var _v2 = A2($author$project$Model$Scroll$getContext, id, net);
-					if (_v2.$ === 'TopLevel') {
-						return {
-							nodes: net.nodes,
-							roots: reorder(net.roots)
-						};
-					} else {
-						var parentId = _v2.a;
-						return A3(
-							$author$project$Model$Scroll$updateShape,
-							parentId,
-							function (shape) {
-								if (shape.$ === 'Sep') {
-									var children = shape.a;
-									var interaction = shape.b;
-									return A2(
-										$author$project$Model$Scroll$Sep,
-										reorder(children),
-										interaction);
-								} else {
-									return shape;
-								}
-							},
-							net);
-					}
+					var newNet = function () {
+						var _v5 = A2($author$project$Model$Scroll$getContext, id, net);
+						if (_v5.$ === 'TopLevel') {
+							return {
+								nodes: net.nodes,
+								roots: reorder(net.roots)
+							};
+						} else {
+							var parentId = _v5.a;
+							return A3(
+								$author$project$Model$Scroll$updateShape,
+								parentId,
+								function (shape) {
+									if (shape.$ === 'Sep') {
+										var children = shape.a;
+										var interaction = shape.b;
+										return A2(
+											$author$project$Model$Scroll$Sep,
+											reorder(children),
+											interaction);
+									} else {
+										return shape;
+									}
+								},
+								net);
+						}
+					}();
+					return _Utils_Tuple2(id, newNet);
 				};
 			default:
 				var id = action.a;
 				return function (net) {
 					var loc = A2($author$project$Model$Scroll$getLocation, id, net);
 					var formNet = function () {
-						var _v4 = A2($author$project$Model$Scroll$getShape, id, net);
-						if (_v4.$ === 'Formula') {
-							var form = _v4.a;
+						var _v8 = A2($author$project$Model$Scroll$getShape, id, net);
+						if (_v8.$ === 'Formula') {
+							var form = _v8.a;
 							return $author$project$Model$Scroll$netOfStruct(
 								$author$project$Model$Scroll$interpretFormula(form));
 						} else {
 							return A2($author$project$Model$Scroll$getSubnet, id, net);
 						}
 					}();
-					return A3(
+					var _v7 = A3(
 						$author$project$Model$Scroll$graft,
 						loc,
 						formNet,
 						A2($author$project$Model$Scroll$prune, id, net));
+					var ids = _v7.a;
+					var newNet = _v7.b;
+					return _Utils_Tuple2(
+						A2(
+							$elm$core$Maybe$withDefault,
+							-1,
+							$elm$core$List$head(ids)),
+						newNet);
 				};
 		}
 	});
-var $owanturist$elm_queue$Queue$enqueue = F2(
-	function (element, queue) {
-		if (queue.$ === 'Empty') {
-			return A5($owanturist$elm_queue$Queue$Queue, element, 0, 0, _List_Nil, _List_Nil);
+var $author$project$Model$Scroll$conclusion = $author$project$Model$Scroll$boundary(true);
+var $author$project$Model$Scroll$premiss = $author$project$Model$Scroll$boundary(false);
+var $author$project$Model$Session$boundary = function (session) {
+	var boundaryFunc = function () {
+		var _v0 = session.execMode;
+		if (_v0.$ === 'Forward') {
+			return $author$project$Model$Scroll$conclusion;
 		} else {
-			var peek = queue.a;
-			var sizeIn = queue.b;
-			var sizeOut = queue.c;
-			var input = queue.d;
-			var output = queue.e;
-			return A5(
-				$owanturist$elm_queue$Queue$Queue,
-				peek,
-				sizeIn + 1,
-				sizeOut,
-				A2($elm$core$List$cons, element, input),
-				output);
+			return $author$project$Model$Scroll$premiss;
 		}
+	}();
+	return boundaryFunc(session.net);
+};
+var $author$project$Model$Scroll$tokenOfTree = function (_v0) {
+	var root = _v0.a;
+	var _v1 = root.node.shape;
+	if (_v1.$ === 'Formula') {
+		var form = _v1.a;
+		return $author$project$Model$Scroll$ITok(
+			$author$project$Model$Scroll$OForm(form));
+	} else {
+		var interaction = _v1.b;
+		var childrenTokens = A2($elm$core$List$map, $author$project$Model$Scroll$tokenOfTree, root.children);
+		if (interaction.$ === 'Nothing') {
+			return $author$project$Model$Scroll$ITok(
+				$author$project$Model$Scroll$OSep(childrenTokens));
+		} else {
+			return $author$project$Model$Scroll$ISep(childrenTokens);
+		}
+	}
+};
+var $author$project$Model$Scroll$boundaryToken = F3(
+	function (isForward, id, net) {
+		return $author$project$Model$Scroll$tokenOfTree(
+			A2(
+				$author$project$Model$Scroll$buildTree,
+				id,
+				A2($author$project$Model$Scroll$boundary, isForward, net)));
+	});
+var $author$project$Model$Session$boundaryToken = F2(
+	function (id, session) {
+		return A3(
+			$author$project$Model$Scroll$boundaryToken,
+			$author$project$Model$Session$isForward(session.execMode),
+			id,
+			session.net);
 	});
 var $author$project$Model$Scroll$getName = F2(
 	function (id, net) {
@@ -8591,85 +8450,110 @@ var $author$project$Model$Scroll$getNodeIdAtLocation = F2(
 				},
 				$elm$core$Dict$keys(net.nodes)));
 	});
-var $miniBill$elm_fast_dict$FastDict$insertHelp = F3(
-	function (key, value, dict) {
-		if (dict.$ === 'Leaf') {
-			return _Utils_Tuple2(
-				A5($miniBill$elm_fast_dict$Internal$InnerNode, $miniBill$elm_fast_dict$Internal$Red, key, value, $miniBill$elm_fast_dict$Internal$Leaf, $miniBill$elm_fast_dict$Internal$Leaf),
-				true);
-		} else {
-			var nColor = dict.a;
-			var nKey = dict.b;
-			var nValue = dict.c;
-			var nLeft = dict.d;
-			var nRight = dict.e;
-			var _v1 = A2($elm$core$Basics$compare, key, nKey);
-			switch (_v1.$) {
-				case 'LT':
-					var _v2 = A3($miniBill$elm_fast_dict$FastDict$insertHelp, key, value, nLeft);
-					var newLeft = _v2.a;
-					var isNew = _v2.b;
-					return _Utils_Tuple2(
-						A5($miniBill$elm_fast_dict$Internal$balance, nColor, nKey, nValue, newLeft, nRight),
-						isNew);
-				case 'EQ':
-					return _Utils_Tuple2(
-						A5($miniBill$elm_fast_dict$Internal$InnerNode, nColor, nKey, value, nLeft, nRight),
-						false);
-				default:
-					var _v3 = A3($miniBill$elm_fast_dict$FastDict$insertHelp, key, value, nRight);
-					var newRight = _v3.a;
-					var isNew = _v3.b;
-					return _Utils_Tuple2(
-						A5($miniBill$elm_fast_dict$Internal$balance, nColor, nKey, nValue, nLeft, newRight),
-						isNew);
-			}
-		}
+var $elm$core$Set$insert = F2(
+	function (key, _v0) {
+		var dict = _v0.a;
+		return $elm$core$Set$Set_elm_builtin(
+			A3($elm$core$Dict$insert, key, _Utils_Tuple0, dict));
 	});
-var $elm$core$Tuple$mapFirst = F2(
-	function (func, _v0) {
-		var x = _v0.a;
-		var y = _v0.b;
-		return _Utils_Tuple2(
-			func(x),
-			y);
+var $folkertdev$elm_deque$Deque$mapAbstract = F2(
+	function (f, _v0) {
+		var _abstract = _v0.a;
+		return $folkertdev$elm_deque$Deque$Deque(
+			f(_abstract));
 	});
-var $miniBill$elm_fast_dict$FastDict$insertInner = F3(
-	function (key, value, dict) {
+var $folkertdev$elm_deque$Deque$pushBack = F2(
+	function (elem, _v0) {
+		var deque = _v0.a;
 		return A2(
-			$elm$core$Tuple$mapFirst,
-			$miniBill$elm_fast_dict$Internal$setRootBlack,
-			A3($miniBill$elm_fast_dict$FastDict$insertHelp, key, value, dict));
-	});
-var $miniBill$elm_fast_dict$FastDict$insert = F3(
-	function (key, value, _v0) {
-		var sz = _v0.a;
-		var dict = _v0.b;
-		var _v1 = A3($miniBill$elm_fast_dict$FastDict$insertInner, key, value, dict);
-		var result = _v1.a;
-		var isNew = _v1.b;
-		return isNew ? A2($miniBill$elm_fast_dict$Internal$Dict, sz + 1, result) : A2($miniBill$elm_fast_dict$Internal$Dict, sz, result);
-	});
-var $noordstar$elm_iddict$Iddict$insert = F2(
-	function (v, _v0) {
-		var d = _v0.a;
-		return _Utils_Tuple2(
-			d.cursor,
-			$noordstar$elm_iddict$Iddict$Iddict(
+			$folkertdev$elm_deque$Deque$mapAbstract,
+			$folkertdev$elm_deque$Internal$rebalance,
+			$folkertdev$elm_deque$Deque$Deque(
 				{
-					cursor: d.cursor + 1,
-					dict: A3($miniBill$elm_fast_dict$FastDict$insert, d.cursor, v, d.dict)
+					front: deque.front,
+					rear: A2($elm$core$List$cons, elem, deque.rear),
+					sizeF: deque.sizeF,
+					sizeR: deque.sizeR + 1
+				}));
+	});
+var $folkertdev$elm_deque$Deque$pushFront = F2(
+	function (elem, _v0) {
+		var deque = _v0.a;
+		return A2(
+			$folkertdev$elm_deque$Deque$mapAbstract,
+			$folkertdev$elm_deque$Internal$rebalance,
+			$folkertdev$elm_deque$Deque$Deque(
+				{
+					front: A2($elm$core$List$cons, elem, deque.front),
+					rear: deque.rear,
+					sizeF: deque.sizeF + 1,
+					sizeR: deque.sizeR
 				}));
 	});
 var $author$project$Model$Session$record = F2(
 	function (action, session) {
-		var transformedNet = A3($author$project$Model$Session$actionTransform, session.execMode, action, session.net);
+		var _v0 = A4($author$project$Model$Session$actionTransform, session.selection, session.execMode, action, session.net);
+		var locus = _v0.a;
+		var transformedNet = _v0.b;
+		var dualAction = function () {
+			switch (action.$) {
+				case 'Open':
+					return $author$project$Model$Session$Close(locus);
+				case 'Close':
+					var id = action.a;
+					return $author$project$Model$Session$Open(
+						A2(
+							$author$project$Model$Scroll$getLocation,
+							id,
+							$author$project$Model$Session$boundary(session)));
+				case 'Insert':
+					return $author$project$Model$Session$Delete(locus);
+				case 'Delete':
+					var id = action.a;
+					return A2(
+						$author$project$Model$Session$Insert,
+						A2(
+							$author$project$Model$Scroll$getLocation,
+							id,
+							$author$project$Model$Session$boundary(session)),
+						A2($author$project$Model$Session$boundaryToken, id, session));
+				case 'Iterate':
+					var src = action.a;
+					return A2($author$project$Model$Session$Deiterate, src, locus);
+				case 'Deiterate':
+					var src = action.a;
+					var tgt = action.b;
+					return A2(
+						$author$project$Model$Session$Iterate,
+						src,
+						A2(
+							$author$project$Model$Scroll$getLocation,
+							tgt,
+							$author$project$Model$Session$boundary(session)));
+				case 'Reorder':
+					var id = action.a;
+					return A2(
+						$author$project$Model$Session$Reorder,
+						id,
+						A2(
+							$author$project$Model$Scroll$getPosition,
+							id,
+							$author$project$Model$Session$boundary(session)));
+				default:
+					return _Debug_todo(
+						'Model.Session',
+						{
+							start: {line: 881, column: 21},
+							end: {line: 881, column: 31}
+						})('dualAction: Decompose');
+			}
+		}();
 		var renamingData = function (loc) {
 			var id = A2($author$project$Model$Scroll$getNodeIdAtLocation, loc, transformedNet);
 			var netWithEmptyName = A3(
 				$author$project$Model$Scroll$updateName,
 				id,
-				function (_v7) {
+				function (_v8) {
 					return '';
 				},
 				transformedNet);
@@ -8680,9 +8564,6 @@ var $author$project$Model$Session$record = F2(
 				$elm$core$Maybe$Just(
 					{id: id, originalName: defaultName}));
 		};
-		var _v0 = A2($noordstar$elm_iddict$Iddict$insert, action, session.actions);
-		var actionId = _v0.a;
-		var newActions = _v0.b;
 		var _v1 = function () {
 			var _v2 = _Utils_Tuple2(session.actionMode, action);
 			_v2$2:
@@ -8703,7 +8584,7 @@ var $author$project$Model$Session$record = F2(
 									_Utils_update(
 										editData,
 										{
-											insertions: A3($elm$core$Dict$insert, id, actionId, editData.insertions)
+											insertedNodes: A2($elm$core$Set$insert, id, editData.insertedNodes)
 										})),
 								renaming);
 						} else {
@@ -8725,75 +8606,73 @@ var $author$project$Model$Session$record = F2(
 		var finalNet = _v1.a;
 		var updatedActionMode = _v1.b;
 		var updatedRenaming = _v1.c;
-		var updatedActionsQueue = A2($owanturist$elm_queue$Queue$enqueue, actionId, session.actionsQueue);
-		return _Utils_Tuple2(
-			actionId,
-			_Utils_update(
-				session,
-				{actionMode: updatedActionMode, actions: newActions, actionsQueue: updatedActionsQueue, net: finalNet, renaming: updatedRenaming}));
+		var _v7 = $author$project$Model$Session$isForward(session.execMode) ? _Utils_Tuple2(
+			$folkertdev$elm_deque$Deque$pushBack(
+				_Utils_Tuple2(action, locus)),
+			$folkertdev$elm_deque$Deque$pushFront(
+				_Utils_Tuple2(dualAction, locus))) : _Utils_Tuple2(
+			$folkertdev$elm_deque$Deque$pushFront(
+				_Utils_Tuple2(dualAction, locus)),
+			$folkertdev$elm_deque$Deque$pushBack(
+				_Utils_Tuple2(action, locus)));
+		var forwardPush = _v7.a;
+		var backwardPush = _v7.b;
+		var newActions = {
+			backward: backwardPush(session.actions.backward),
+			forward: forwardPush(session.actions.forward)
+		};
+		return _Utils_update(
+			session,
+			{actionMode: updatedActionMode, actions: newActions, net: finalNet, renaming: updatedRenaming});
 	});
 var $author$project$Model$Session$apply = F2(
 	function (action, session) {
-		var _v0 = A2($author$project$Model$Session$record, action, session);
-		var actionId = _v0.a;
-		var newSession = _v0.b;
-		return session.recording ? newSession : A2($author$project$Model$Session$execute, actionId, session);
+		var newSession = A2($author$project$Model$Session$record, action, session);
+		return session.recording ? newSession : A2($author$project$Model$Session$execute, 0, newSession);
 	});
-var $author$project$Model$Session$Insert = F2(
-	function (a, b) {
-		return {$: 'Insert', a: a, b: b};
+var $elm$core$Set$foldl = F3(
+	function (func, initialState, _v0) {
+		var dict = _v0.a;
+		return A3(
+			$elm$core$Dict$foldl,
+			F3(
+				function (key, _v1, state) {
+					return A2(func, key, state);
+				}),
+			initialState,
+			dict);
 	});
-var $author$project$Model$Scroll$conclusion = $author$project$Model$Scroll$boundary(true);
-var $author$project$Model$Scroll$premiss = $author$project$Model$Scroll$boundary(false);
-var $author$project$Model$Session$boundary = function (session) {
-	var boundaryFunc = function () {
-		var _v0 = session.execMode;
-		if (_v0.$ === 'Forward') {
-			return $author$project$Model$Scroll$conclusion;
-		} else {
-			return $author$project$Model$Scroll$premiss;
-		}
-	}();
-	return boundaryFunc(session.net);
+var $folkertdev$elm_deque$Internal$map = F2(
+	function (f, deque) {
+		return {
+			front: A2($elm$core$List$map, f, deque.front),
+			rear: A2($elm$core$List$map, f, deque.rear),
+			sizeF: deque.sizeF,
+			sizeR: deque.sizeR
+		};
+	});
+var $folkertdev$elm_deque$Deque$map = function (f) {
+	return $folkertdev$elm_deque$Deque$mapAbstract(
+		$folkertdev$elm_deque$Internal$map(f));
 };
-var $author$project$Model$Scroll$tokenOfTree = function (_v0) {
-	var root = _v0.a;
-	var _v1 = root.node.shape;
-	if (_v1.$ === 'Formula') {
-		var form = _v1.a;
-		return $author$project$Model$Scroll$ITok(
-			$author$project$Model$Scroll$OForm(form));
-	} else {
-		var interaction = _v1.b;
-		var childrenTokens = A2($elm$core$List$map, $author$project$Model$Scroll$tokenOfTree, root.children);
-		if (interaction.$ === 'Nothing') {
-			return $author$project$Model$Scroll$ITok(
-				$author$project$Model$Scroll$OSep(childrenTokens));
-		} else {
-			return $author$project$Model$Scroll$ISep(childrenTokens);
-		}
-	}
-};
-var $miniBill$elm_fast_dict$FastDict$update = F3(
-	function (targetKey, alter, dictionary) {
-		var _v0 = alter(
-			A2($miniBill$elm_fast_dict$FastDict$get, targetKey, dictionary));
-		if (_v0.$ === 'Just') {
-			var value = _v0.a;
-			return A3($miniBill$elm_fast_dict$FastDict$insert, targetKey, value, dictionary);
-		} else {
-			return A2($miniBill$elm_fast_dict$FastDict$remove, targetKey, dictionary);
-		}
-	});
-var $noordstar$elm_iddict$Iddict$update = F3(
-	function (k, f, _v0) {
-		var d = _v0.a;
-		return $noordstar$elm_iddict$Iddict$Iddict(
-			_Utils_update(
-				d,
-				{
-					dict: A3($miniBill$elm_fast_dict$FastDict$update, k, f, d.dict)
-				}));
+var $author$project$Model$Session$updateInsertion = F3(
+	function (session, ancId, acc) {
+		var newToken = A2($author$project$Model$Session$boundaryToken, ancId, session);
+		return A2(
+			$folkertdev$elm_deque$Deque$map,
+			function (_v0) {
+				var action = _v0.a;
+				var locus = _v0.b;
+				if (action.$ === 'Insert') {
+					var ancLoc = action.a;
+					return _Utils_Tuple2(
+						A2($author$project$Model$Session$Insert, ancLoc, newToken),
+						locus);
+				} else {
+					return _Utils_Tuple2(action, locus);
+				}
+			},
+			acc);
 	});
 var $author$project$Model$Session$commitInsertions = function (session) {
 	return _Utils_update(
@@ -8802,32 +8681,19 @@ var $author$project$Model$Session$commitInsertions = function (session) {
 			actions: function () {
 				var _v0 = session.actionMode;
 				if (_v0.$ === 'EditMode') {
-					var insertions = _v0.a.insertions;
-					return A3(
-						$elm$core$Dict$foldl,
-						F3(
-							function (ancId, insertionActionId, acc) {
-								var newToken = $author$project$Model$Scroll$tokenOfTree(
-									A2(
-										$author$project$Model$Scroll$buildTree,
-										ancId,
-										$author$project$Model$Session$boundary(session)));
-								return A3(
-									$noordstar$elm_iddict$Iddict$update,
-									insertionActionId,
-									$elm$core$Maybe$map(
-										function (action) {
-											if (action.$ === 'Insert') {
-												var ancLoc = action.a;
-												return A2($author$project$Model$Session$Insert, ancLoc, newToken);
-											} else {
-												return action;
-											}
-										}),
-									acc);
-							}),
-						session.actions,
-						insertions);
+					var insertedNodes = _v0.a.insertedNodes;
+					return {
+						backward: A3(
+							$elm$core$Set$foldl,
+							$author$project$Model$Session$updateInsertion(session),
+							session.actions.backward,
+							insertedNodes),
+						forward: A3(
+							$elm$core$Set$foldl,
+							$author$project$Model$Session$updateInsertion(session),
+							session.actions.forward,
+							insertedNodes)
+					};
 				} else {
 					return session.actions;
 				}
@@ -8883,6 +8749,11 @@ var $author$project$Model$Session$changeOperationMode = F2(
 			session,
 			{actionMode: newActionMode});
 	});
+var $author$project$Model$Session$clearSelection = function (session) {
+	return _Utils_update(
+		session,
+		{selection: _List_Nil});
+};
 var $author$project$Update$App$dragstart = _Platform_outgoingPort('dragstart', $elm$core$Basics$identity);
 var $author$project$Model$Session$execAll = function (session) {
 	return _Utils_update(
@@ -8896,16 +8767,10 @@ var $author$project$Model$Session$execAll = function (session) {
 					return session.actionMode;
 				}
 			}(),
-			actions: $noordstar$elm_iddict$Iddict$empty,
-			actionsQueue: $owanturist$elm_queue$Queue$empty,
+			actions: {backward: $folkertdev$elm_deque$Deque$empty, forward: $folkertdev$elm_deque$Deque$empty},
 			net: $author$project$Model$Session$boundary(session)
 		});
 };
-var $elm$core$Basics$composeL = F3(
-	function (g, f, x) {
-		return g(
-			f(x));
-	});
 var $elm$core$Task$onError = _Scheduler_onError;
 var $elm$core$Task$attempt = F2(
 	function (resultToMessage, task) {
@@ -9255,6 +9120,7 @@ var $author$project$Model$App$getSession = F2(
 			return A2($author$project$Model$Session$getSandbox, sandboxID, model.manualExamples).currentSession;
 		}
 	});
+var $elm$core$Basics$neq = _Utils_notEqual;
 var $author$project$Model$Session$isTyping = function (session) {
 	var _v0 = session.actionMode;
 	if (_v0.$ === 'EditMode') {
@@ -9266,6 +9132,49 @@ var $author$project$Model$Session$isTyping = function (session) {
 };
 var $elm$browser$Browser$Navigation$load = _Browser_load;
 var $elm$core$Basics$not = _Basics_not;
+var $elm$core$Tuple$mapSecond = F2(
+	function (func, _v0) {
+		var x = _v0.a;
+		var y = _v0.b;
+		return _Utils_Tuple2(
+			x,
+			func(y));
+	});
+var $folkertdev$elm_deque$Internal$popFront = function (deque) {
+	var front = deque.front;
+	var rear = deque.rear;
+	var _v0 = _Utils_Tuple2(front, rear);
+	if (!_v0.a.b) {
+		if (!_v0.b.b) {
+			return _Utils_Tuple2($elm$core$Maybe$Nothing, $folkertdev$elm_deque$Internal$empty);
+		} else {
+			if (!_v0.b.b.b) {
+				var _v1 = _v0.b;
+				var x = _v1.a;
+				return _Utils_Tuple2(
+					$elm$core$Maybe$Just(x),
+					$folkertdev$elm_deque$Internal$empty);
+			} else {
+				return _Utils_Tuple2($elm$core$Maybe$Nothing, $folkertdev$elm_deque$Internal$empty);
+			}
+		}
+	} else {
+		var _v2 = _v0.a;
+		var f = _v2.a;
+		var fs = _v2.b;
+		return _Utils_Tuple2(
+			$elm$core$Maybe$Just(f),
+			$folkertdev$elm_deque$Internal$rebalance(
+				{front: fs, rear: deque.rear, sizeF: deque.sizeF - 1, sizeR: deque.sizeR}));
+	}
+};
+var $folkertdev$elm_deque$Deque$popFront = A2(
+	$elm$core$Basics$composeL,
+	A2(
+		$elm$core$Basics$composeL,
+		$elm$core$Tuple$mapSecond($folkertdev$elm_deque$Deque$Deque),
+		$folkertdev$elm_deque$Internal$popFront),
+	$folkertdev$elm_deque$Deque$unwrap);
 var $elm$browser$Browser$Navigation$pushUrl = _Browser_pushUrl;
 var $author$project$Model$App$getHistory = function (model) {
 	var _v0 = model.history;
@@ -9352,6 +9261,12 @@ var $author$project$Model$Session$setNewAtomInputFocus = F2(
 		return _Utils_update(
 			session,
 			{actionMode: updatedMode});
+	});
+var $author$project$Model$Session$setSelectionMode = F2(
+	function (mode, session) {
+		return _Utils_update(
+			session,
+			{selecting: mode});
 	});
 var $author$project$Model$App$setSession = F3(
 	function (route, session, model) {
@@ -9536,6 +9451,48 @@ var $author$project$Model$Session$toggleRecording = F2(
 			session,
 			{recording: recording});
 	});
+var $elm$core$List$any = F2(
+	function (isOkay, list) {
+		any:
+		while (true) {
+			if (!list.b) {
+				return false;
+			} else {
+				var x = list.a;
+				var xs = list.b;
+				if (isOkay(x)) {
+					return true;
+				} else {
+					var $temp$isOkay = isOkay,
+						$temp$list = xs;
+					isOkay = $temp$isOkay;
+					list = $temp$list;
+					continue any;
+				}
+			}
+		}
+	});
+var $elm$core$List$member = F2(
+	function (x, xs) {
+		return A2(
+			$elm$core$List$any,
+			function (a) {
+				return _Utils_eq(a, x);
+			},
+			xs);
+	});
+var $author$project$Model$Session$toggleSelection = F2(
+	function (id, session) {
+		var newSelection = A2($elm$core$List$member, id, session.selection) ? A2(
+			$elm$core$List$filter,
+			function (x) {
+				return !_Utils_eq(x, id);
+			},
+			session.selection) : A2($elm$core$List$cons, id, session.selection);
+		return _Utils_update(
+			session,
+			{selection: newSelection});
+	});
 var $author$project$Model$App$setHistory = F2(
 	function (history, model) {
 		return _Utils_update(
@@ -9714,18 +9671,18 @@ var $author$project$Update$App$handleDragDropMsg = F2(
 					},
 					$author$project$Update$App$dragstart),
 				dragStart));
-		var _v27 = A2($norpan$elm_html5_drag_drop$Html5$DragDrop$update, dndMsg, model.dragDrop);
-		var newDragDrop = _v27.a;
-		var result = _v27.b;
-		var _v28 = function () {
+		var _v30 = A2($norpan$elm_html5_drag_drop$Html5$DragDrop$update, dndMsg, model.dragDrop);
+		var newDragDrop = _v30.a;
+		var result = _v30.b;
+		var _v31 = function () {
 			if (dragStart.$ === 'Just') {
 				var dragId = dragStart.a.dragId;
 				var session = A2($author$project$Model$App$getSession, dragId.route, model);
 				var newMode = function () {
-					var _v30 = session.actionMode;
-					switch (_v30.$) {
+					var _v33 = session.actionMode;
+					switch (_v33.$) {
 						case 'ProofMode':
-							var modeData = _v30.a;
+							var modeData = _v33.a;
 							return $author$project$Model$Session$ProofMode(
 								_Utils_update(
 									modeData,
@@ -9733,7 +9690,7 @@ var $author$project$Update$App$handleDragDropMsg = F2(
 										interaction: $author$project$Model$Session$Justifying(modeData.copyMode)
 									}));
 						case 'EditMode':
-							var modeData = _v30.a;
+							var modeData = _v33.a;
 							return $author$project$Model$Session$EditMode(
 								_Utils_update(
 									modeData,
@@ -9753,21 +9710,21 @@ var $author$project$Update$App$handleDragDropMsg = F2(
 					$elm$core$Platform$Cmd$none);
 			} else {
 				if (result.$ === 'Just') {
-					var _v32 = result.a;
-					var drag = _v32.a;
-					var drop = _v32.b;
+					var _v35 = result.a;
+					var drag = _v35.a;
+					var drop = _v35.b;
 					var session = A2($author$project$Model$App$getSession, drag.route, model);
 					var defaultMode = function () {
-						var _v38 = session.actionMode;
-						switch (_v38.$) {
+						var _v41 = session.actionMode;
+						switch (_v41.$) {
 							case 'ProofMode':
-								var modeData = _v38.a;
+								var modeData = _v41.a;
 								return $author$project$Model$Session$ProofMode(
 									_Utils_update(
 										modeData,
 										{interaction: $author$project$Model$Session$Interacting}));
 							case 'EditMode':
-								var modeData = _v38.a;
+								var modeData = _v41.a;
 								return $author$project$Model$Session$EditMode(
 									_Utils_update(
 										modeData,
@@ -9776,47 +9733,47 @@ var $author$project$Update$App$handleDragDropMsg = F2(
 								return session.actionMode;
 						}
 					}();
-					var _v33 = drag.source;
-					var source = _v33.a;
+					var _v36 = drag.source;
+					var source = _v36.a;
 					var action = A2(
 						$elm$core$Maybe$andThen,
-						function (_v36) {
-							var destination = _v36.destination;
-							var _v37 = _Utils_Tuple2(session.actionMode, destination);
-							_v37$3:
+						function (_v39) {
+							var destination = _v39.destination;
+							var _v40 = _Utils_Tuple2(session.actionMode, destination);
+							_v40$3:
 							while (true) {
-								switch (_v37.a.$) {
+								switch (_v40.a.$) {
 									case 'ProofMode':
-										switch (_v37.b.$) {
+										switch (_v40.b.$) {
 											case 'DropNode':
-												var copyMode = _v37.a.a.copyMode;
-												var target = _v37.b.a;
+												var copyMode = _v40.a.a.copyMode;
+												var target = _v40.b.a;
 												return _Utils_eq(copyMode, $author$project$Model$Session$Deiteration) ? $elm$core$Maybe$Just(
 													A2($author$project$Model$Session$Deiterate, source, target)) : $elm$core$Maybe$Nothing;
 											case 'DropLocation':
-												var copyMode = _v37.a.a.copyMode;
-												var location = _v37.b.a;
+												var copyMode = _v40.a.a.copyMode;
+												var location = _v40.b.a;
 												return _Utils_eq(copyMode, $author$project$Model$Session$Iteration) ? $elm$core$Maybe$Just(
 													A2($author$project$Model$Session$Iterate, source, location)) : $elm$core$Maybe$Nothing;
 											default:
-												break _v37$3;
+												break _v40$3;
 										}
 									case 'EditMode':
-										if (_v37.b.$ === 'DropLocation') {
-											var location = _v37.b.a;
+										if (_v40.b.$ === 'DropLocation') {
+											var location = _v40.b.a;
 											return $elm$core$Maybe$Just(
 												A2($author$project$Model$Session$Reorder, source, location.pos));
 										} else {
-											break _v37$3;
+											break _v40$3;
 										}
 									default:
-										break _v37$3;
+										break _v40$3;
 								}
 							}
 							return $elm$core$Maybe$Nothing;
 						},
 						drop);
-					var _v34 = function () {
+					var _v37 = function () {
 						if (action.$ === 'Just') {
 							var action_ = action.a;
 							return A2(
@@ -9827,8 +9784,8 @@ var $author$project$Update$App$handleDragDropMsg = F2(
 							return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 						}
 					}();
-					var modelApplied = _v34.a;
-					var applyCmd = _v34.b;
+					var modelApplied = _v37.a;
+					var applyCmd = _v37.b;
 					var sessionApplied = A2($author$project$Model$App$getSession, drag.route, modelApplied);
 					return _Utils_Tuple2(
 						A3(
@@ -9844,8 +9801,8 @@ var $author$project$Update$App$handleDragDropMsg = F2(
 				}
 			}
 		}();
-		var newModel = _v28.a;
-		var nextCmd = _v28.b;
+		var newModel = _v31.a;
+		var nextCmd = _v31.b;
 		return _Utils_Tuple2(
 			_Utils_update(
 				newModel,
@@ -9887,10 +9844,10 @@ var $author$project$Update$App$update = F2(
 						$author$project$Update$App$focusApp);
 				case 'Exec':
 					var route = msg.a;
-					var actionId = msg.b;
+					var actionIdx = msg.b;
 					var newSession = A2(
 						$author$project$Model$Session$execute,
-						actionId,
+						actionIdx,
 						A2($author$project$Model$App$getSession, route, model));
 					return _Utils_Tuple2(
 						A3($author$project$Model$App$setSessionWithHistory, route, newSession, model),
@@ -9904,12 +9861,18 @@ var $author$project$Update$App$update = F2(
 							model),
 						$author$project$Update$App$focusApp);
 				case 'Step':
-					return _Debug_todo(
-						'Update.App',
-						{
-							start: {line: 201, column: 13},
-							end: {line: 201, column: 23}
-						})('Action stepping not implemented yet');
+					var _v2 = $folkertdev$elm_deque$Deque$popFront(
+						A2($author$project$Model$Session$getActionsDeque, model.playground.execMode, model.playground));
+					if (_v2.a.$ === 'Just') {
+						var $temp$msg = A2($author$project$Update$App$Exec, $author$project$Model$Session$Playground, 0),
+							$temp$model = model;
+						msg = $temp$msg;
+						model = $temp$model;
+						continue update;
+					} else {
+						var _v3 = _v2.a;
+						return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+					}
 				case 'ChangeActionMode':
 					var mode = msg.a;
 					return _Utils_Tuple2(
@@ -9967,8 +9930,8 @@ var $author$project$Update$App$update = F2(
 					return _Debug_todo(
 						'Update.App',
 						{
-							start: {line: 225, column: 13},
-							end: {line: 225, column: 23}
+							start: {line: 236, column: 13},
+							end: {line: 236, column: 23}
 						})('Auto not implemented yet');
 				case 'UpdateNewAtomName':
 					var name = msg.a;
@@ -9995,7 +9958,7 @@ var $author$project$Update$App$update = F2(
 					var newNet = A3(
 						$author$project$Model$Scroll$updateName,
 						id,
-						function (_v2) {
+						function (_v4) {
 							return newName;
 						},
 						session.net);
@@ -10035,14 +9998,14 @@ var $author$project$Update$App$update = F2(
 				case 'CancelRenaming':
 					var session = model.playground;
 					var newSession = function () {
-						var _v3 = session.renaming;
-						if (_v3.$ === 'Just') {
-							var id = _v3.a.id;
-							var originalName = _v3.a.originalName;
+						var _v5 = session.renaming;
+						if (_v5.$ === 'Just') {
+							var id = _v5.a.id;
+							var originalName = _v5.a.originalName;
 							var newNet = A3(
 								$author$project$Model$Scroll$updateName,
 								id,
-								function (_v4) {
+								function (_v6) {
 									return originalName;
 								},
 								session.net);
@@ -10063,8 +10026,8 @@ var $author$project$Update$App$update = F2(
 					return A2($author$project$Update$App$handleDragDropMsg, dndMsg, model);
 				case 'SetDragModifiers':
 					var alt = msg.a.alt;
-					var _v5 = model.playground.actionMode;
-					if (_v5.$ === 'EditMode') {
+					var _v7 = model.playground.actionMode;
+					if (_v7.$ === 'EditMode') {
 						var $temp$msg = $author$project$Update$App$ToggleInsertionMode(alt),
 							$temp$model = model;
 						msg = $temp$msg;
@@ -10086,6 +10049,48 @@ var $author$project$Update$App$update = F2(
 								manualExamples: A2($author$project$Model$Session$resetSandbox, id, model.manualExamples)
 							}),
 						$elm$core$Platform$Cmd$none);
+				case 'SetSelectionMode':
+					var mode = msg.a;
+					return _Utils_Tuple2(
+						A3(
+							$author$project$Model$App$setSession,
+							$author$project$Model$Session$Playground,
+							A2($author$project$Model$Session$setSelectionMode, mode, model.playground),
+							model),
+						$author$project$Update$App$focusApp);
+				case 'ClickedSelectionToggle':
+					var mode = msg.a;
+					var session = model.playground;
+					var newSession = mode ? A2($author$project$Model$Session$setSelectionMode, true, session) : A2($author$project$Model$Session$setSelectionMode, false, session);
+					return _Utils_Tuple2(
+						A3($author$project$Model$App$setSession, $author$project$Model$Session$Playground, newSession, model),
+						$elm$core$Platform$Cmd$none);
+				case 'ClearSelection':
+					return _Utils_Tuple2(
+						A3(
+							$author$project$Model$App$setSession,
+							$author$project$Model$Session$Playground,
+							$author$project$Model$Session$clearSelection(model.playground),
+							model),
+						$elm$core$Platform$Cmd$none);
+				case 'ToggleSelection':
+					var id = msg.a;
+					return _Utils_Tuple2(
+						A3(
+							$author$project$Model$App$setSession,
+							$author$project$Model$Session$Playground,
+							A2($author$project$Model$Session$toggleSelection, id, model.playground),
+							model),
+						$elm$core$Platform$Cmd$none);
+				case 'SetStepButtonFocus':
+					var focused = msg.a;
+					var session = model.playground;
+					var newSession = _Utils_update(
+						session,
+						{stepButtonFocused: focused});
+					return _Utils_Tuple2(
+						A3($author$project$Model$App$setSession, $author$project$Model$Session$Playground, newSession, model),
+						$elm$core$Platform$Cmd$none);
 				case 'ToggleCopyMode':
 					var doit = msg.a;
 					return _Utils_Tuple2(
@@ -10106,66 +10111,81 @@ var $author$project$Update$App$update = F2(
 						$elm$core$Platform$Cmd$none);
 				case 'HandleKeyUpEvent':
 					var key = msg.a.key;
-					if ((key.$ === 'Just') && (key.a === 'Alt')) {
-						var _v7 = model.playground.actionMode;
-						switch (_v7.$) {
-							case 'EditMode':
-								var $temp$msg = $author$project$Update$App$ToggleInsertionMode(false),
-									$temp$model = model;
-								msg = $temp$msg;
-								model = $temp$model;
-								continue update;
-							case 'ProofMode':
-								var $temp$msg = $author$project$Update$App$ToggleCopyMode(false),
-									$temp$model = model;
-								msg = $temp$msg;
-								model = $temp$model;
-								continue update;
-							default:
-								return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+					_v8$2:
+					while (true) {
+						if (key.$ === 'Just') {
+							switch (key.a) {
+								case 'Alt':
+									var _v9 = model.playground.actionMode;
+									switch (_v9.$) {
+										case 'EditMode':
+											var $temp$msg = $author$project$Update$App$ToggleInsertionMode(false),
+												$temp$model = model;
+											msg = $temp$msg;
+											model = $temp$model;
+											continue update;
+										case 'ProofMode':
+											var $temp$msg = $author$project$Update$App$ToggleCopyMode(false),
+												$temp$model = model;
+											msg = $temp$msg;
+											model = $temp$model;
+											continue update;
+										default:
+											return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+									}
+								case 'Shift':
+									var $temp$msg = $author$project$Update$App$SetSelectionMode(false),
+										$temp$model = model;
+									msg = $temp$msg;
+									model = $temp$model;
+									continue update;
+								default:
+									break _v8$2;
+							}
+						} else {
+							break _v8$2;
 						}
-					} else {
-						return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 					}
+					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 				case 'HandleKeyboardEvent':
 					var event = msg.a.event;
 					var code = msg.a.code;
-					var _v8 = event;
-					var ctrlKey = _v8.ctrlKey;
-					var altKey = _v8.altKey;
-					var shiftKey = _v8.shiftKey;
-					var key = _v8.key;
+					var _v10 = event;
+					var ctrlKey = _v10.ctrlKey;
+					var altKey = _v10.altKey;
+					var shiftKey = _v10.shiftKey;
+					var key = _v10.key;
 					var noModifiers = (!ctrlKey) && ((!altKey) && (!shiftKey));
-					var _v9 = _Utils_Tuple3(
+					var _v11 = _Utils_Tuple3(
 						_Utils_Tuple3(ctrlKey, altKey, shiftKey),
 						code,
 						key);
-					_v9$1:
+					_v11$2:
 					while (true) {
-						_v9$2:
+						_v11$3:
 						while (true) {
-							_v9$4:
+							_v11$5:
 							while (true) {
-								_v9$5:
+								_v11$6:
 								while (true) {
-									_v9$6:
+									_v11$7:
 									while (true) {
-										_v9$7:
+										_v11$8:
 										while (true) {
-											_v9$8:
+											_v11$9:
 											while (true) {
-												_v9$9:
+												_v11$10:
 												while (true) {
-													_v9$10:
+													_v11$11:
 													while (true) {
-														_v9$11:
+														_v11$12:
 														while (true) {
-															if (_v9.c.$ === 'Just') {
-																switch (_v9.c.a) {
+															if (_v11.c.$ === 'Just') {
+																switch (_v11.c.a) {
 																	case 'Alt':
-																		var _v10 = _v9.a;
-																		var _v11 = model.playground.actionMode;
-																		switch (_v11.$) {
+																		var _v12 = _v11.a;
+																		var _v13 = model.playground.actionMode;
+																		switch (_v13.$) {
 																			case 'EditMode':
 																				var $temp$msg = $author$project$Update$App$ToggleInsertionMode(true),
 																					$temp$model = model;
@@ -10181,90 +10201,97 @@ var $author$project$Update$App$update = F2(
 																			default:
 																				return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 																		}
+																	case 'Shift':
+																		var _v14 = _v11.a;
+																		var $temp$msg = $author$project$Update$App$SetSelectionMode(true),
+																			$temp$model = model;
+																		msg = $temp$msg;
+																		model = $temp$model;
+																		continue update;
 																	case 'z':
-																		if (_v9.b.$ === 'Just') {
-																			switch (_v9.b.a) {
+																		if (_v11.b.$ === 'Just') {
+																			switch (_v11.b.a) {
 																				case 'KeyR':
-																					if ((_v9.a.a && (!_v9.a.b)) && (!_v9.a.c)) {
-																						break _v9$1;
+																					if ((_v11.a.a && (!_v11.a.b)) && (!_v11.a.c)) {
+																						break _v11$2;
 																					} else {
-																						break _v9$4;
+																						break _v11$5;
 																					}
 																				case 'KeyQ':
-																					if ((_v9.a.a && (!_v9.a.b)) && (!_v9.a.c)) {
-																						break _v9$1;
+																					if ((_v11.a.a && (!_v11.a.b)) && (!_v11.a.c)) {
+																						break _v11$2;
 																					} else {
-																						break _v9$5;
+																						break _v11$6;
 																					}
 																				case 'KeyW':
-																					if ((_v9.a.a && (!_v9.a.b)) && (!_v9.a.c)) {
-																						break _v9$1;
+																					if ((_v11.a.a && (!_v11.a.b)) && (!_v11.a.c)) {
+																						break _v11$2;
 																					} else {
-																						break _v9$6;
+																						break _v11$7;
 																					}
 																				case 'KeyE':
-																					if ((_v9.a.a && (!_v9.a.b)) && (!_v9.a.c)) {
-																						break _v9$1;
+																					if ((_v11.a.a && (!_v11.a.b)) && (!_v11.a.c)) {
+																						break _v11$2;
 																					} else {
-																						break _v9$7;
+																						break _v11$8;
 																					}
 																				default:
-																					if ((_v9.a.a && (!_v9.a.b)) && (!_v9.a.c)) {
-																						break _v9$1;
+																					if ((_v11.a.a && (!_v11.a.b)) && (!_v11.a.c)) {
+																						break _v11$2;
 																					} else {
-																						break _v9$11;
+																						break _v11$12;
 																					}
 																			}
 																		} else {
-																			if ((_v9.a.a && (!_v9.a.b)) && (!_v9.a.c)) {
-																				break _v9$1;
+																			if ((_v11.a.a && (!_v11.a.b)) && (!_v11.a.c)) {
+																				break _v11$2;
 																			} else {
-																				break _v9$11;
+																				break _v11$12;
 																			}
 																		}
 																	case 'y':
-																		if (_v9.b.$ === 'Just') {
-																			switch (_v9.b.a) {
+																		if (_v11.b.$ === 'Just') {
+																			switch (_v11.b.a) {
 																				case 'KeyR':
-																					if ((_v9.a.a && (!_v9.a.b)) && (!_v9.a.c)) {
-																						break _v9$2;
+																					if ((_v11.a.a && (!_v11.a.b)) && (!_v11.a.c)) {
+																						break _v11$3;
 																					} else {
-																						break _v9$4;
+																						break _v11$5;
 																					}
 																				case 'KeyQ':
-																					if ((_v9.a.a && (!_v9.a.b)) && (!_v9.a.c)) {
-																						break _v9$2;
+																					if ((_v11.a.a && (!_v11.a.b)) && (!_v11.a.c)) {
+																						break _v11$3;
 																					} else {
-																						break _v9$5;
+																						break _v11$6;
 																					}
 																				case 'KeyW':
-																					if ((_v9.a.a && (!_v9.a.b)) && (!_v9.a.c)) {
-																						break _v9$2;
+																					if ((_v11.a.a && (!_v11.a.b)) && (!_v11.a.c)) {
+																						break _v11$3;
 																					} else {
-																						break _v9$6;
+																						break _v11$7;
 																					}
 																				case 'KeyE':
-																					if ((_v9.a.a && (!_v9.a.b)) && (!_v9.a.c)) {
-																						break _v9$2;
+																					if ((_v11.a.a && (!_v11.a.b)) && (!_v11.a.c)) {
+																						break _v11$3;
 																					} else {
-																						break _v9$7;
+																						break _v11$8;
 																					}
 																				default:
-																					if ((_v9.a.a && (!_v9.a.b)) && (!_v9.a.c)) {
-																						break _v9$2;
+																					if ((_v11.a.a && (!_v11.a.b)) && (!_v11.a.c)) {
+																						break _v11$3;
 																					} else {
-																						break _v9$11;
+																						break _v11$12;
 																					}
 																			}
 																		} else {
-																			if ((_v9.a.a && (!_v9.a.b)) && (!_v9.a.c)) {
-																				break _v9$2;
+																			if ((_v11.a.a && (!_v11.a.b)) && (!_v11.a.c)) {
+																				break _v11$3;
 																			} else {
-																				break _v9$11;
+																				break _v11$12;
 																			}
 																		}
 																	case 'Tab':
-																		var _v14 = _v9.a;
+																		var _v17 = _v11.a;
 																		if ($author$project$Model$Session$isTyping(model.playground) || (!noModifiers)) {
 																			return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 																		} else {
@@ -10276,101 +10303,101 @@ var $author$project$Update$App$update = F2(
 																			continue update;
 																		}
 																	case 'Enter':
-																		if (_v9.b.$ === 'Just') {
-																			switch (_v9.b.a) {
+																		if (_v11.b.$ === 'Just') {
+																			switch (_v11.b.a) {
 																				case 'KeyR':
-																					break _v9$4;
+																					break _v11$5;
 																				case 'KeyQ':
-																					break _v9$5;
+																					break _v11$6;
 																				case 'KeyW':
-																					break _v9$6;
+																					break _v11$7;
 																				case 'KeyE':
-																					break _v9$7;
+																					break _v11$8;
 																				default:
-																					break _v9$8;
+																					break _v11$9;
 																			}
 																		} else {
-																			break _v9$8;
+																			break _v11$9;
 																		}
 																	case 'Escape':
-																		if (_v9.b.$ === 'Just') {
-																			switch (_v9.b.a) {
+																		if (_v11.b.$ === 'Just') {
+																			switch (_v11.b.a) {
 																				case 'KeyR':
-																					break _v9$4;
+																					break _v11$5;
 																				case 'KeyQ':
-																					break _v9$5;
+																					break _v11$6;
 																				case 'KeyW':
-																					break _v9$6;
+																					break _v11$7;
 																				case 'KeyE':
-																					break _v9$7;
+																					break _v11$8;
 																				default:
-																					break _v9$9;
+																					break _v11$10;
 																			}
 																		} else {
-																			break _v9$9;
+																			break _v11$10;
 																		}
 																	case ' ':
-																		if (_v9.b.$ === 'Just') {
-																			switch (_v9.b.a) {
+																		if (_v11.b.$ === 'Just') {
+																			switch (_v11.b.a) {
 																				case 'KeyR':
-																					break _v9$4;
+																					break _v11$5;
 																				case 'KeyQ':
-																					break _v9$5;
+																					break _v11$6;
 																				case 'KeyW':
-																					break _v9$6;
+																					break _v11$7;
 																				case 'KeyE':
-																					break _v9$7;
+																					break _v11$8;
 																				default:
-																					break _v9$10;
+																					break _v11$11;
 																			}
 																		} else {
-																			break _v9$10;
+																			break _v11$11;
 																		}
 																	default:
-																		if (_v9.b.$ === 'Just') {
-																			switch (_v9.b.a) {
+																		if (_v11.b.$ === 'Just') {
+																			switch (_v11.b.a) {
 																				case 'KeyR':
-																					break _v9$4;
+																					break _v11$5;
 																				case 'KeyQ':
-																					break _v9$5;
+																					break _v11$6;
 																				case 'KeyW':
-																					break _v9$6;
+																					break _v11$7;
 																				case 'KeyE':
-																					break _v9$7;
+																					break _v11$8;
 																				default:
-																					break _v9$11;
+																					break _v11$12;
 																			}
 																		} else {
-																			break _v9$11;
+																			break _v11$12;
 																		}
 																}
 															} else {
-																if (_v9.b.$ === 'Just') {
-																	switch (_v9.b.a) {
+																if (_v11.b.$ === 'Just') {
+																	switch (_v11.b.a) {
 																		case 'KeyR':
-																			break _v9$4;
+																			break _v11$5;
 																		case 'KeyQ':
-																			break _v9$5;
+																			break _v11$6;
 																		case 'KeyW':
-																			break _v9$6;
+																			break _v11$7;
 																		case 'KeyE':
-																			break _v9$7;
+																			break _v11$8;
 																		default:
-																			break _v9$11;
+																			break _v11$12;
 																	}
 																} else {
-																	break _v9$11;
+																	break _v11$12;
 																}
 															}
 														}
 														return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 													}
-													var _v21 = _v9.a;
+													var _v24 = _v11.a;
 													if ($author$project$Model$Session$isTyping(model.playground)) {
 														return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 													} else {
-														var _v22 = model.playground.actionMode;
-														switch (_v22.$) {
+														var _v25 = model.playground.actionMode;
+														switch (_v25.$) {
 															case 'EditMode':
 																var $temp$msg = A2(
 																	$author$project$Update$App$Transform,
@@ -10391,21 +10418,29 @@ var $author$project$Update$App$update = F2(
 														}
 													}
 												}
-												var _v20 = _v9.a;
-												var $temp$msg = $author$project$Update$App$CancelRenaming,
-													$temp$model = model;
-												msg = $temp$msg;
-												model = $temp$model;
-												continue update;
+												var _v23 = _v11.a;
+												if (shiftKey) {
+													var $temp$msg = $author$project$Update$App$ClearSelection,
+														$temp$model = model;
+													msg = $temp$msg;
+													model = $temp$model;
+													continue update;
+												} else {
+													var $temp$msg = $author$project$Update$App$CancelRenaming,
+														$temp$model = model;
+													msg = $temp$msg;
+													model = $temp$model;
+													continue update;
+												}
 											}
-											var _v19 = _v9.a;
+											var _v22 = _v11.a;
 											var $temp$msg = $author$project$Update$App$CommitRenaming,
 												$temp$model = model;
 											msg = $temp$msg;
 											model = $temp$model;
 											continue update;
 										}
-										var _v18 = _v9.a;
+										var _v21 = _v11.a;
 										if ($author$project$Model$Session$isTyping(model.playground) || (!noModifiers)) {
 											return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 										} else {
@@ -10416,7 +10451,7 @@ var $author$project$Update$App$update = F2(
 											continue update;
 										}
 									}
-									var _v17 = _v9.a;
+									var _v20 = _v11.a;
 									if ($author$project$Model$Session$isTyping(model.playground) || (!noModifiers)) {
 										return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 									} else {
@@ -10427,7 +10462,7 @@ var $author$project$Update$App$update = F2(
 										continue update;
 									}
 								}
-								var _v16 = _v9.a;
+								var _v19 = _v11.a;
 								if ($author$project$Model$Session$isTyping(model.playground) || (!noModifiers)) {
 									return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 								} else {
@@ -10438,7 +10473,7 @@ var $author$project$Update$App$update = F2(
 									continue update;
 								}
 							}
-							var _v15 = _v9.a;
+							var _v18 = _v11.a;
 							if ($author$project$Model$Session$isTyping(model.playground) || (!noModifiers)) {
 								return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 							} else {
@@ -10449,14 +10484,14 @@ var $author$project$Update$App$update = F2(
 								continue update;
 							}
 						}
-						var _v13 = _v9.a;
+						var _v16 = _v11.a;
 						var $temp$msg = $author$project$Update$App$Redo,
 							$temp$model = model;
 						msg = $temp$msg;
 						model = $temp$model;
 						continue update;
 					}
-					var _v12 = _v9.a;
+					var _v15 = _v11.a;
 					var $temp$msg = $author$project$Update$App$Undo,
 						$temp$model = model;
 					msg = $temp$msg;
@@ -10476,15 +10511,15 @@ var $author$project$Update$App$update = F2(
 				case 'ConsoleLog':
 					var tag = msg.a;
 					var message = msg.b;
-					var _v23 = A2($elm$core$Debug$log, tag, message);
+					var _v26 = A2($elm$core$Debug$log, tag, message);
 					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 				case 'DoNothing':
 					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 				case 'UrlChanged':
 					var url = msg.a;
 					var newModel = function () {
-						var _v24 = $author$project$View$Route$fromUrl(url);
-						if (_v24.$ === 'Manual') {
+						var _v27 = $author$project$View$Route$fromUrl(url);
+						if (_v27.$ === 'Manual') {
 							return _Utils_update(
 								model,
 								{
@@ -10504,8 +10539,8 @@ var $author$project$Update$App$update = F2(
 					if (urlRequest.$ === 'Internal') {
 						var url = urlRequest.a;
 						var newPath = function () {
-							var _v26 = url.host;
-							switch (_v26) {
+							var _v29 = url.host;
+							switch (_v29) {
 								case 'www.lix.polytechnique.fr':
 									return '/Labo/Pablo.DONATO/flowerprover' + url.path;
 								case 'pablogician.refl.fr':
@@ -10673,10 +10708,6 @@ var $elm$html$Html$Attributes$stringProperty = F2(
 	});
 var $elm$html$Html$Attributes$class = $elm$html$Html$Attributes$stringProperty('className');
 var $elm$html$Html$div = _VirtualDom_node('div');
-var $elm$core$Set$Set_elm_builtin = function (a) {
-	return {$: 'Set_elm_builtin', a: a};
-};
-var $elm$core$Set$empty = $elm$core$Set$Set_elm_builtin($elm$core$Dict$empty);
 var $mdgriffith$elm_ui$Internal$Model$lengthClassName = function (x) {
 	switch (x.$) {
 		case 'Px':
@@ -10826,12 +10857,6 @@ var $mdgriffith$elm_ui$Internal$Model$getStyleName = function (style) {
 				$mdgriffith$elm_ui$Internal$Model$transformClass(x));
 	}
 };
-var $elm$core$Set$insert = F2(
-	function (key, _v0) {
-		var dict = _v0.a;
-		return $elm$core$Set$Set_elm_builtin(
-			A3($elm$core$Dict$insert, key, _Utils_Tuple0, dict));
-	});
 var $elm$core$Set$member = F2(
 	function (key, _v0) {
 		var dict = _v0.a;
@@ -10908,13 +10933,13 @@ var $mdgriffith$elm_ui$Internal$Model$formatBoxShadow = function (shadow) {
 					$mdgriffith$elm_ui$Internal$Model$formatColor(shadow.color))
 				])));
 };
-var $elm$core$Tuple$mapSecond = F2(
+var $elm$core$Tuple$mapFirst = F2(
 	function (func, _v0) {
 		var x = _v0.a;
 		var y = _v0.b;
 		return _Utils_Tuple2(
-			x,
-			func(y));
+			func(x),
+			y);
 	});
 var $mdgriffith$elm_ui$Internal$Model$renderFocusStyle = function (focus) {
 	return _List_fromArray(
@@ -13104,27 +13129,6 @@ var $elm$json$Json$Encode$object = function (pairs) {
 			_Json_emptyObject(_Utils_Tuple0),
 			pairs));
 };
-var $elm$core$List$any = F2(
-	function (isOkay, list) {
-		any:
-		while (true) {
-			if (!list.b) {
-				return false;
-			} else {
-				var x = list.a;
-				var xs = list.b;
-				if (isOkay(x)) {
-					return true;
-				} else {
-					var $temp$isOkay = isOkay,
-						$temp$list = xs;
-					isOkay = $temp$isOkay;
-					list = $temp$list;
-					continue any;
-				}
-			}
-		}
-	});
 var $mdgriffith$elm_ui$Internal$Model$fontName = function (font) {
 	switch (font.$) {
 		case 'Serif':
@@ -14314,13 +14318,6 @@ var $mdgriffith$elm_ui$Internal$Model$finalizeNode = F6(
 				return html;
 		}
 	});
-var $elm$core$List$isEmpty = function (xs) {
-	if (!xs.b) {
-		return true;
-	} else {
-		return false;
-	}
-};
 var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
 var $mdgriffith$elm_ui$Internal$Model$textElementClasses = $mdgriffith$elm_ui$Internal$Style$classes.any + (' ' + ($mdgriffith$elm_ui$Internal$Style$classes.text + (' ' + ($mdgriffith$elm_ui$Internal$Style$classes.widthContent + (' ' + $mdgriffith$elm_ui$Internal$Style$classes.heightContent)))));
 var $mdgriffith$elm_ui$Internal$Model$textElement = function (str) {
@@ -17220,7 +17217,8 @@ var $mdgriffith$elm_ui$Element$rgb = F3(
 	function (r, g, b) {
 		return A4($mdgriffith$elm_ui$Internal$Model$Rgba, r, g, b, 1);
 	});
-var $author$project$View$Style$collapseColor = A3($mdgriffith$elm_ui$Element$rgb, 1, 0.6, 0);
+var $author$project$View$Style$createColor = A3($mdgriffith$elm_ui$Element$rgb, 0.227, 0.525, 1);
+var $author$project$View$Style$destroyColor = A3($mdgriffith$elm_ui$Element$rgb, 1, 0, 0);
 var $author$project$View$Style$draggable = function (color) {
 	var width = 3;
 	var borderColor = $avh4$elm_color$Color$toCssString(color);
@@ -17405,7 +17403,7 @@ var $author$project$View$Manual$flowerIcon = A2(
 			$elm$core$Basics$round($author$project$View$Manual$headingIconSize) + 10)
 		]),
 	$mdgriffith$elm_ui$Element$text('❀'));
-var $author$project$View$Style$green = A3($mdgriffith$elm_ui$Element$rgb, 0.3, 0.9, 0.3);
+var $author$project$View$Style$green = A3($mdgriffith$elm_ui$Element$rgb, 0.2, 0.8, 0.2);
 var $mdgriffith$elm_ui$Element$Font$italic = $mdgriffith$elm_ui$Internal$Model$htmlClass($mdgriffith$elm_ui$Internal$Style$classes.italic);
 var $author$project$View$Style$italic = function (txt) {
 	return A2(
@@ -17824,24 +17822,15 @@ var $elm$core$List$intersperse = F2(
 			return A2($elm$core$List$cons, hd, spersed);
 		}
 	});
-var $author$project$Model$Scroll$stringOfOrigin = F2(
-	function (net, origin) {
-		if (origin.$ === 'Direct') {
-			var srcId = origin.a;
-			return A2($author$project$Model$Scroll$getName, srcId, net);
-		} else {
-			return '';
-		}
-	});
 var $author$project$Model$Scroll$stringOfJustification = F2(
 	function (net, _v0) {
 		var self = _v0.self;
-		var from = _v0.from;
+		var copy = _v0.copy;
 		var selfText = self ? '•' : '';
 		var fromText = function () {
-			if ((from.$ === 'Just') && (from.a.$ === 'Direct')) {
-				var copy = from.a;
-				return A2($author$project$Model$Scroll$stringOfOrigin, net, copy) + '/';
+			if (copy.$ === 'Just') {
+				var originId = copy.a;
+				return A2($author$project$Model$Scroll$getName, originId, net) + '/';
 			} else {
 				return '';
 			}
@@ -17936,20 +17925,11 @@ var $author$project$Model$Scroll$stringOfNet = function (net) {
 		$author$project$Model$Scroll$stringOfTreeList(net),
 		net);
 };
-var $author$project$Model$Session$Close = function (a) {
-	return {$: 'Close', a: a};
-};
-var $author$project$Model$Session$Delete = function (a) {
-	return {$: 'Delete', a: a};
-};
 var $author$project$Model$App$DropLocation = function (a) {
 	return {$: 'DropLocation', a: a};
 };
 var $author$project$Model$App$DropNode = function (a) {
 	return {$: 'DropNode', a: a};
-};
-var $author$project$Model$Session$Open = function (a) {
-	return {$: 'Open', a: a};
 };
 var $author$project$Update$App$Rename = F2(
 	function (a, b) {
@@ -17957,6 +17937,9 @@ var $author$project$Update$App$Rename = F2(
 	});
 var $author$project$Update$App$StartRenaming = function (a) {
 	return {$: 'StartRenaming', a: a};
+};
+var $author$project$Update$App$ToggleSelection = function (a) {
+	return {$: 'ToggleSelection', a: a};
 };
 var $mdgriffith$elm_ui$Internal$Model$Left = {$: 'Left'};
 var $mdgriffith$elm_ui$Element$alignLeft = $mdgriffith$elm_ui$Internal$Model$AlignX($mdgriffith$elm_ui$Internal$Model$Left);
@@ -17968,6 +17951,7 @@ var $author$project$Model$Session$IncompatibleBoundaries = F2(
 		return {$: 'IncompatibleBoundaries', a: a, b: b};
 	});
 var $author$project$Model$Session$InvalidPolarity = {$: 'InvalidPolarity'};
+var $author$project$Model$Session$NonContiguousSelection = {$: 'NonContiguousSelection'};
 var $author$project$Model$Session$NonEmptyOutloop = function (a) {
 	return {$: 'NonEmptyOutloop', a: a};
 };
@@ -18244,10 +18228,44 @@ var $author$project$Model$Session$isInserted = F2(
 	function (id, _v0) {
 		var actionMode = _v0.actionMode;
 		if (actionMode.$ === 'EditMode') {
-			var insertions = actionMode.a.insertions;
-			return A2($elm$core$Dict$member, id, insertions);
+			var insertedNodes = actionMode.a.insertedNodes;
+			return A2($elm$core$Set$member, id, insertedNodes);
 		} else {
 			return false;
+		}
+	});
+var $elm_community$list_extra$List$Extra$isSubsequenceOf = F2(
+	function (subseq, list) {
+		isSubsequenceOf:
+		while (true) {
+			var _v0 = _Utils_Tuple2(subseq, list);
+			if (!_v0.a.b) {
+				return true;
+			} else {
+				if (!_v0.b.b) {
+					return false;
+				} else {
+					var _v1 = _v0.a;
+					var x = _v1.a;
+					var xs = _v1.b;
+					var _v2 = _v0.b;
+					var y = _v2.a;
+					var ys = _v2.b;
+					if (_Utils_eq(x, y)) {
+						var $temp$subseq = xs,
+							$temp$list = ys;
+						subseq = $temp$subseq;
+						list = $temp$list;
+						continue isSubsequenceOf;
+					} else {
+						var $temp$subseq = subseq,
+							$temp$list = ys;
+						subseq = $temp$subseq;
+						list = $temp$list;
+						continue isSubsequenceOf;
+					}
+				}
+			}
 		}
 	});
 var $author$project$Model$Scroll$inside = F3(
@@ -18262,15 +18280,6 @@ var $author$project$Model$Scroll$inside = F3(
 				parentId,
 				net);
 		}
-	});
-var $elm$core$List$member = F2(
-	function (x, xs) {
-		return A2(
-			$elm$core$List$any,
-			function (a) {
-				return _Utils_eq(a, x);
-			},
-			xs);
 	});
 var $author$project$Model$Scroll$spans = F3(
 	function (src, dst, net) {
@@ -18325,7 +18334,21 @@ var $author$project$Model$Session$applicable = F2(
 		switch (action.$) {
 			case 'Open':
 				var loc = action.a;
-				return A2($author$project$Model$Session$isErasedContext, loc.ctx, session) ? $elm$core$Result$Err($author$project$Model$Session$Erased) : $elm$core$Result$Ok(_Utils_Tuple0);
+				if (A2($author$project$Model$Session$isErasedContext, loc.ctx, session)) {
+					return $elm$core$Result$Err($author$project$Model$Session$Erased);
+				} else {
+					var childIds = A2($author$project$Model$Scroll$getChildIdsContext, loc.ctx, session.net);
+					var isSelectionContiguous = function (_v1) {
+						var sortedSelection = A2(
+							$elm$core$List$sortBy,
+							function (id) {
+								return A2($author$project$Model$Scroll$getPosition, id, session.net);
+							},
+							session.selection);
+						return A2($elm_community$list_extra$List$Extra$isSubsequenceOf, sortedSelection, childIds);
+					};
+					return (!($elm$core$List$isEmpty(session.selection) || isSelectionContiguous(_Utils_Tuple0))) ? $elm$core$Result$Err($author$project$Model$Session$NonContiguousSelection) : $elm$core$Result$Ok(_Utils_Tuple0);
+				}
 			case 'Close':
 				var id = action.a;
 				return A2($author$project$Model$Session$isErased, id, session) ? $elm$core$Result$Err($author$project$Model$Session$Erased) : ((!_Utils_eq(
@@ -18480,15 +18503,15 @@ var $feathericons$elm_feather$FeatherIcons$minimize2 = A2(
 				]),
 			_List_Nil)
 		]));
-var $author$project$View$Widgets$collapseIndicator = A2(
-	$author$project$View$Widgets$indicator,
-	$author$project$View$Style$collapseColor,
-	$author$project$View$Widgets$indicatorIcon($feathericons$elm_feather$FeatherIcons$minimize2));
-var $author$project$View$Style$createColor = A3($mdgriffith$elm_ui$Element$rgb, 0.227, 0.525, 1);
+var $author$project$View$Widgets$collapseIndicator = function (color) {
+	return A2(
+		$author$project$View$Widgets$indicator,
+		color,
+		$author$project$View$Widgets$indicatorIcon($feathericons$elm_feather$FeatherIcons$minimize2));
+};
 var $author$project$Update$App$HighlightOrigin = function (a) {
 	return {$: 'HighlightOrigin', a: a};
 };
-var $author$project$View$Style$destroyColor = A3($mdgriffith$elm_ui$Element$rgb, 1, 0, 0);
 var $mdgriffith$elm_ui$Internal$Model$Bottom = {$: 'Bottom'};
 var $mdgriffith$elm_ui$Element$alignBottom = $mdgriffith$elm_ui$Internal$Model$AlignY($mdgriffith$elm_ui$Internal$Model$Bottom);
 var $mdgriffith$elm_ui$Element$Font$family = function (families) {
@@ -18578,7 +18601,9 @@ var $author$project$View$Widgets$interactiveIndicator = F5(
 			return baseIndicator;
 		}
 	});
-var $author$project$View$Widgets$deiterationIndicator = A2($author$project$View$Widgets$interactiveIndicator, $author$project$View$Style$destroyColor, $author$project$Update$App$HighlightOrigin);
+var $author$project$View$Widgets$deiterationIndicator = function (color) {
+	return A2($author$project$View$Widgets$interactiveIndicator, color, $author$project$Update$App$HighlightOrigin);
+};
 var $feathericons$elm_feather$FeatherIcons$x = A2(
 	$feathericons$elm_feather$FeatherIcons$makeBuilder,
 	'x',
@@ -18605,10 +18630,12 @@ var $feathericons$elm_feather$FeatherIcons$x = A2(
 				]),
 			_List_Nil)
 		]));
-var $author$project$View$Widgets$deletionIndicator = A2(
-	$author$project$View$Widgets$indicator,
-	$author$project$View$Style$destroyColor,
-	$author$project$View$Widgets$indicatorIcon($feathericons$elm_feather$FeatherIcons$x));
+var $author$project$View$Widgets$deletionIndicator = function (color) {
+	return A2(
+		$author$project$View$Widgets$indicator,
+		color,
+		$author$project$View$Widgets$indicatorIcon($feathericons$elm_feather$FeatherIcons$x));
+};
 var $author$project$Model$App$DragNode = function (a) {
 	return {$: 'DragNode', a: a};
 };
@@ -18731,7 +18758,6 @@ var $author$project$View$Style$droppableNode = function (color) {
 		inactive: $author$project$View$Style$droppableBorder(color)
 	};
 };
-var $author$project$View$Style$expandColor = A3($mdgriffith$elm_ui$Element$rgb, 0.3, 0.8, 0);
 var $feathericons$elm_feather$FeatherIcons$maximize2 = A2(
 	$feathericons$elm_feather$FeatherIcons$makeBuilder,
 	'maximize-2',
@@ -18772,10 +18798,12 @@ var $feathericons$elm_feather$FeatherIcons$maximize2 = A2(
 				]),
 			_List_Nil)
 		]));
-var $author$project$View$Widgets$expansionIndicator = A2(
-	$author$project$View$Widgets$indicator,
-	$author$project$View$Style$expandColor,
-	$author$project$View$Widgets$indicatorIcon($feathericons$elm_feather$FeatherIcons$maximize2));
+var $author$project$View$Widgets$expansionIndicator = function (color) {
+	return A2(
+		$author$project$View$Widgets$indicator,
+		color,
+		$author$project$View$Widgets$indicatorIcon($feathericons$elm_feather$FeatherIcons$maximize2));
+};
 var $author$project$View$Style$negativeColor = A3($mdgriffith$elm_ui$Element$rgb, 0.18, 0.2, 0.25);
 var $author$project$View$Style$positiveColor = A3($mdgriffith$elm_ui$Element$rgb, 1, 1, 1);
 var $author$project$View$Style$foregroundColor = function (polarity) {
@@ -18797,6 +18825,13 @@ var $norpan$elm_html5_drag_drop$Html5$DragDrop$getDropId = function (model) {
 			var dropId = model.b;
 			return $elm$core$Maybe$Just(dropId);
 	}
+};
+var $author$project$Model$Session$getHighlightedAction = function (session) {
+	var actionsDeque = A2($author$project$Model$Session$getActionsDeque, session.execMode, session);
+	return session.stepButtonFocused ? A2($author$project$Model$Session$getActionAtIndex, 0, actionsDeque) : A2(
+		$author$project$Model$Session$getActionAtIndex,
+		$folkertdev$elm_deque$Deque$length(actionsDeque) - 1,
+		actionsDeque);
 };
 var $feathericons$elm_feather$FeatherIcons$plus = A2(
 	$feathericons$elm_feather$FeatherIcons$makeBuilder,
@@ -18824,10 +18859,12 @@ var $feathericons$elm_feather$FeatherIcons$plus = A2(
 				]),
 			_List_Nil)
 		]));
-var $author$project$View$Widgets$insertionIndicator = A2(
-	$author$project$View$Widgets$indicator,
-	$author$project$View$Style$createColor,
-	$author$project$View$Widgets$indicatorIcon($feathericons$elm_feather$FeatherIcons$plus));
+var $author$project$View$Widgets$insertionIndicator = function (color) {
+	return A2(
+		$author$project$View$Widgets$indicator,
+		color,
+		$author$project$View$Widgets$indicatorIcon($feathericons$elm_feather$FeatherIcons$plus));
+};
 var $author$project$View$Session$isDeiterationTarget = F3(
 	function (dnd, session, id) {
 		var _v0 = $norpan$elm_html5_drag_drop$Html5$DragDrop$getDragId(dnd);
@@ -18854,7 +18891,9 @@ var $author$project$Model$Scroll$isFormula = F2(
 			return false;
 		}
 	});
-var $author$project$View$Widgets$iterationIndicator = A2($author$project$View$Widgets$interactiveIndicator, $author$project$View$Style$createColor, $author$project$Update$App$HighlightOrigin);
+var $author$project$View$Widgets$iterationIndicator = function (color) {
+	return A2($author$project$View$Widgets$interactiveIndicator, color, $author$project$Update$App$HighlightOrigin);
+};
 var $mdgriffith$elm_ui$Element$Input$HiddenLabel = function (a) {
 	return {$: 'HiddenLabel', a: a};
 };
@@ -18929,15 +18968,6 @@ var $mdgriffith$elm_ui$Element$Events$onLoseFocus = A2($elm$core$Basics$composeL
 var $mdgriffith$elm_ui$Internal$Model$OnRight = {$: 'OnRight'};
 var $mdgriffith$elm_ui$Element$onRight = function (element) {
 	return A2($mdgriffith$elm_ui$Element$createNearby, $mdgriffith$elm_ui$Internal$Model$OnRight, element);
-};
-var $author$project$Model$Scroll$originSourceId = function (origin) {
-	if (origin.$ === 'Direct') {
-		var id = origin.a;
-		return id;
-	} else {
-		var src = origin.a.src;
-		return src;
-	}
 };
 var $author$project$View$Style$reorderColor = A3($avh4$elm_color$Color$rgb, 0.7, 0.7, 0.7);
 var $mdgriffith$elm_ui$Element$rgba = $mdgriffith$elm_ui$Internal$Model$Rgba;
@@ -19124,15 +19154,6 @@ var $mdgriffith$elm_ui$Element$Input$getHeight = function (attr) {
 	if (attr.$ === 'Height') {
 		var h = attr.a;
 		return $elm$core$Maybe$Just(h);
-	} else {
-		return $elm$core$Maybe$Nothing;
-	}
-};
-var $elm$core$List$head = function (list) {
-	if (list.b) {
-		var x = list.a;
-		var xs = list.b;
-		return $elm$core$Maybe$Just(x);
 	} else {
 		return $elm$core$Maybe$Nothing;
 	}
@@ -19822,12 +19843,15 @@ var $author$project$View$Session$viewClickAction = F4(
 						$author$project$Update$App$Transform,
 						session.route,
 						$author$project$Model$Session$map(
-							A4(
-								$author$project$Model$Scroll$insert,
-								false,
-								$elm$core$Maybe$Just(''),
-								loc,
-								tok))) : A2(
+							function (net) {
+								return A5(
+									$author$project$Model$Scroll$insert,
+									false,
+									$elm$core$Maybe$Just(''),
+									loc,
+									tok,
+									net).b;
+							})) : A2(
 						$author$project$Update$App$Apply,
 						session.route,
 						A2($author$project$Model$Session$Insert, loc, tok));
@@ -20222,13 +20246,40 @@ var $author$project$View$Session$viewNode = F3(
 		var id = tree.a.id;
 		var node = tree.a.node;
 		var children = tree.a.children;
-		var inForwardMode = function () {
-			var _v55 = session.execMode;
-			if (_v55.$ === 'Forward') {
-				return true;
-			} else {
-				return false;
-			}
+		var selectionStyle = function () {
+			var hoverColor = A4($mdgriffith$elm_ui$Element$rgba, 0.227, 0.525, 1, 0.2);
+			var borderStyle = A2($elm$core$List$member, id, session.selection) ? _List_fromArray(
+				[
+					A2($author$project$View$Style$styleAttr, 'border-width', '6px'),
+					A2($author$project$View$Style$styleAttr, 'border-style', 'solid'),
+					A2($author$project$View$Style$styleAttr, 'border-color', 'rgba(129, 177, 255, 1)')
+				]) : _List_Nil;
+			var overlay = _List_fromArray(
+				[
+					$mdgriffith$elm_ui$Element$inFront(
+					A2(
+						$mdgriffith$elm_ui$Element$Input$button,
+						_Utils_ap(
+							_List_fromArray(
+								[
+									$mdgriffith$elm_ui$Element$width($mdgriffith$elm_ui$Element$fill),
+									$mdgriffith$elm_ui$Element$height($mdgriffith$elm_ui$Element$fill),
+									$author$project$View$Style$shapeBorderRadius(
+									$elm$core$Maybe$Just(node.shape)),
+									$mdgriffith$elm_ui$Element$mouseOver(
+									_List_fromArray(
+										[
+											$mdgriffith$elm_ui$Element$Background$color(hoverColor)
+										]))
+								]),
+							borderStyle),
+						{
+							label: $mdgriffith$elm_ui$Element$none,
+							onPress: $elm$core$Maybe$Just(
+								$author$project$Update$App$ToggleSelection(id))
+						}))
+				]);
+			return session.selecting ? overlay : borderStyle;
 		}();
 		var dropAttrs = function (dest) {
 			return A2(
@@ -20241,27 +20292,27 @@ var $author$project$View$Session$viewNode = F3(
 						{destination: dest, route: session.route})));
 		};
 		var dropAction = function () {
-			var _v49 = session.actionMode;
-			if (_v49.$ === 'ProofMode') {
-				var copyMode = _v49.a.copyMode;
+			var _v53 = session.actionMode;
+			if (_v53.$ === 'ProofMode') {
+				var copyMode = _v53.a.copyMode;
 				if (_Utils_eq(copyMode, $author$project$Model$Session$Deiteration)) {
-					var _v50 = $norpan$elm_html5_drag_drop$Html5$DragDrop$getDragId(dnd);
-					if (_v50.$ === 'Nothing') {
+					var _v54 = $norpan$elm_html5_drag_drop$Html5$DragDrop$getDragId(dnd);
+					if (_v54.$ === 'Nothing') {
 						return _List_Nil;
 					} else {
-						var source = _v50.a.source;
-						var _v51 = source;
-						var src = _v51.a;
+						var source = _v54.a.source;
+						var _v55 = source;
+						var src = _v55.a;
 						var deiterateAction = A2($author$project$Model$Session$Deiterate, src, id);
-						var _v52 = A2($author$project$Model$Session$applicable, deiterateAction, session);
-						if (_v52.$ === 'Err') {
+						var _v56 = A2($author$project$Model$Session$applicable, deiterateAction, session);
+						if (_v56.$ === 'Err') {
 							return _List_Nil;
 						} else {
 							var dropStyle = $author$project$View$Style$droppableNode($author$project$View$Style$useColor);
 							var dropTargetStyle = function () {
-								var _v53 = $norpan$elm_html5_drag_drop$Html5$DragDrop$getDropId(dnd);
-								if ((_v53.$ === 'Just') && (_v53.a.$ === 'Just')) {
-									var destination = _v53.a.a.destination;
+								var _v57 = $norpan$elm_html5_drag_drop$Html5$DragDrop$getDropId(dnd);
+								if ((_v57.$ === 'Just') && (_v57.a.$ === 'Just')) {
+									var destination = _v57.a.a.destination;
 									if (destination.$ === 'DropNode') {
 										var dropId = destination.a;
 										return _Utils_eq(dropId, id) ? dropStyle.active : dropStyle.inactive;
@@ -20318,8 +20369,8 @@ var $author$project$View$Session$viewNode = F3(
 					$mdgriffith$elm_ui$Element$none))
 			])) : _List_Nil;
 		var dragColor = function () {
-			var _v48 = session.actionMode;
-			switch (_v48.$) {
+			var _v52 = session.actionMode;
+			switch (_v52.$) {
 				case 'ProofMode':
 					return $author$project$View$Style$useColor;
 				case 'EditMode':
@@ -20331,8 +20382,8 @@ var $author$project$View$Session$viewNode = F3(
 		var debug = false;
 		var statusBar = function () {
 			var polarity = function () {
-				var _v47 = session.execMode;
-				if (_v47.$ === 'Forward') {
+				var _v51 = session.execMode;
+				if (_v51.$ === 'Forward') {
 					return node.polarity;
 				} else {
 					return $author$project$Model$Scroll$invert(node.polarity);
@@ -20340,9 +20391,9 @@ var $author$project$View$Session$viewNode = F3(
 			}();
 			var nameEl = function () {
 				var isRenaming = function () {
-					var _v46 = session.renaming;
-					if (_v46.$ === 'Just') {
-						var renaming = _v46.a;
+					var _v50 = session.renaming;
+					if (_v50.$ === 'Just') {
+						var renaming = _v50.a;
 						return _Utils_eq(renaming.id, id);
 					} else {
 						return false;
@@ -20409,10 +20460,9 @@ var $author$project$View$Session$viewNode = F3(
 							node.name)));
 			}();
 			var _v44 = function () {
-				var _v45 = node.justif.from;
+				var _v45 = node.justif.copy;
 				if (_v45.$ === 'Just') {
-					var origin = _v45.a;
-					var oId = $author$project$Model$Scroll$originSourceId(origin);
+					var oId = _v45.a;
 					return _Utils_Tuple3(
 						$elm$core$Maybe$Just(oId),
 						A2($author$project$Model$Scroll$getName, oId, session.net),
@@ -20426,28 +20476,60 @@ var $author$project$View$Session$viewNode = F3(
 			var originId = _v44.a;
 			var originName = _v44.b;
 			var isHoveredOrigin = _v44.c;
-			var elimIndicator = A2($author$project$Model$Scroll$isDeletion, polarity, node.justif) ? $author$project$View$Widgets$deletionIndicator : (A2($author$project$Model$Scroll$isDeiteration, polarity, node.justif) ? A3($author$project$View$Widgets$deiterationIndicator, originId, originName, isHoveredOrigin) : (A2(
+			var _v46 = function () {
+				var _v47 = $author$project$Model$Session$getHighlightedAction(session);
+				if (_v47.$ === 'Just') {
+					var _v48 = _v47.a;
+					var action = _v48.a;
+					var locus = _v48.b;
+					if (_Utils_eq(locus, id)) {
+						switch (action.$) {
+							case 'Insert':
+								return _Utils_Tuple2($author$project$View$Style$green, $author$project$View$Style$destroyColor);
+							case 'Iterate':
+								return _Utils_Tuple2($author$project$View$Style$green, $author$project$View$Style$destroyColor);
+							case 'Open':
+								return _Utils_Tuple2($author$project$View$Style$green, $author$project$View$Style$destroyColor);
+							case 'Delete':
+								return _Utils_Tuple2($author$project$View$Style$createColor, $author$project$View$Style$green);
+							case 'Deiterate':
+								return _Utils_Tuple2($author$project$View$Style$createColor, $author$project$View$Style$green);
+							case 'Close':
+								return _Utils_Tuple2($author$project$View$Style$createColor, $author$project$View$Style$green);
+							default:
+								return _Utils_Tuple2($author$project$View$Style$createColor, $author$project$View$Style$destroyColor);
+						}
+					} else {
+						return _Utils_Tuple2($author$project$View$Style$createColor, $author$project$View$Style$destroyColor);
+					}
+				} else {
+					return _Utils_Tuple2($author$project$View$Style$createColor, $author$project$View$Style$destroyColor);
+				}
+			}();
+			var introColor = _v46.a;
+			var elimColor = _v46.b;
+			var elimIndicator = A2($author$project$Model$Scroll$isDeletion, polarity, node.justif) ? $author$project$View$Widgets$deletionIndicator(elimColor) : (A2($author$project$Model$Scroll$isDeiteration, polarity, node.justif) ? A4($author$project$View$Widgets$deiterationIndicator, elimColor, originId, originName, isHoveredOrigin) : (A2(
 				$elm$core$Maybe$withDefault,
 				false,
 				A2(
 					$elm$core$Maybe$map,
-					inForwardMode ? function ($) {
+					$author$project$Model$Session$isForward(session.execMode) ? function ($) {
 						return $.closed;
 					} : function ($) {
 						return $.opened;
 					},
-					A2($author$project$Model$Scroll$getInloopInteraction, id, session.net))) ? $author$project$View$Widgets$collapseIndicator : $mdgriffith$elm_ui$Element$none));
-			var introIndicator = A2($author$project$Model$Scroll$isInsertion, polarity, node.justif) ? $author$project$View$Widgets$insertionIndicator : (A2($author$project$Model$Scroll$isIteration, polarity, node.justif) ? A3($author$project$View$Widgets$iterationIndicator, originId, originName, isHoveredOrigin) : (A2(
+					A2($author$project$Model$Scroll$getInloopInteraction, id, session.net))) ? $author$project$View$Widgets$collapseIndicator(elimColor) : $mdgriffith$elm_ui$Element$none));
+			var introIndicator = A2($author$project$Model$Scroll$isInsertion, polarity, node.justif) ? $author$project$View$Widgets$insertionIndicator(introColor) : (A2($author$project$Model$Scroll$isIteration, polarity, node.justif) ? A4($author$project$View$Widgets$iterationIndicator, introColor, originId, originName, isHoveredOrigin) : (A2(
 				$elm$core$Maybe$withDefault,
 				false,
 				A2(
 					$elm$core$Maybe$map,
-					inForwardMode ? function ($) {
+					$author$project$Model$Session$isForward(session.execMode) ? function ($) {
 						return $.opened;
 					} : function ($) {
 						return $.closed;
 					},
-					A2($author$project$Model$Scroll$getInloopInteraction, id, session.net))) ? $author$project$View$Widgets$expansionIndicator : $mdgriffith$elm_ui$Element$none));
+					A2($author$project$Model$Scroll$getInloopInteraction, id, session.net))) ? $author$project$View$Widgets$expansionIndicator(introColor) : $mdgriffith$elm_ui$Element$none));
 			return A2(
 				$mdgriffith$elm_ui$Element$row,
 				_List_fromArray(
@@ -20493,7 +20575,7 @@ var $author$project$View$Session$viewNode = F3(
 						var _v37 = _v35.b;
 						return A2(
 							viewAction,
-							$author$project$View$Style$collapseColor,
+							$author$project$View$Style$destroyColor,
 							$author$project$Model$Session$Close(id));
 					} else {
 						return _List_Nil;
@@ -20584,17 +20666,19 @@ var $author$project$View$Session$viewNode = F3(
 										dropAction,
 										_Utils_ap(
 											clickAction,
-											_List_fromArray(
-												[
-													$mdgriffith$elm_ui$Element$width($mdgriffith$elm_ui$Element$fill),
-													$mdgriffith$elm_ui$Element$centerY,
-													nodeHeight,
-													$author$project$View$Style$shapeBorderRadius(
-													$elm$core$Maybe$Just(node.shape)),
-													$author$project$Utils$Events$onClick($author$project$Update$App$DoNothing),
-													A2($author$project$View$Style$styleAttr, 'position', 'relative'),
-													A2($author$project$View$Style$styleAttr, 'z-index', '1')
-												]))))))),
+											_Utils_ap(
+												selectionStyle,
+												_List_fromArray(
+													[
+														$mdgriffith$elm_ui$Element$width($mdgriffith$elm_ui$Element$fill),
+														$mdgriffith$elm_ui$Element$centerY,
+														nodeHeight,
+														$author$project$View$Style$shapeBorderRadius(
+														$elm$core$Maybe$Just(node.shape)),
+														$author$project$Utils$Events$onClick($author$project$Update$App$DoNothing),
+														A2($author$project$View$Style$styleAttr, 'position', 'relative'),
+														A2($author$project$View$Style$styleAttr, 'z-index', '1')
+													])))))))),
 					nodeShapeEl)
 				]));
 	});
@@ -20752,7 +20836,7 @@ var $author$project$View$Session$viewNodes = F4(
 							$author$project$View$Session$viewClickAction,
 							session,
 							$elm$core$Maybe$Nothing,
-							$author$project$View$Style$expandColor,
+							$author$project$View$Style$createColor,
 							$author$project$Model$Session$Open(newNodeLoc));
 					} else {
 						return _List_Nil;
@@ -21342,7 +21426,7 @@ var $author$project$View$Manual$body = function (_v0) {
 								t('Click on an '),
 								A2(
 								$mdgriffith$elm_ui$Element$el,
-								A3($author$project$View$Style$actionable, $author$project$Update$App$DoNothing, $author$project$View$Manual$dummyForm, $author$project$View$Style$collapseColor).active,
+								A3($author$project$View$Style$actionable, $author$project$Update$App$DoNothing, $author$project$View$Manual$dummyForm, $author$project$View$Style$createColor).active,
 								$mdgriffith$elm_ui$Element$text('empty outloop')),
 								t(' to unlock its inloop.')
 							])),
@@ -21378,7 +21462,7 @@ var $author$project$View$Manual$body = function (_v0) {
 								t('Click on an '),
 								A2(
 								$mdgriffith$elm_ui$Element$el,
-								A3($author$project$View$Style$actionable, $author$project$Update$App$DoNothing, $author$project$View$Manual$dummyForm, $author$project$View$Style$collapseColor).active,
+								A3($author$project$View$Style$actionable, $author$project$Update$App$DoNothing, $author$project$View$Manual$dummyForm, $author$project$View$Style$destroyColor).active,
 								$mdgriffith$elm_ui$Element$text('empty outloop')),
 								t(' to turn its attached inloops into outloops.')
 							])),
@@ -21829,6 +21913,9 @@ var $author$project$View$Toolbar$viewCopyModeToggle = function (copyMode) {
 var $author$project$Update$App$ExecAll = {$: 'ExecAll'};
 var $author$project$View$Widgets$Msg = function (a) {
 	return {$: 'Msg', a: a};
+};
+var $author$project$Update$App$SetStepButtonFocus = function (a) {
+	return {$: 'SetStepButtonFocus', a: a};
 };
 var $author$project$Update$App$Step = {$: 'Step'};
 var $avh4$elm_color$Color$black = A4($avh4$elm_color$Color$RgbaSpace, 0 / 255, 0 / 255, 0 / 255, 1.0);
@@ -23583,6 +23670,20 @@ var $author$project$Utils$Events$alwaysStopPropagationOnStyled = F2(
 var $author$project$Utils$Events$onClickStyled = $author$project$Utils$Events$alwaysStopPropagationOnStyled('click');
 var $rtfeldman$elm_css$Css$pointer = {cursor: $rtfeldman$elm_css$Css$Structure$Compatible, value: 'pointer'};
 var $rtfeldman$elm_css$Css$solid = {borderStyle: $rtfeldman$elm_css$Css$Structure$Compatible, textDecorationStyle: $rtfeldman$elm_css$Css$Structure$Compatible, value: 'solid'};
+var $rtfeldman$elm_css$VirtualDom$Styled$attribute = F2(
+	function (key, value) {
+		return A3(
+			$rtfeldman$elm_css$VirtualDom$Styled$Attribute,
+			A2($elm$virtual_dom$VirtualDom$attribute, key, value),
+			false,
+			'');
+	});
+var $rtfeldman$elm_css$Html$Styled$Attributes$tabindex = function (n) {
+	return A2(
+		$rtfeldman$elm_css$VirtualDom$Styled$attribute,
+		'tabIndex',
+		$elm$core$String$fromInt(n));
+};
 var $rtfeldman$elm_css$Html$Styled$Attributes$title = $rtfeldman$elm_css$Html$Styled$Attributes$stringProperty('title');
 var $rtfeldman$elm_css$Css$cssFunction = F2(
 	function (funcName, args) {
@@ -24211,6 +24312,7 @@ var $author$project$View$Widgets$button = F2(
 		var title = _v0.title;
 		var content = _v0.content;
 		var enabled = _v0.enabled;
+		var attrs = _v0.attrs;
 		var tag = function () {
 			if (action.$ === 'Msg') {
 				return $rtfeldman$elm_css$Html$Styled$div;
@@ -24279,30 +24381,27 @@ var $author$project$View$Widgets$button = F2(
 														$rtfeldman$elm_css$Css$borderColor($rtfeldman$elm_css$Css$transparent),
 														$rtfeldman$elm_css$Css$backgroundColor($rtfeldman$elm_css$Css$transparent)
 													])))))))))));
+		var onClickStyledFromAction = function (act) {
+			if (act.$ === 'Msg') {
+				var msg = act.a;
+				return $author$project$Utils$Events$onClickStyled(msg);
+			} else {
+				var url = act.a;
+				return $rtfeldman$elm_css$Html$Styled$Attributes$href(url);
+			}
+		};
 		var iconStyledHtml = $rtfeldman$elm_css$Html$Styled$fromUnstyled(
 			A2(
 				$mdgriffith$elm_ui$Element$layout,
 				_List_Nil,
 				$author$project$View$Style$centered(content)));
-		var actionAttr = function () {
-			if (enabled) {
-				if (action.$ === 'Msg') {
-					var msg = action.a;
-					return _List_fromArray(
-						[
-							$author$project$Utils$Events$onClickStyled(msg)
-						]);
-				} else {
-					var url = action.a;
-					return _List_fromArray(
-						[
-							$rtfeldman$elm_css$Html$Styled$Attributes$href(url)
-						]);
-				}
-			} else {
-				return _List_Nil;
-			}
-		}();
+		var actionAttr = enabled ? A2(
+			$elm$core$List$cons,
+			onClickStyledFromAction(action),
+			A2(
+				$elm$core$List$cons,
+				$rtfeldman$elm_css$Html$Styled$Attributes$tabindex(0),
+				attrs)) : attrs;
 		return $mdgriffith$elm_ui$Element$html(
 			$rtfeldman$elm_css$Html$Styled$toUnstyled(
 				A2(
@@ -24323,12 +24422,14 @@ var $author$project$View$Widgets$iconButton = F2(
 		var title = _v0.title;
 		var icon = _v0.icon;
 		var enabled = _v0.enabled;
+		var attrs = _v0.attrs;
 		var color = enabled ? style.iconColorEnabled : style.iconColorDisabled;
 		return A2(
 			$author$project$View$Widgets$button,
 			style,
 			{
 				action: action,
+				attrs: attrs,
 				content: $mdgriffith$elm_ui$Element$html(
 					A2(
 						$feathericons$elm_feather$FeatherIcons$toHtml,
@@ -24342,7 +24443,38 @@ var $author$project$View$Widgets$iconButton = F2(
 			});
 	});
 var $author$project$View$Widgets$defaultButton = $author$project$View$Widgets$iconButton($author$project$View$Widgets$defaultButtonStyle);
-var $owanturist$elm_queue$Queue$isEmpty = $elm$core$Basics$eq($owanturist$elm_queue$Queue$Empty);
+var $folkertdev$elm_deque$Internal$isEmpty = function (deque) {
+	return !$folkertdev$elm_deque$Internal$length(deque);
+};
+var $folkertdev$elm_deque$Deque$isEmpty = A2($elm$core$Basics$composeL, $folkertdev$elm_deque$Internal$isEmpty, $folkertdev$elm_deque$Deque$unwrap);
+var $rtfeldman$elm_css$Html$Styled$Events$on = F2(
+	function (event, decoder) {
+		return A2(
+			$rtfeldman$elm_css$VirtualDom$Styled$on,
+			event,
+			$elm$virtual_dom$VirtualDom$Normal(decoder));
+	});
+var $rtfeldman$elm_css$Html$Styled$Events$onMouseDown = function (msg) {
+	return A2(
+		$rtfeldman$elm_css$Html$Styled$Events$on,
+		'mousedown',
+		$elm$json$Json$Decode$succeed(msg));
+};
+var $rtfeldman$elm_css$Html$Styled$Events$onMouseLeave = function (msg) {
+	return A2(
+		$rtfeldman$elm_css$Html$Styled$Events$on,
+		'mouseleave',
+		$elm$json$Json$Decode$succeed(msg));
+};
+var $rtfeldman$elm_css$Html$Styled$Events$onMouseOver = function (msg) {
+	return A2(
+		$rtfeldman$elm_css$Html$Styled$Events$on,
+		'mouseover',
+		$elm$json$Json$Decode$succeed(msg));
+};
+var $author$project$Utils$Events$onTouchCancel = $author$project$Utils$Events$alwaysStopPropagationOnStyled('touchcancel');
+var $author$project$Utils$Events$onTouchEnd = $author$project$Utils$Events$alwaysStopPropagationOnStyled('touchend');
+var $author$project$Utils$Events$onTouchStart = $author$project$Utils$Events$alwaysStopPropagationOnStyled('touchstart');
 var $feathericons$elm_feather$FeatherIcons$play = A2(
 	$feathericons$elm_feather$FeatherIcons$makeBuilder,
 	'play',
@@ -24379,12 +24511,27 @@ var $feathericons$elm_feather$FeatherIcons$skipForward = A2(
 				]),
 			_List_Nil)
 		]));
-var $author$project$View$Toolbar$viewExecButtons = function (_v0) {
-	var actionsQueue = _v0.actionsQueue;
-	var stepEnabled = !$owanturist$elm_queue$Queue$isEmpty(actionsQueue);
+var $author$project$View$Toolbar$viewExecButtons = function (session) {
+	var stepEnabled = !$folkertdev$elm_deque$Deque$isEmpty(
+		A2($author$project$Model$Session$getActionsDeque, session.execMode, session));
 	var stepButton = $author$project$View$Widgets$defaultButton(
 		{
 			action: $author$project$View$Widgets$Msg($author$project$Update$App$Step),
+			attrs: _List_fromArray(
+				[
+					$rtfeldman$elm_css$Html$Styled$Events$onMouseOver(
+					$author$project$Update$App$SetStepButtonFocus(true)),
+					$rtfeldman$elm_css$Html$Styled$Events$onMouseDown(
+					$author$project$Update$App$SetStepButtonFocus(true)),
+					$rtfeldman$elm_css$Html$Styled$Events$onMouseLeave(
+					$author$project$Update$App$SetStepButtonFocus(false)),
+					$author$project$Utils$Events$onTouchStart(
+					$author$project$Update$App$SetStepButtonFocus(true)),
+					$author$project$Utils$Events$onTouchEnd(
+					$author$project$Update$App$SetStepButtonFocus(false)),
+					$author$project$Utils$Events$onTouchCancel(
+					$author$project$Update$App$SetStepButtonFocus(false))
+				]),
 			enabled: stepEnabled,
 			icon: $feathericons$elm_feather$FeatherIcons$play,
 			title: 'Step'
@@ -24392,6 +24539,7 @@ var $author$project$View$Toolbar$viewExecButtons = function (_v0) {
 	var runButton = $author$project$View$Widgets$defaultButton(
 		{
 			action: $author$project$View$Widgets$Msg($author$project$Update$App$ExecAll),
+			attrs: _List_Nil,
 			enabled: true,
 			icon: $feathericons$elm_feather$FeatherIcons$skipForward,
 			title: 'Run'
@@ -24560,6 +24708,7 @@ var $feathericons$elm_feather$FeatherIcons$helpCircle = A2(
 var $author$project$View$Toolbar$viewHelpButton = $author$project$View$Widgets$defaultButton(
 	{
 		action: $author$project$View$Widgets$Link('/manual'),
+		attrs: _List_Nil,
 		enabled: true,
 		icon: $feathericons$elm_feather$FeatherIcons$helpCircle,
 		title: 'Help'
@@ -24572,9 +24721,9 @@ var $author$project$View$Toolbar$viewInteractionModeSelector = function (current
 		function (mode, position) {
 			var selectedColor = function () {
 				if (mode.$ === 'Expansion') {
-					return $author$project$View$Style$expandColor;
+					return $author$project$View$Style$createColor;
 				} else {
-					return $author$project$View$Style$collapseColor;
+					return $author$project$View$Style$destroyColor;
 				}
 			}();
 			var isSelected = _Utils_eq(mode, currentMode);
@@ -24876,6 +25025,35 @@ var $author$project$View$Toolbar$viewRecordToggle = function (recording) {
 		{color: $author$project$View$Toolbar$modeSelectorColor, iconOff: $feathericons$elm_feather$FeatherIcons$cameraOff, iconOn: $feathericons$elm_feather$FeatherIcons$camera, onChange: $author$project$Update$App$ToggleRecording, title: 'Record'},
 		recording);
 };
+var $author$project$Update$App$ClickedSelectionToggle = function (a) {
+	return {$: 'ClickedSelectionToggle', a: a};
+};
+var $feathericons$elm_feather$FeatherIcons$mousePointer = A2(
+	$feathericons$elm_feather$FeatherIcons$makeBuilder,
+	'mouse-pointer',
+	_List_fromArray(
+		[
+			A2(
+			$elm$svg$Svg$path,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$d('M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z')
+				]),
+			_List_Nil),
+			A2(
+			$elm$svg$Svg$path,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$d('M13 13l6 6')
+				]),
+			_List_Nil)
+		]));
+var $author$project$View$Toolbar$viewSelectionToggle = function (enabled) {
+	return A2(
+		$author$project$View$Widgets$toggle,
+		{color: $author$project$View$Toolbar$modeSelectorColor, iconOff: $feathericons$elm_feather$FeatherIcons$mousePointer, iconOn: $feathericons$elm_feather$FeatherIcons$mousePointer, onChange: $author$project$Update$App$ClickedSelectionToggle, title: 'Select'},
+		enabled);
+};
 var $feathericons$elm_feather$FeatherIcons$arrowLeft = A2(
 	$feathericons$elm_feather$FeatherIcons$makeBuilder,
 	'arrow-left',
@@ -24947,6 +25125,7 @@ var $author$project$View$Toolbar$viewUndoRedo = function (_v0) {
 				$author$project$View$Widgets$defaultButton(
 				{
 					action: $author$project$View$Widgets$Msg($author$project$Update$App$Undo),
+					attrs: _List_Nil,
 					enabled: undoEnabled,
 					icon: $feathericons$elm_feather$FeatherIcons$arrowLeft,
 					title: 'Undo'
@@ -24954,6 +25133,7 @@ var $author$project$View$Toolbar$viewUndoRedo = function (_v0) {
 				$author$project$View$Widgets$defaultButton(
 				{
 					action: $author$project$View$Widgets$Msg($author$project$Update$App$Redo),
+					attrs: _List_Nil,
 					enabled: redoEnabled,
 					icon: $feathericons$elm_feather$FeatherIcons$arrowRight,
 					title: 'Redo'
@@ -24973,10 +25153,15 @@ var $author$project$View$Toolbar$viewToolbar = function (model) {
 			]),
 		_List_fromArray(
 			[
+				$author$project$View$Toolbar$viewSelectionToggle(model.playground.selecting),
 				$author$project$View$Toolbar$viewRecordToggle(model.playground.recording),
 				$author$project$View$Toolbar$viewExecModeSelector(model.playground.execMode),
 				$author$project$View$Toolbar$viewExecButtons(model.playground)
 			]));
+	var clearSelectionOnClick = model.playground.selecting ? _List_fromArray(
+		[
+			$mdgriffith$elm_ui$Element$Events$onClick($author$project$Update$App$ClearSelection)
+		]) : _List_Nil;
 	var actionToolZone = A2(
 		$mdgriffith$elm_ui$Element$row,
 		_List_fromArray(
@@ -25019,26 +25204,28 @@ var $author$project$View$Toolbar$viewToolbar = function (model) {
 	var actionModeSelector = $author$project$View$Toolbar$viewActionModeSelector(model.playground.actionMode);
 	return A2(
 		$mdgriffith$elm_ui$Element$row,
-		_List_fromArray(
-			[
-				$mdgriffith$elm_ui$Element$width($mdgriffith$elm_ui$Element$fill),
-				$mdgriffith$elm_ui$Element$height(
-				$mdgriffith$elm_ui$Element$px($author$project$View$Toolbar$toolbarHeight)),
-				$mdgriffith$elm_ui$Element$padding($author$project$View$Toolbar$toolbarPadding),
-				$mdgriffith$elm_ui$Element$spacing(100),
-				A2($author$project$View$Style$styleAttr, 'border-width', '1px 0px 0px 0px'),
-				A2($author$project$View$Style$styleAttr, 'border-style', 'solid'),
-				A2($author$project$View$Style$styleAttr, 'border-color', 'rgb(153, 153, 153)'),
-				$mdgriffith$elm_ui$Element$Background$gradient(
-				{
-					angle: 0,
-					steps: _List_fromArray(
-						[
-							A3($mdgriffith$elm_ui$Element$rgb, 0.8, 0.8, 0.8),
-							A3($mdgriffith$elm_ui$Element$rgb, 0.9, 0.9, 0.9)
-						])
-				})
-			]),
+		_Utils_ap(
+			_List_fromArray(
+				[
+					$mdgriffith$elm_ui$Element$width($mdgriffith$elm_ui$Element$fill),
+					$mdgriffith$elm_ui$Element$height(
+					$mdgriffith$elm_ui$Element$px($author$project$View$Toolbar$toolbarHeight)),
+					$mdgriffith$elm_ui$Element$padding($author$project$View$Toolbar$toolbarPadding),
+					$mdgriffith$elm_ui$Element$spacing(100),
+					A2($author$project$View$Style$styleAttr, 'border-width', '1px 0px 0px 0px'),
+					A2($author$project$View$Style$styleAttr, 'border-style', 'solid'),
+					A2($author$project$View$Style$styleAttr, 'border-color', 'rgb(153, 153, 153)'),
+					$mdgriffith$elm_ui$Element$Background$gradient(
+					{
+						angle: 0,
+						steps: _List_fromArray(
+							[
+								A3($mdgriffith$elm_ui$Element$rgb, 0.8, 0.8, 0.8),
+								A3($mdgriffith$elm_ui$Element$rgb, 0.9, 0.9, 0.9)
+							])
+					})
+				]),
+			clearSelectionOnClick),
 		_List_fromArray(
 			[
 				A2(

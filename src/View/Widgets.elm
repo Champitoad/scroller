@@ -9,8 +9,8 @@ import Element.Font as Font
 import Element.Input as Input
 import FeatherIcons as Icons exposing (Icon)
 import Html.Attributes
-import Html.Styled exposing (fromUnstyled, toUnstyled)
-import Html.Styled.Attributes as Attrs exposing (action, css)
+import Html.Styled exposing (Attribute, fromUnstyled, toUnstyled)
+import Html.Styled.Attributes as Attrs exposing (action, css, tabindex)
 import Model.Scroll exposing (Id)
 import Update.App exposing (Msg(..))
 import Utils.Color
@@ -51,6 +51,7 @@ type alias ButtonParams msg =
     , title : String
     , content : Element msg
     , enabled : Bool
+    , attrs : List (Attribute msg)
     }
 
 
@@ -59,11 +60,12 @@ type alias IconButtonParams msg =
     , title : String
     , icon : Icon
     , enabled : Bool
+    , attrs : List (Attribute msg)
     }
 
 
 button : ButtonStyle widthUnit heightUnit -> ButtonParams msg -> Element msg
-button style { action, title, content, enabled } =
+button style { action, title, content, enabled, attrs } =
     let
         iconStyledHtml =
             centered content |> layout [] |> fromUnstyled
@@ -107,17 +109,21 @@ button style { action, title, content, enabled } =
                 Link _ ->
                     Html.Styled.a
 
+        -- Helper to handle both Msg types
+        onClickStyledFromAction act =
+            case act of
+                Msg msg ->
+                    Utils.Events.onClickStyled msg
+
+                Link url ->
+                    Attrs.href url
+
         actionAttr =
             if enabled then
-                case action of
-                    Msg msg ->
-                        [ Utils.Events.onClickStyled msg ]
-
-                    Link url ->
-                        [ Attrs.href url ]
+                onClickStyledFromAction action :: tabindex 0 :: attrs
 
             else
-                []
+                attrs
     in
     tag
         (css styleAttrs :: Attrs.title title :: actionAttr)
@@ -127,7 +133,7 @@ button style { action, title, content, enabled } =
 
 
 iconButton : ButtonStyle widthUnit heightUnit -> IconButtonParams msg -> Element msg
-iconButton style { action, title, icon, enabled } =
+iconButton style { action, title, icon, enabled, attrs } =
     let
         color =
             if enabled then
@@ -146,6 +152,7 @@ iconButton style { action, title, icon, enabled } =
                 |> Icons.toHtml [ color |> Utils.Color.htmlAttr ]
                 |> Element.html
         , enabled = enabled
+        , attrs = attrs
         }
 
 
@@ -253,14 +260,14 @@ indicator color content =
         (centered content)
 
 
-insertionIndicator : Element msg
-insertionIndicator =
-    indicator createColor (indicatorIcon Icons.plus)
+insertionIndicator : Color -> Element msg
+insertionIndicator color =
+    indicator color (indicatorIcon Icons.plus)
 
 
-deletionIndicator : Element msg
-deletionIndicator =
-    indicator destroyColor (indicatorIcon Icons.x)
+deletionIndicator : Color -> Element msg
+deletionIndicator color =
+    indicator color (indicatorIcon Icons.x)
 
 
 iterationText : String -> Bool -> Element msg
@@ -322,24 +329,24 @@ interactiveIndicator color mkMsg originId originName isHovered =
             baseIndicator
 
 
-iterationIndicator : Maybe Id -> String -> Bool -> Element Msg
-iterationIndicator =
-    interactiveIndicator createColor HighlightOrigin
+iterationIndicator : Color -> Maybe Id -> String -> Bool -> Element Msg
+iterationIndicator color =
+    interactiveIndicator color HighlightOrigin
 
 
-deiterationIndicator : Maybe Id -> String -> Bool -> Element Msg
-deiterationIndicator =
-    interactiveIndicator destroyColor HighlightOrigin
+deiterationIndicator : Color -> Maybe Id -> String -> Bool -> Element Msg
+deiterationIndicator color =
+    interactiveIndicator color HighlightOrigin
 
 
-expansionIndicator : Element msg
-expansionIndicator =
-    indicator expandColor (indicatorIcon Icons.maximize2)
+expansionIndicator : Color -> Element msg
+expansionIndicator color =
+    indicator color (indicatorIcon Icons.maximize2)
 
 
-collapseIndicator : Element msg
-collapseIndicator =
-    indicator collapseColor (indicatorIcon Icons.minimize2)
+collapseIndicator : Color -> Element msg
+collapseIndicator color =
+    indicator color (indicatorIcon Icons.minimize2)
 
 
 

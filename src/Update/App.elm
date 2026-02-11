@@ -53,6 +53,7 @@ type Msg
     | ClickedSelectionToggle Bool
     | ToggleSelection Id
     | ClearSelection
+    | SetStepButtonFocus Bool
     | ResetSandbox SandboxID
     | HandleKeyboardEvent DetailedKeyboardEvent
     | HandleKeyUpEvent KeyboardEvent
@@ -343,6 +344,16 @@ update msg model =
 
         ToggleSelection id ->
             ( setSession Playground (toggleSelection id model.playground) model, Cmd.none )
+
+        SetStepButtonFocus focused ->
+            let
+                session =
+                    model.playground
+
+                newSession =
+                    { session | stepButtonFocused = focused }
+            in
+            ( setSession Playground newSession model, Cmd.none )
 
         ToggleCopyMode doit ->
             ( setSession Playground (toggleCopyMode doit model.playground) model, Cmd.none )

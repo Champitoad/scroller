@@ -171,7 +171,7 @@ body { manualExamples, dragDrop } =
             , par [ t "Click on an ", el (actionable DoNothing dummyForm green).active (text "atom"), t " to erase it." ]
             , sandbox "Justify"
             , h2 "Unlock"
-            , par [ t "Click on an ", el (actionable DoNothing dummyForm collapseColor).active (text "empty outloop"), t " to unlock its inloop." ]
+            , par [ t "Click on an ", el (actionable DoNothing dummyForm createColor).active (text "empty outloop"), t " to unlock its inloop." ]
             , sandbox "Unlock"
             , par [ t "Note that flowers can be ", b "nested", t " inside each other." ]
             , h2 "Import"
@@ -184,7 +184,7 @@ body { manualExamples, dragDrop } =
                 ]
             , sandbox "Import"
             , h2 "Case"
-            , par [ t "Click on an ", el (actionable DoNothing dummyForm collapseColor).active (text "empty outloop"), t " to turn its attached inloops into outloops." ]
+            , par [ t "Click on an ", el (actionable DoNothing dummyForm destroyColor).active (text "empty outloop"), t " to turn its attached inloops into outloops." ]
             , sandbox "Case"
             , h2 "Decompose"
             , par [ t "Click on a ", el (actionable DoNothing dummyForm pink).active (text "symbolic formula"), t " to turn it into a flower." ]

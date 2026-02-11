@@ -227,6 +227,7 @@ type alias Session =
     , hoveredOrigin : Maybe Id
     , selection : Selection
     , selecting : Bool
+    , stepButtonFocused : Bool
     }
 
 
@@ -243,7 +244,21 @@ fromNet net =
     , hoveredOrigin = Nothing
     , selection = []
     , selecting = False
+    , stepButtonFocused = False
     }
+
+
+getHighlightedAction : Session -> Maybe ( Action, Id )
+getHighlightedAction session =
+    let
+        actionsDeque =
+            getActionsDeque session.execMode session
+    in
+    if session.stepButtonFocused then
+        getActionAtIndex 0 actionsDeque
+
+    else
+        getActionAtIndex (Deque.length actionsDeque - 1) actionsDeque
 
 
 map : (Net -> Net) -> Session -> Session
@@ -1149,6 +1164,7 @@ manualExamples =
                 , hoveredOrigin = Nothing
                 , selection = []
                 , selecting = False
+                , stepButtonFocused = False
                 }
 
         examples : List ( SandboxID, ActionMode, Net )
