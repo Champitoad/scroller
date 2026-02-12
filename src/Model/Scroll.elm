@@ -1263,9 +1263,9 @@ graft loc src tgt =
 
 
 
-{- Assuming that `source` and `target` are isomorphic, this updates the `justif.from` field of every
-   node in `target` so that it holds a `Copy` backpointer to the corresponding node in `source`. The
-   root node is a `Direct` copy, while subnodes are `Indirect` copies.
+{- Assuming that `source` and `target` are isomorphic, this updates the `justif` field of every
+   node in `target` so that it holds a backpointer to the original copy in `source`. The
+   root node is a direct `copy`, while subnodes are indirect `subcopy`.
 -}
 
 
@@ -1306,7 +1306,7 @@ deeplink source target =
 
 
 
-{- Returns a deep copy of `net` with fresh IDs, holding `Copy` backpointers to the original nodes. -}
+{- Returns a deep copy of `net` with fresh IDs, holding `copy` and `subcopy` backpointers to the original nodes. -}
 
 
 deepcopy : Net -> Net
@@ -1348,7 +1348,7 @@ freshName basename net =
 
 
 insert : Bool -> Maybe String -> Location -> IToken -> Net -> ( Id, Net )
-insert self name loc tok net =
+insert isSelfJustified name loc tok net =
     let
         newTree =
             hydrateIToken loc.ctx (getPolarityContext loc.ctx net) tok |> State.eval 0
@@ -1375,14 +1375,13 @@ insert self name loc tok net =
                 |> updateName 0 (\_ -> nodeName)
                 |> updateJustif 0
                     (\j ->
-                        if self then
+                        if isSelfJustified then
                             selfJustify j
 
                         else
                             j
                     )
-    in
-    let
+
         ( newIds, newNet ) =
             graft loc ins net
     in
