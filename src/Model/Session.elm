@@ -702,7 +702,7 @@ applicable action session =
             else if isErased src session || isErased tgt session then
                 Err Erased
 
-            else if not (isEqualIToken (getToken src (boundary session)) (getToken tgt (boundary session))) then
+            else if not ((boundary session |> getToken src |> tokenOfIToken) == (boundary session |> getToken tgt |> tokenOfIToken)) then
                 Err (IncompatibleBoundaries src tgt)
 
             else

@@ -49,6 +49,35 @@ isEqualOToken t1 t2 =
 
 
 
+{- Classical alpha EGs -}
+
+
+type Token
+    = TForm Formula
+    | TSep (List Token)
+
+
+tokenOfOToken : OToken -> Token
+tokenOfOToken otok =
+    case otok of
+        OForm formula ->
+            TForm formula
+
+        OSep itoks ->
+            TSep (List.map tokenOfIToken itoks)
+
+
+tokenOfIToken : IToken -> Token
+tokenOfIToken itok =
+    case itok of
+        ITok otok ->
+            tokenOfOToken otok
+
+        ISep itoks ->
+            TSep (List.map tokenOfIToken itoks)
+
+
+
 {- Splits a list of inner tokens into a pair `( outloop, inloops )`. -}
 
 
@@ -632,7 +661,8 @@ sameRootOutloop sep1 sep2 net =
 {- Whether context `dst` is in scope of node `src`.
 
    Note: for now we forbid recursivity by requiring that nodes in `dst` are not inside `src`. We
-   also enforce intuitionism by requiring that `dst` is attached to the same scroll as `src`.
+   also enforce intuitionism by requiring that `dst` is attached to the same scroll as `src`, if
+   `src` is attached.
 -}
 
 
