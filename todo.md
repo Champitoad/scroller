@@ -3,8 +3,6 @@
 # Features
 
 - Execution of actions
-  - "Step" button that dequeues and executes the next action
-  - The action at the head of the queue should always be highlighted at the location where it occurs in the session
   - **Free execution**:
     - the user can execute actions in the order she wants by clicking directly on them in the session. However, only actions which are _executable_ (and thus do not depend on other actions) can be executed:
       - `Open`: the parent is neither introduced nor eliminated
