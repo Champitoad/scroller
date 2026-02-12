@@ -751,6 +751,7 @@ viewNodes dnd session ctx trees =
 
         neighbors =
             getChildIdsContext ctx session.net
+                |> List.filter (\id -> not (isInloop id session.net))
 
         clickAction =
             let
@@ -965,8 +966,8 @@ viewNodes dnd session ctx trees =
                 sperse pos ((TNode { node }) as tree) =
                     let
                         lastDropzone =
-                            if pos >= List.length neighbors then
-                                [ onRight (dropZone pos) ]
+                            if pos == List.length neighbors - 1 then
+                                [ onRight (dropZone (pos + 1)) ]
 
                             else
                                 []
@@ -1037,6 +1038,7 @@ viewSession dnd session =
             el
                 ([ width fill
                  , sessionHeightAttr
+                 , styleAttr "padding" "5px 20px 5px 20px"
                  , styleAttr "overflow-x" "hidden"
                  , styleAttr "overflow-y" "auto"
                  ]

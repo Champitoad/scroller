@@ -54,7 +54,7 @@ type alias Model =
 
 init : Url.Url -> Browser.Navigation.Key -> Model
 init url key =
-    { playground = Session.fromNet (netOfStruct [ a "A", curl [ a "A" ] [ [ a "B" ] ] ])
+    { playground = Session.fromNet (netOfStruct [])
     , history = History { prev = Nothing, next = Nothing }
     , manualExamples = manualExamples
     , dragDrop = DnD.init
@@ -102,7 +102,7 @@ setSessionWithHistory route session model =
                     }
             in
             { model
-                | playground = session
+                | playground = { session | hoveredOrigin = Nothing }
                 , history = History { prev = Just resetModel, next = Nothing }
             }
 

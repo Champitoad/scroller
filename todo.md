@@ -1,7 +1,5 @@
 # Next
 
-- Fix `Reorder` actions
-
 # Features
 
 - Execution of actions
