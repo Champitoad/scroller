@@ -3,6 +3,7 @@ module Model.Scroll exposing (..)
 import Dict exposing (Dict)
 import List.Extra
 import Model.Formula as Formula exposing (..)
+import Utils.Func
 import Utils.List
 import Utils.Maybe
 import Utils.State as State
@@ -331,6 +332,11 @@ merge s t =
     { nodes = Dict.union s.nodes t.nodes
     , roots = s.roots ++ t.roots
     }
+
+
+isEqualNet : Net -> Net -> Bool
+isEqualNet =
+    (==)
 
 
 
@@ -1440,14 +1446,14 @@ delete id net =
 iterate : Bool -> Id -> Location -> Net -> ( Id, Net )
 iterate isForward id loc net =
     let
-        copy =
+        copyOfBoundary =
             net
                 |> getSubnet id
                 |> boundary isForward
                 |> updateName id (\name -> "Copy of " ++ name)
                 |> deepcopy
     in
-    case graft loc copy net of
+    case graft loc copyOfBoundary net of
         ( [ newId ], newNet ) ->
             ( newId, newNet )
 
@@ -1853,6 +1859,30 @@ conclusionStruct =
 
 
 
+-- Evaluation
+
+
+eval : Net -> Net
+eval =
+    Utils.Func.fixpoint isEqualNet (copy >> free >> return)
+
+
+copy : Net -> Net
+copy _ =
+    Debug.todo ""
+
+
+free : Net -> Net
+free _ =
+    Debug.todo ""
+
+
+return : Net -> Net
+return _ =
+    Debug.todo ""
+
+
+
 -- Pretty-printing
 
 
@@ -1897,17 +1927,17 @@ stringOfNode net content node =
 
 
 stringOfJustification : Net -> Justification -> String
-stringOfJustification net { self, copy } =
+stringOfJustification net justif =
     let
         selfText =
-            if self then
+            if justif.self then
                 "•"
 
             else
                 ""
 
         fromText =
-            case copy of
+            case justif.copy of
                 Just originId ->
                     getName originId net ++ "/"
 

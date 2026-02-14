@@ -1091,8 +1091,8 @@ apply action session =
 
 
 eval : Session -> Session
-eval _ =
-    Debug.todo "Model.Session.eval: Not implemented"
+eval session =
+    { session | net = Scroll.eval session.net }
 
 
 
