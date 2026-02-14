@@ -1090,6 +1090,11 @@ apply action session =
         execute (Deque.length (getActionsDeque newSession.execMode newSession) - 1) newSession
 
 
+eval : Session -> Session
+eval _ =
+    Debug.todo "Model.Session.eval: Not implemented"
+
+
 
 -- A Sandbox is a Session that can be reset
 

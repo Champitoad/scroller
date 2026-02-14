@@ -31,6 +31,7 @@ type Msg
     | Exec Route Int
     | ExecAll
     | Step
+    | Eval Route
     | ChangeActionMode ActionMode
     | ChangeOperationMode OperationMode
     | ChangeInteractionMode InteractionMode
@@ -201,6 +202,9 @@ update msg model =
 
         ExecAll ->
             ( setSessionWithHistory model.playground.route (execAll model.playground) model, focusApp )
+
+        Eval route ->
+            ( setSessionWithHistory route (eval (getSession route model)) model, focusApp )
 
         Step ->
             case model.playground |> getActionsDeque model.playground.execMode |> Deque.popFront of
