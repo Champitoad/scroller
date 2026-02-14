@@ -473,6 +473,19 @@ viewExecButtons session =
     row [] [ stepButton, runButton ]
 
 
+viewEvalButton : Session -> Element Msg
+viewEvalButton session =
+    row []
+        [ defaultButton
+            { action = Msg (Eval session.route)
+            , title = "Evaluate"
+            , icon = Icons.trendingDown
+            , enabled = True
+            , attrs = []
+            }
+        ]
+
+
 toolbarPadding : Int
 toolbarPadding =
     15
@@ -564,6 +577,7 @@ viewToolbar model =
                 , viewRecordToggle model.playground.recording
                 , viewExecModeSelector model.playground.execMode
                 , viewExecButtons model.playground
+                , viewEvalButton model.playground
                 ]
 
         clearSelectionOnClick =
