@@ -204,7 +204,7 @@ update msg model =
             ( setSessionWithHistory model.playground.route (execAll model.playground) model, focusApp )
 
         Eval route ->
-            ( setSessionWithHistory route (eval (getSession route model)) model, focusApp )
+            ( setSessionWithHistory route (Model.Session.eval (getSession route model)) model, focusApp )
 
         Step ->
             case model.playground |> getActionsDeque model.playground.execMode |> Deque.popFront of
