@@ -1463,24 +1463,23 @@ iterate isForward id loc net =
 
 
 unionJustification : Justification -> Justification -> Justification
-unionJustification _ _ =
-    -- { self = justif1.self || justif2.self
-    -- , copy =
-    --     case ( justif1.from, justif2.from ) of
-    --         ( Just origin1, Just origin2 ) ->
-    --             if origin1 == origin2 then
-    --                 Just origin1
-    --             else
-    --                 -- should never happen
-    --                 Nothing
-    --         ( Just origin1, Nothing ) ->
-    --             Just origin1
-    --         ( Nothing, Just origin2 ) ->
-    --             Just origin2
-    --         ( Nothing, Nothing ) ->
-    --             Nothing
-    -- }
-    Debug.todo "Justification union not implemented yet"
+unionJustification j1 j2 =
+    { self = j1.self || j2.self
+    , copy =
+        case j2.copy of
+            Just _ ->
+                j2.copy
+
+            Nothing ->
+                j1.copy
+    , subcopy =
+        case j2.subcopy of
+            Just _ ->
+                j2.subcopy
+
+            Nothing ->
+                j1.subcopy
+    }
 
 
 unionInteraction : Interaction -> Interaction -> Interaction
@@ -1867,19 +1866,79 @@ eval =
     Utils.Func.fixpoint isEqualNet (copy >> free >> return)
 
 
+getDependents : Id -> Net -> List Id
+getDependents id net =
+    net.nodes
+        |> Dict.filter
+            (\_ { justif } ->
+                case justif.copy of
+                    Just src ->
+                        src == id
+
+                    _ ->
+                        False
+            )
+        |> Dict.keys
+
+
+isReferenced : Id -> Net -> Bool
+isReferenced id net =
+    not (List.isEmpty (getDependents id net))
+
+
+isCopy : Id -> Net -> Bool
+isCopy id net =
+    Utils.Maybe.isSomething (getJustif id net).copy
+
+
 copy : Net -> Net
-copy _ =
-    Debug.todo ""
+copy net =
+    net
 
 
 free : Net -> Net
-free _ =
-    Debug.todo ""
+free net =
+    let
+        candidates =
+            Dict.keys net.nodes
+                |> List.filter
+                    (\id ->
+                        (getJustif id net).self
+                            && not (isReferenced id net)
+                            && (case (getJustif id net).copy of
+                                    Nothing ->
+                                        case getShape id net of
+                                            Sep _ (Just interaction) ->
+                                                interaction.opened
+
+                                            _ ->
+                                                False
+
+                                    _ ->
+                                        True
+                               )
+                    )
+    in
+    List.foldl prune net candidates
 
 
 return : Net -> Net
-return _ =
-    Debug.todo ""
+return net =
+    let
+        candidates =
+            net.nodes
+                |> Dict.filter
+                    (\_ node ->
+                        case node.shape of
+                            Sep _ (Just interaction) ->
+                                interaction.opened && interaction.closed
+
+                            _ ->
+                                False
+                    )
+                |> Dict.keys
+    in
+    List.foldl (removeScrollNodes True) net candidates
 
 
 
