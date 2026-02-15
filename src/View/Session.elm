@@ -587,7 +587,7 @@ addButton params =
 newOToken : String -> OToken
 newOToken newAtomName =
     if String.isEmpty newAtomName then
-        OSep []
+        emptyScroll
 
     else
         case newAtomName of

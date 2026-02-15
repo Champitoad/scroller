@@ -783,7 +783,7 @@ actionTransform selection execMode action =
                         ( inloopId, updateInteraction inloopId (annotateExpansion (flipExecMode execMode)) net )
 
                     _ ->
-                        -- Should never happen since we only allow correction actions
+                        -- Should never happen since we only allow correct actions
                         ( id, net )
 
         Insert loc tok ->

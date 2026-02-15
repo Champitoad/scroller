@@ -1,7 +1,6 @@
 module Model.Scroll exposing (..)
 
 import Dict exposing (Dict)
-import Element exposing (rotate)
 import List.Extra
 import Model.Formula as Formula exposing (..)
 import Utils.Func
@@ -1463,88 +1462,88 @@ iterate isForward id loc net =
             ( -1, newNet )
 
 
-unionJustification : Justification -> Justification -> Justification
-unionJustification j1 j2 =
-    { self = j1.self || j2.self
-    , copy =
-        case j2.copy of
-            Just _ ->
-                j2.copy
 
-            Nothing ->
-                j1.copy
-    , subcopy =
-        case j2.subcopy of
-            Just _ ->
-                j2.subcopy
-
-            Nothing ->
-                j1.subcopy
-    }
+{- Inlines all annotations coming from the original copies of `tgt`'s subnodes. -}
 
 
-unionInteraction : Interaction -> Interaction -> Interaction
-unionInteraction int1 int2 =
-    { opened = int1.opened || int2.opened, closed = int1.closed || int2.closed }
+inline : Id -> Net -> Net
+inline tgt net =
+    let
+        descendentsTgt =
+            net
+                |> getDescendentIds tgt
+                |> List.Extra.remove tgt
+    in
+    List.foldl
+        (\tgtSub ->
+            updateNode tgtSub
+                (\tgtSubNode ->
+                    case tgtSubNode.justif.subcopy of
+                        Nothing ->
+                            tgtSubNode
 
+                        Just origin ->
+                            let
+                                srcSubNode =
+                                    getNode origin.src net
+                            in
+                            { tgtSubNode
+                                | shape =
+                                    case ( srcSubNode.shape, tgtSubNode.shape ) of
+                                        ( Sep _ int1, Sep childIdsTgt int2 ) ->
+                                            Sep childIdsTgt
+                                                (case ( int1, int2 ) of
+                                                    ( Just int1_, Just int2_ ) ->
+                                                        Just { int2_ | opened = int1_.opened || int2_.opened }
 
+                                                    _ ->
+                                                        Nothing
+                                                )
 
-{- Returns a node resulting from the union of the annotations (justification + interaction) of two
-   nodes, assuming they have the same shape. Metadata like `name` and `context` are taken from
-   `node2`.
--}
+                                        _ ->
+                                            tgtSubNode.shape
+                                , justif =
+                                    { self =
+                                        case tgtSubNode.polarity of
+                                            Pos ->
+                                                tgtSubNode.justif.self
 
+                                            Neg ->
+                                                srcSubNode.justif.self
+                                    , copy =
+                                        case tgtSubNode.polarity of
+                                            Pos ->
+                                                srcSubNode.justif.copy
+                                                    |> Maybe.map
+                                                        (\srcSubCopy ->
+                                                            if existsAncestor ((==) origin.anc) srcSubCopy net then
+                                                                descendentsTgt
+                                                                    |> List.Extra.find
+                                                                        (\id ->
+                                                                            case (getNode id net).justif.subcopy of
+                                                                                Just origin_ ->
+                                                                                    origin_.src == srcSubCopy
 
-mergeNodes : Node -> Node -> Node
-mergeNodes node1 node2 =
-    { shape =
-        case ( node1.shape, node2.shape ) of
-            ( Sep _ int1, Sep childIds2 int2 ) ->
-                Sep childIds2
-                    (case ( int1, int2 ) of
-                        ( Just int1_, Just int2_ ) ->
-                            Just (unionInteraction int1_ int2_)
+                                                                                _ ->
+                                                                                    False
+                                                                        )
+                                                                    -- Should not happen
+                                                                    |> Maybe.withDefault -1
 
-                        ( Just int1_, Nothing ) ->
-                            Just int1_
+                                                            else
+                                                                srcSubCopy
+                                                        )
 
-                        ( Nothing, Just int2_ ) ->
-                            Just int2_
-
-                        ( Nothing, Nothing ) ->
-                            Nothing
-                    )
-
-            _ ->
-                node2.shape
-    , name =
-        node2.name
-    , justif =
-        unionJustification node1.justif node2.justif
-    , context =
-        node2.context
-    , polarity =
-        node2.polarity
-    }
-
-
-
-{- Merges the annotations of `s.nodes` into `t.nodes`, assuming the IDs of `s` form a subset of
-   those of `t`.
--}
-
-
-mergeInto : Net -> Net -> Net
-mergeInto s t =
-    { nodes =
-        Dict.foldl
-            (\id node acc ->
-                Dict.update id (Maybe.map (mergeNodes node)) acc
-            )
-            t.nodes
-            s.nodes
-    , roots = t.roots
-    }
+                                            Neg ->
+                                                tgtSubNode.justif.copy
+                                    , subcopy =
+                                        Nothing
+                                    }
+                            }
+                )
+        )
+        net
+        descendentsTgt
 
 
 
@@ -1896,26 +1895,44 @@ copy net =
                     acc
 
                 Just src ->
-                    case (getJustif src net).copy of
+                    let
+                        srcNode =
+                            getNode src net
+
+                        rotatedAcc =
+                            List.foldl
+                                (\sub ->
+                                    updateJustif sub
+                                        (\j ->
+                                            if sub == id then
+                                                { j | copy = srcNode.justif.copy }
+
+                                            else
+                                                { j
+                                                    | subcopy =
+                                                        case j.subcopy of
+                                                            Just origin ->
+                                                                (getNode origin.src net).justif.subcopy
+
+                                                            _ ->
+                                                                j.subcopy
+                                                }
+                                        )
+                                )
+                                acc
+                                (getDescendentIds id net)
+                    in
+                    case srcNode.justif.copy of
                         Nothing ->
-                            case ( node.shape, isExpandedOutloop src acc ) of
+                            case ( srcNode.shape, (isExpandedOutloop src acc && srcNode.polarity == Pos) || (isCollapsedOutloop src acc && srcNode.polarity == Neg) ) of
                                 ( Sep _ _, True ) ->
-                                    Debug.todo ""
+                                    inline id rotatedAcc
 
                                 _ ->
                                     acc
 
-                        Just srcSrc ->
-                            let
-                                rotatedAcc =
-                                    updateJustif id (\j -> { j | copy = Just srcSrc }) acc
-                            in
-                            case node.shape of
-                                Sep _ _ ->
-                                    Debug.todo ""
-
-                                _ ->
-                                    rotatedAcc
+                        Just _ ->
+                            inline id rotatedAcc
         )
         net
         (justifLeaves net)
@@ -1928,7 +1945,10 @@ free net =
             if node.justif.self then
                 case node.justif.copy of
                     Nothing ->
-                        if isExpandedOutloop id acc then
+                        if
+                            (isExpandedOutloop id acc && node.polarity == Pos)
+                                || (isCollapsedOutloop id acc && node.polarity == Neg)
+                        then
                             prune id acc
 
                         else
