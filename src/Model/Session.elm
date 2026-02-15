@@ -164,10 +164,12 @@ type
 type ActionError
     = InvalidPolarity
     | Erased
+    | NonEmptyInloop Id
     | NonEmptyOutloop Id
     | NonSingleInloop Id
     | OutOfScope Id
     | IncompatibleBoundaries Id Id
+    | NonEmptySelection
     | NonContiguousSelection
 
 
@@ -624,18 +626,25 @@ applicable action session =
 
             else
                 let
-                    childIds =
-                        getChildIdsContext loc.ctx session.net
-
                     isSelectionContiguous () =
                         let
+                            childIds =
+                                getChildIdsContext loc.ctx session.net
+
                             sortedSelection =
                                 List.sortBy (\id -> Scroll.getPosition id session.net) session.selection
                         in
                         List.Extra.isSubsequenceOf sortedSelection childIds
                 in
-                if not (List.isEmpty session.selection || isSelectionContiguous ()) then
-                    Err NonContiguousSelection
+                if not (List.isEmpty session.selection) then
+                    if isForward session.execMode then
+                        Err NonEmptySelection
+
+                    else if not (isSelectionContiguous ()) then
+                        Err NonContiguousSelection
+
+                    else
+                        Ok ()
 
                 else
                     Ok ()
@@ -647,11 +656,17 @@ applicable action session =
             else if getOutloop id (boundary session) /= [] then
                 Err (NonEmptyOutloop id)
 
-            else if Dict.size (getOutloopInteractions id (boundary session)) /= 1 then
-                Err (NonSingleInloop id)
-
             else
-                Ok ()
+                case getOutloopInteractions id (boundary session) |> Dict.toList of
+                    [ ( inloopId, _ ) ] ->
+                        if session.execMode == Backward && not (List.isEmpty (getChildIds inloopId (boundary session))) then
+                            Err (NonEmptyInloop inloopId)
+
+                        else
+                            Ok ()
+
+                    _ ->
+                        Err (NonSingleInloop id)
 
         Insert loc _ ->
             if existsAncestorContext (\id -> isInserted id session) loc.ctx session.net then
