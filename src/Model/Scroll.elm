@@ -1,6 +1,7 @@
 module Model.Scroll exposing (..)
 
 import Dict exposing (Dict)
+import Element exposing (rotate)
 import List.Extra
 import Model.Formula as Formula exposing (..)
 import Utils.Func
@@ -1866,7 +1867,7 @@ eval =
     Utils.Func.fixpoint isEqualNet (copy >> free >> return)
 
 
-getDependents : Id -> Net -> List Id
+getDependents : Id -> Net -> Dict Id Node
 getDependents id net =
     net.nodes
         |> Dict.filter
@@ -1878,67 +1879,94 @@ getDependents id net =
                     _ ->
                         False
             )
-        |> Dict.keys
 
 
-isReferenced : Id -> Net -> Bool
-isReferenced id net =
-    not (List.isEmpty (getDependents id net))
-
-
-isCopy : Id -> Net -> Bool
-isCopy id net =
-    Utils.Maybe.isSomething (getJustif id net).copy
+justifLeaves : Net -> Dict Id Node
+justifLeaves net =
+    net.nodes
+        |> Dict.filter (\id _ -> Dict.isEmpty (getDependents id net))
 
 
 copy : Net -> Net
 copy net =
-    net
+    Dict.foldl
+        (\id node acc ->
+            case node.justif.copy of
+                Nothing ->
+                    acc
+
+                Just src ->
+                    case (getJustif src net).copy of
+                        Nothing ->
+                            case ( node.shape, isExpandedOutloop src acc ) of
+                                ( Sep _ _, True ) ->
+                                    Debug.todo ""
+
+                                _ ->
+                                    acc
+
+                        Just srcSrc ->
+                            let
+                                rotatedAcc =
+                                    updateJustif id (\j -> { j | copy = Just srcSrc }) acc
+                            in
+                            case node.shape of
+                                Sep _ _ ->
+                                    Debug.todo ""
+
+                                _ ->
+                                    rotatedAcc
+        )
+        net
+        (justifLeaves net)
 
 
 free : Net -> Net
 free net =
-    let
-        candidates =
-            Dict.keys net.nodes
-                |> List.filter
-                    (\id ->
-                        (getJustif id net).self
-                            && not (isReferenced id net)
-                            && (case (getJustif id net).copy of
-                                    Nothing ->
-                                        case getShape id net of
-                                            Sep _ (Just interaction) ->
-                                                interaction.opened
+    Dict.foldl
+        (\id node acc ->
+            if node.justif.self then
+                case node.justif.copy of
+                    Nothing ->
+                        if isExpandedOutloop id acc then
+                            prune id acc
 
-                                            _ ->
-                                                False
+                        else
+                            acc
 
-                                    _ ->
-                                        True
-                               )
-                    )
-    in
-    List.foldl prune net candidates
+                    _ ->
+                        prune id acc
+
+            else
+                acc
+        )
+        net
+        (justifLeaves net)
+
+
+hasEmptyOutloop : Id -> Net -> Bool
+hasEmptyOutloop id net =
+    List.isEmpty (getOutloop id (premiss net))
+        && List.isEmpty (getOutloop id (conclusion net))
 
 
 return : Net -> Net
 return net =
-    let
-        candidates =
-            net.nodes
-                |> Dict.filter
-                    (\_ node ->
-                        case node.shape of
-                            Sep _ (Just interaction) ->
-                                interaction.opened && interaction.closed
+    Dict.foldl
+        (\id node acc ->
+            case node.shape of
+                Sep _ (Just int) ->
+                    if int.opened && int.closed && hasEmptyOutloop id net then
+                        removeScrollNodes True id acc
 
-                            _ ->
-                                False
-                    )
-                |> Dict.keys
-    in
-    List.foldl (removeScrollNodes True) net candidates
+                    else
+                        acc
+
+                _ ->
+                    acc
+        )
+        net
+        net.nodes
 
 
 
