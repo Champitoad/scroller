@@ -1,5 +1,7 @@
 # Next
 
+- Fix route to manual
+- Rewrite manual as an introduction to scroll net manipulation
 - Evaluation algorithm
 
 # Features
