@@ -13,22 +13,16 @@ type Route
 routeParser : Parser (Route -> a) a
 routeParser =
     let
-        lix =
-            s "Labo" </> s "Pablo.DONATO" </> s "flowerprover"
-
         refl =
-            s "flowerprover"
+            s "scroller"
     in
     oneOf
         [ map Playground top
         , map Playground (top </> s "src" </> s "Main.elm") -- For use with elm reactor
         , map Playground (top </> s "index.html")
-        , map Playground lix
-        , map Playground (lix </> s "index.html")
         , map Playground refl
         , map Playground (refl </> s "index.html")
         , map Manual (s "manual")
-        , map Manual (lix </> s "manual")
         , map Manual (refl </> s "manual")
         ]
 

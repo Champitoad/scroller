@@ -9018,14 +9018,7 @@ var $elm$url$Url$Parser$top = $elm$url$Url$Parser$Parser(
 			[state]);
 	});
 var $author$project$View$Route$routeParser = function () {
-	var refl = $elm$url$Url$Parser$s('flowerprover');
-	var lix = A2(
-		$elm$url$Url$Parser$slash,
-		$elm$url$Url$Parser$s('Labo'),
-		A2(
-			$elm$url$Url$Parser$slash,
-			$elm$url$Url$Parser$s('Pablo.DONATO'),
-			$elm$url$Url$Parser$s('flowerprover')));
+	var refl = $elm$url$Url$Parser$s('scroller');
 	return $elm$url$Url$Parser$oneOf(
 		_List_fromArray(
 			[
@@ -9047,14 +9040,6 @@ var $author$project$View$Route$routeParser = function () {
 					$elm$url$Url$Parser$slash,
 					$elm$url$Url$Parser$top,
 					$elm$url$Url$Parser$s('index.html'))),
-				A2($elm$url$Url$Parser$map, $author$project$View$Route$Playground, lix),
-				A2(
-				$elm$url$Url$Parser$map,
-				$author$project$View$Route$Playground,
-				A2(
-					$elm$url$Url$Parser$slash,
-					lix,
-					$elm$url$Url$Parser$s('index.html'))),
 				A2($elm$url$Url$Parser$map, $author$project$View$Route$Playground, refl),
 				A2(
 				$elm$url$Url$Parser$map,
@@ -9067,13 +9052,6 @@ var $author$project$View$Route$routeParser = function () {
 				$elm$url$Url$Parser$map,
 				$author$project$View$Route$Manual,
 				$elm$url$Url$Parser$s('manual')),
-				A2(
-				$elm$url$Url$Parser$map,
-				$author$project$View$Route$Manual,
-				A2(
-					$elm$url$Url$Parser$slash,
-					lix,
-					$elm$url$Url$Parser$s('manual'))),
 				A2(
 				$elm$url$Url$Parser$map,
 				$author$project$View$Route$Manual,
