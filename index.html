@@ -5236,6 +5236,47 @@ var $elm$browser$Browser$application = _Browser_application;
 var $author$project$Model$App$History = function (a) {
 	return {$: 'History', a: a};
 };
+var $author$project$Model$Session$Forward = {$: 'Forward'};
+var $author$project$Model$Session$Playground = {$: 'Playground'};
+var $author$project$Model$Session$Expansion = {$: 'Expansion'};
+var $author$project$Model$Session$Interacting = {$: 'Interacting'};
+var $author$project$Model$Session$Iteration = {$: 'Iteration'};
+var $author$project$Model$Session$ProofMode = function (a) {
+	return {$: 'ProofMode', a: a};
+};
+var $author$project$Model$Session$defaultProofMode = $author$project$Model$Session$ProofMode(
+	{copyMode: $author$project$Model$Session$Iteration, interaction: $author$project$Model$Session$Interacting, interactionMode: $author$project$Model$Session$Expansion});
+var $folkertdev$elm_deque$Deque$Deque = function (a) {
+	return {$: 'Deque', a: a};
+};
+var $folkertdev$elm_deque$Internal$empty = {front: _List_Nil, rear: _List_Nil, sizeF: 0, sizeR: 0};
+var $folkertdev$elm_deque$Deque$empty = $folkertdev$elm_deque$Deque$Deque($folkertdev$elm_deque$Internal$empty);
+var $author$project$Model$Session$Initial = function (a) {
+	return {$: 'Initial', a: a};
+};
+var $author$project$Model$Scroll$TopLevel = {$: 'TopLevel'};
+var $author$project$Model$Session$initialNavigation = $author$project$Model$Session$Initial($author$project$Model$Scroll$TopLevel);
+var $author$project$Model$Session$fromNet = function (net) {
+	return {
+		actionMode: $author$project$Model$Session$defaultProofMode,
+		actions: {backward: $folkertdev$elm_deque$Deque$empty, forward: $folkertdev$elm_deque$Deque$empty},
+		execMode: $author$project$Model$Session$Forward,
+		hoveredOrigin: $elm$core$Maybe$Nothing,
+		navigation: $author$project$Model$Session$initialNavigation,
+		net: net,
+		recording: true,
+		renaming: $elm$core$Maybe$Nothing,
+		route: $author$project$Model$Session$Playground,
+		selecting: false,
+		selection: _List_Nil,
+		stepButtonFocused: false
+	};
+};
+var $norpan$elm_html5_drag_drop$Html5$DragDrop$NotDragging = {$: 'NotDragging'};
+var $norpan$elm_html5_drag_drop$Html5$DragDrop$init = $norpan$elm_html5_drag_drop$Html5$DragDrop$NotDragging;
+var $author$project$Model$Session$Manual = function (a) {
+	return {$: 'Manual', a: a};
+};
 var $author$project$Model$Formula$Atom = function (a) {
 	return {$: 'Atom', a: a};
 };
@@ -5278,47 +5319,6 @@ var $author$project$Model$Scroll$curl = F2(
 						$elm$core$List$map($author$project$Model$Scroll$ITok),
 						inloops))));
 	});
-var $author$project$Model$Session$Forward = {$: 'Forward'};
-var $author$project$Model$Session$Playground = {$: 'Playground'};
-var $author$project$Model$Session$Expansion = {$: 'Expansion'};
-var $author$project$Model$Session$Interacting = {$: 'Interacting'};
-var $author$project$Model$Session$Iteration = {$: 'Iteration'};
-var $author$project$Model$Session$ProofMode = function (a) {
-	return {$: 'ProofMode', a: a};
-};
-var $author$project$Model$Session$defaultProofMode = $author$project$Model$Session$ProofMode(
-	{copyMode: $author$project$Model$Session$Iteration, interaction: $author$project$Model$Session$Interacting, interactionMode: $author$project$Model$Session$Expansion});
-var $folkertdev$elm_deque$Deque$Deque = function (a) {
-	return {$: 'Deque', a: a};
-};
-var $folkertdev$elm_deque$Internal$empty = {front: _List_Nil, rear: _List_Nil, sizeF: 0, sizeR: 0};
-var $folkertdev$elm_deque$Deque$empty = $folkertdev$elm_deque$Deque$Deque($folkertdev$elm_deque$Internal$empty);
-var $author$project$Model$Session$Initial = function (a) {
-	return {$: 'Initial', a: a};
-};
-var $author$project$Model$Scroll$TopLevel = {$: 'TopLevel'};
-var $author$project$Model$Session$initialNavigation = $author$project$Model$Session$Initial($author$project$Model$Scroll$TopLevel);
-var $author$project$Model$Session$fromNet = function (net) {
-	return {
-		actionMode: $author$project$Model$Session$defaultProofMode,
-		actions: {backward: $folkertdev$elm_deque$Deque$empty, forward: $folkertdev$elm_deque$Deque$empty},
-		execMode: $author$project$Model$Session$Forward,
-		hoveredOrigin: $elm$core$Maybe$Nothing,
-		navigation: $author$project$Model$Session$initialNavigation,
-		net: net,
-		recording: true,
-		renaming: $elm$core$Maybe$Nothing,
-		route: $author$project$Model$Session$Playground,
-		selecting: false,
-		selection: _List_Nil,
-		stepButtonFocused: false
-	};
-};
-var $norpan$elm_html5_drag_drop$Html5$DragDrop$NotDragging = {$: 'NotDragging'};
-var $norpan$elm_html5_drag_drop$Html5$DragDrop$init = $norpan$elm_html5_drag_drop$Html5$DragDrop$NotDragging;
-var $author$project$Model$Session$Manual = function (a) {
-	return {$: 'Manual', a: a};
-};
 var $author$project$Model$Session$EditMode = function (a) {
 	return {$: 'EditMode', a: a};
 };
@@ -5972,24 +5972,7 @@ var $author$project$Model$App$init = F2(
 			key: key,
 			manualExamples: $author$project$Model$Session$manualExamples,
 			playground: $author$project$Model$Session$fromNet(
-				$author$project$Model$Scroll$netOfStruct(
-					_List_fromArray(
-						[
-							$author$project$Model$Scroll$a('A'),
-							A2(
-							$author$project$Model$Scroll$curl,
-							_List_fromArray(
-								[
-									$author$project$Model$Scroll$a('A')
-								]),
-							_List_fromArray(
-								[
-									_List_fromArray(
-									[
-										$author$project$Model$Scroll$a('B')
-									])
-								]))
-						]))),
+				$author$project$Model$Scroll$netOfStruct(_List_Nil)),
 			url: url
 		};
 	});
@@ -6049,10 +6032,6 @@ var $author$project$Update$App$ToggleInsertionMode = function (a) {
 var $author$project$Update$App$ToggleRecording = function (a) {
 	return {$: 'ToggleRecording', a: a};
 };
-var $author$project$Update$App$Transform = F2(
-	function (a, b) {
-		return {$: 'Transform', a: a, b: b};
-	});
 var $author$project$Update$App$Undo = {$: 'Undo'};
 var $elm$core$Maybe$andThen = F2(
 	function (callback, maybeValue) {
@@ -6136,22 +6115,6 @@ var $author$project$Model$Session$getActionsDeque = F2(
 			return session.actions.backward;
 		}
 	});
-var $elm$core$List$append = F2(
-	function (xs, ys) {
-		if (!ys.b) {
-			return xs;
-		} else {
-			return A3($elm$core$List$foldr, $elm$core$List$cons, ys, xs);
-		}
-	});
-var $elm$core$List$concat = function (lists) {
-	return A3($elm$core$List$foldr, $elm$core$List$append, _List_Nil, lists);
-};
-var $elm$core$List$concatMap = F2(
-	function (f, list) {
-		return $elm$core$List$concat(
-			A2($elm$core$List$map, f, list));
-	});
 var $author$project$Model$Formula$Image = function (a) {
 	return {$: 'Image', a: a};
 };
@@ -6228,6 +6191,22 @@ var $author$project$Model$Scroll$getChildIds = F2(
 		} else {
 			return _List_Nil;
 		}
+	});
+var $elm$core$List$append = F2(
+	function (xs, ys) {
+		if (!ys.b) {
+			return xs;
+		} else {
+			return A3($elm$core$List$foldr, $elm$core$List$cons, ys, xs);
+		}
+	});
+var $elm$core$List$concat = function (lists) {
+	return A3($elm$core$List$foldr, $elm$core$List$append, _List_Nil, lists);
+};
+var $elm$core$List$concatMap = F2(
+	function (f, list) {
+		return $elm$core$List$concat(
+			A2($elm$core$List$map, f, list));
 	});
 var $author$project$Model$Scroll$getDescendentIds = F2(
 	function (id, net) {
@@ -7197,11 +7176,19 @@ var $author$project$Model$Session$execute = F2(
 							},
 							session.net);
 					case 'Close':
+						var outloopId = action.a;
 						return A3(
-							$author$project$Model$Scroll$removeScrollNodes,
-							$author$project$Model$Session$isForward(session.execMode),
-							locus,
-							session.net);
+							$elm$core$List$foldl,
+							F2(
+								function (id, acc) {
+									return A2($author$project$Model$Scroll$prune, id, acc);
+								}),
+							A3(
+								$author$project$Model$Scroll$removeScrollNodes,
+								$author$project$Model$Session$isForward(session.execMode),
+								locus,
+								session.net),
+							A2($author$project$Model$Scroll$getChildIds, outloopId, session.net));
 					case 'Insert':
 						return A3(
 							$author$project$Model$Scroll$updateJustif,
@@ -7237,15 +7224,15 @@ var $author$project$Model$Session$execute = F2(
 						return _Debug_todo(
 							'Model.Session',
 							{
-								start: {line: 1046, column: 29},
-								end: {line: 1046, column: 39}
+								start: {line: 1077, column: 29},
+								end: {line: 1077, column: 39}
 							})('Reorder action execution not implemented yet');
 					default:
 						return _Debug_todo(
 							'Model.Session',
 							{
-								start: {line: 1049, column: 29},
-								end: {line: 1049, column: 39}
+								start: {line: 1080, column: 29},
+								end: {line: 1080, column: 39}
 							})('Decompose action execution not implemented yet.');
 				}
 			}();
@@ -7948,7 +7935,7 @@ var $author$project$Model$Scroll$updateName = F3(
 			net);
 	});
 var $author$project$Model$Scroll$insert = F5(
-	function (self, name, loc, tok, net) {
+	function (isSelfJustified, name, loc, tok, net) {
 		var newTree = A2(
 			$author$project$Utils$State$eval,
 			0,
@@ -7987,7 +7974,7 @@ var $author$project$Model$Scroll$insert = F5(
 			$author$project$Model$Scroll$updateJustif,
 			0,
 			function (j) {
-				return self ? $author$project$Model$Scroll$selfJustify(j) : j;
+				return isSelfJustified ? $author$project$Model$Scroll$selfJustify(j) : j;
 			},
 			A3(
 				$author$project$Model$Scroll$updateName,
@@ -8543,8 +8530,8 @@ var $author$project$Model$Session$record = F2(
 					return _Debug_todo(
 						'Model.Session',
 						{
-							start: {line: 881, column: 21},
-							end: {line: 881, column: 31}
+							start: {line: 892, column: 21},
+							end: {line: 892, column: 31}
 						})('dualAction: Decompose');
 			}
 		}();
@@ -8628,7 +8615,11 @@ var $author$project$Model$Session$record = F2(
 var $author$project$Model$Session$apply = F2(
 	function (action, session) {
 		var newSession = A2($author$project$Model$Session$record, action, session);
-		return session.recording ? newSession : A2($author$project$Model$Session$execute, 0, newSession);
+		return session.recording ? newSession : A2(
+			$author$project$Model$Session$execute,
+			$folkertdev$elm_deque$Deque$length(
+				A2($author$project$Model$Session$getActionsDeque, newSession.execMode, newSession)) - 1,
+			newSession);
 	});
 var $elm$core$Set$foldl = F3(
 	function (func, initialState, _v0) {
@@ -9264,15 +9255,26 @@ var $author$project$Model$App$setSession = F3(
 var $author$project$Model$App$setSessionWithHistory = F3(
 	function (route, session, model) {
 		if (route.$ === 'Playground') {
+			var playground = model.playground;
+			var resetModel = _Utils_update(
+				model,
+				{
+					dragDrop: $norpan$elm_html5_drag_drop$Html5$DragDrop$init,
+					playground: _Utils_update(
+						playground,
+						{hoveredOrigin: $elm$core$Maybe$Nothing, stepButtonFocused: false})
+				});
 			return _Utils_update(
 				model,
 				{
 					history: $author$project$Model$App$History(
 						{
 							next: $elm$core$Maybe$Nothing,
-							prev: $elm$core$Maybe$Just(model)
+							prev: $elm$core$Maybe$Just(resetModel)
 						}),
-					playground: session
+					playground: _Utils_update(
+						session,
+						{hoveredOrigin: $elm$core$Maybe$Nothing})
 				});
 		} else {
 			var sandboxID = route.a;
@@ -10112,11 +10114,15 @@ var $author$project$Update$App$update = F2(
 											return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 									}
 								case 'Shift':
-									var $temp$msg = $author$project$Update$App$SetSelectionMode(false),
-										$temp$model = model;
-									msg = $temp$msg;
-									model = $temp$model;
-									continue update;
+									if ($author$project$Model$Session$isTyping(model.playground)) {
+										return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+									} else {
+										var $temp$msg = $author$project$Update$App$SetSelectionMode(false),
+											$temp$model = model;
+										msg = $temp$msg;
+										model = $temp$model;
+										continue update;
+									}
 								default:
 									break _v8$2;
 							}
@@ -10181,11 +10187,15 @@ var $author$project$Update$App$update = F2(
 																		}
 																	case 'Shift':
 																		var _v14 = _v11.a;
-																		var $temp$msg = $author$project$Update$App$SetSelectionMode(true),
-																			$temp$model = model;
-																		msg = $temp$msg;
-																		model = $temp$model;
-																		continue update;
+																		if ($author$project$Model$Session$isTyping(model.playground)) {
+																			return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+																		} else {
+																			var $temp$msg = $author$project$Update$App$SetSelectionMode(true),
+																				$temp$model = model;
+																			msg = $temp$msg;
+																			model = $temp$model;
+																			continue update;
+																		}
 																	case 'z':
 																		if (_v11.b.$ === 'Just') {
 																			switch (_v11.b.a) {
@@ -10377,20 +10387,21 @@ var $author$project$Update$App$update = F2(
 														var _v25 = model.playground.actionMode;
 														switch (_v25.$) {
 															case 'EditMode':
-																var $temp$msg = A2(
-																	$author$project$Update$App$Transform,
-																	$author$project$Model$Session$Playground,
-																	$author$project$Model$Session$toggleEditMode(altKey)),
-																	$temp$model = model;
-																msg = $temp$msg;
-																model = $temp$model;
-																continue update;
+																return _Utils_Tuple2(
+																	_Utils_update(
+																		model,
+																		{
+																			playground: A2($author$project$Model$Session$toggleEditMode, altKey, model.playground)
+																		}),
+																	$author$project$Update$App$focusApp);
 															case 'ProofMode':
-																var $temp$msg = A2($author$project$Update$App$Transform, $author$project$Model$Session$Playground, $author$project$Model$Session$toggleProofMode),
-																	$temp$model = model;
-																msg = $temp$msg;
-																model = $temp$model;
-																continue update;
+																return _Utils_Tuple2(
+																	_Utils_update(
+																		model,
+																		{
+																			playground: $author$project$Model$Session$toggleProofMode(model.playground)
+																		}),
+																	$author$project$Update$App$focusApp);
 															default:
 																return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 														}
@@ -17930,9 +17941,13 @@ var $author$project$Model$Session$IncompatibleBoundaries = F2(
 	});
 var $author$project$Model$Session$InvalidPolarity = {$: 'InvalidPolarity'};
 var $author$project$Model$Session$NonContiguousSelection = {$: 'NonContiguousSelection'};
+var $author$project$Model$Session$NonEmptyInloop = function (a) {
+	return {$: 'NonEmptyInloop', a: a};
+};
 var $author$project$Model$Session$NonEmptyOutloop = function (a) {
 	return {$: 'NonEmptyOutloop', a: a};
 };
+var $author$project$Model$Session$NonEmptySelection = {$: 'NonEmptySelection'};
 var $author$project$Model$Session$NonSingleInloop = function (a) {
 	return {$: 'NonSingleInloop', a: a};
 };
@@ -18032,87 +18047,6 @@ var $author$project$Model$Scroll$getToken = function (id) {
 		$author$project$Model$Scroll$buildTree(id),
 		$author$project$Model$Scroll$tokenOfTree);
 };
-var $author$project$Utils$List$forall2 = F3(
-	function (p, l1, l2) {
-		return A3(
-			$elm$core$List$foldl,
-			$elm$core$Basics$and,
-			true,
-			A3($elm$core$List$map2, p, l1, l2));
-	});
-var $author$project$Model$Scroll$splitITokens = function (ts) {
-	return A3(
-		$elm$core$List$foldr,
-		F2(
-			function (t, _v0) {
-				var outloop = _v0.a;
-				var inloops = _v0.b;
-				if (t.$ === 'ITok') {
-					var tok = t.a;
-					return _Utils_Tuple2(
-						A2($elm$core$List$cons, tok, outloop),
-						inloops);
-				} else {
-					var inloop = t.a;
-					return _Utils_Tuple2(
-						outloop,
-						A2($elm$core$List$cons, inloop, inloops));
-				}
-			}),
-		_Utils_Tuple2(_List_Nil, _List_Nil),
-		ts);
-};
-var $author$project$Model$Scroll$isEqualITokens = F2(
-	function (ts1, ts2) {
-		var _v1 = _Utils_Tuple2(
-			$author$project$Model$Scroll$splitITokens(ts1),
-			$author$project$Model$Scroll$splitITokens(ts2));
-		var _v2 = _v1.a;
-		var outloop1 = _v2.a;
-		var inloops1 = _v2.b;
-		var _v3 = _v1.b;
-		var outloop2 = _v3.a;
-		var inloops2 = _v3.b;
-		return _Utils_eq(
-			$elm$core$List$length(outloop1),
-			$elm$core$List$length(outloop2)) && (_Utils_eq(
-			$elm$core$List$length(inloops1),
-			$elm$core$List$length(inloops2)) && (A3($author$project$Utils$List$forall2, $author$project$Model$Scroll$isEqualOToken, outloop1, outloop2) && A3($author$project$Utils$List$forall2, $author$project$Model$Scroll$isEqualITokens, inloops1, inloops2)));
-	});
-var $author$project$Model$Scroll$isEqualOToken = F2(
-	function (t1, t2) {
-		var _v0 = _Utils_Tuple2(t1, t2);
-		_v0$2:
-		while (true) {
-			if (_v0.a.$ === 'OForm') {
-				if (_v0.b.$ === 'OForm') {
-					var f1 = _v0.a.a;
-					var f2 = _v0.b.a;
-					return _Utils_eq(f1, f2);
-				} else {
-					break _v0$2;
-				}
-			} else {
-				if (_v0.b.$ === 'OSep') {
-					var ts1 = _v0.a.a;
-					var ts2 = _v0.b.a;
-					return A2($author$project$Model$Scroll$isEqualITokens, ts1, ts2);
-				} else {
-					break _v0$2;
-				}
-			}
-		}
-		return false;
-	});
-var $author$project$Model$Scroll$isEqualIToken = F2(
-	function (t1, t2) {
-		return A2(
-			$author$project$Model$Scroll$isEqualITokens,
-			_List_fromArray(
-				[t1]),
-			_List_fromArray(
-				[t2]));
-	});
 var $author$project$Utils$List$exists = F2(
 	function (p, l) {
 		return A3(
@@ -18259,6 +18193,44 @@ var $author$project$Model$Scroll$inside = F3(
 				net);
 		}
 	});
+var $elm$core$Dict$isEmpty = function (dict) {
+	if (dict.$ === 'RBEmpty_elm_builtin') {
+		return true;
+	} else {
+		return false;
+	}
+};
+var $author$project$Model$Scroll$isOutloop = F2(
+	function (id, net) {
+		return A3(
+			$elm$core$Basics$composeL,
+			$elm$core$Basics$not,
+			$elm$core$Dict$isEmpty,
+			A2($author$project$Model$Scroll$getOutloopInteractions, id, net));
+	});
+var $author$project$Model$Scroll$getRootOutloop = F2(
+	function (id, net) {
+		return A3(
+			$author$project$Model$Scroll$findAncestor,
+			function (ancId) {
+				return A2($author$project$Model$Scroll$isOutloop, ancId, net) && (!A2($author$project$Model$Scroll$isInloop, ancId, net));
+			},
+			id,
+			net);
+	});
+var $author$project$Model$Scroll$sameRootOutloop = F3(
+	function (sep1, sep2, net) {
+		var _v0 = _Utils_Tuple2(
+			A2($author$project$Model$Scroll$getRootOutloop, sep1, net),
+			A2($author$project$Model$Scroll$getRootOutloop, sep2, net));
+		if ((_v0.a.$ === 'Just') && (_v0.b.$ === 'Just')) {
+			var root1 = _v0.a.a;
+			var root2 = _v0.b.a;
+			return _Utils_eq(root1, root2);
+		} else {
+			return false;
+		}
+	});
 var $author$project$Model$Scroll$spans = F3(
 	function (src, dst, net) {
 		var _v0 = _Utils_Tuple2(src, dst);
@@ -18285,27 +18257,40 @@ var $author$project$Model$Scroll$scopes = F3(
 			$author$project$Model$Scroll$spans,
 			A2($author$project$Model$Scroll$getContext, src, net),
 			dst,
-			net) && (!A3($author$project$Model$Scroll$inside, src, dst, net));
-	});
-var $elm$core$Dict$sizeHelp = F2(
-	function (n, dict) {
-		sizeHelp:
-		while (true) {
-			if (dict.$ === 'RBEmpty_elm_builtin') {
-				return n;
+			net) && ((!A3($author$project$Model$Scroll$inside, src, dst, net)) && function () {
+			if (dst.$ === 'TopLevel') {
+				return true;
 			} else {
-				var left = dict.d;
-				var right = dict.e;
-				var $temp$n = A2($elm$core$Dict$sizeHelp, n + 1, right),
-					$temp$dict = left;
-				n = $temp$n;
-				dict = $temp$dict;
-				continue sizeHelp;
+				var id = dst.a;
+				return (!A2($author$project$Model$Scroll$isInloop, src, net)) || ((!A2($author$project$Model$Scroll$isInloop, id, net)) || A3($author$project$Model$Scroll$sameRootOutloop, src, id, net));
 			}
-		}
+		}());
 	});
-var $elm$core$Dict$size = function (dict) {
-	return A2($elm$core$Dict$sizeHelp, 0, dict);
+var $author$project$Model$Scroll$TForm = function (a) {
+	return {$: 'TForm', a: a};
+};
+var $author$project$Model$Scroll$TSep = function (a) {
+	return {$: 'TSep', a: a};
+};
+var $author$project$Model$Scroll$tokenOfIToken = function (itok) {
+	if (itok.$ === 'ITok') {
+		var otok = itok.a;
+		return $author$project$Model$Scroll$tokenOfOToken(otok);
+	} else {
+		var itoks = itok.a;
+		return $author$project$Model$Scroll$TSep(
+			A2($elm$core$List$map, $author$project$Model$Scroll$tokenOfIToken, itoks));
+	}
+};
+var $author$project$Model$Scroll$tokenOfOToken = function (otok) {
+	if (otok.$ === 'OForm') {
+		var formula = otok.a;
+		return $author$project$Model$Scroll$TForm(formula);
+	} else {
+		var itoks = otok.a;
+		return $author$project$Model$Scroll$TSep(
+			A2($elm$core$List$map, $author$project$Model$Scroll$tokenOfIToken, itoks));
+	}
 };
 var $author$project$Model$Session$applicable = F2(
 	function (action, session) {
@@ -18315,7 +18300,6 @@ var $author$project$Model$Session$applicable = F2(
 				if (A2($author$project$Model$Session$isErasedContext, loc.ctx, session)) {
 					return $elm$core$Result$Err($author$project$Model$Session$Erased);
 				} else {
-					var childIds = A2($author$project$Model$Scroll$getChildIdsContext, loc.ctx, session.net);
 					var isSelectionContiguous = function (_v1) {
 						var sortedSelection = A2(
 							$elm$core$List$sortBy,
@@ -18323,24 +18307,45 @@ var $author$project$Model$Session$applicable = F2(
 								return A2($author$project$Model$Scroll$getPosition, id, session.net);
 							},
 							session.selection);
+						var childIds = A2($author$project$Model$Scroll$getChildIdsContext, loc.ctx, session.net);
 						return A2($elm_community$list_extra$List$Extra$isSubsequenceOf, sortedSelection, childIds);
 					};
-					return (!($elm$core$List$isEmpty(session.selection) || isSelectionContiguous(_Utils_Tuple0))) ? $elm$core$Result$Err($author$project$Model$Session$NonContiguousSelection) : $elm$core$Result$Ok(_Utils_Tuple0);
+					return (!$elm$core$List$isEmpty(session.selection)) ? ($author$project$Model$Session$isForward(session.execMode) ? $elm$core$Result$Err($author$project$Model$Session$NonEmptySelection) : ((!isSelectionContiguous(_Utils_Tuple0)) ? $elm$core$Result$Err($author$project$Model$Session$NonContiguousSelection) : $elm$core$Result$Ok(_Utils_Tuple0))) : $elm$core$Result$Ok(_Utils_Tuple0);
 				}
 			case 'Close':
 				var id = action.a;
-				return A2($author$project$Model$Session$isErased, id, session) ? $elm$core$Result$Err($author$project$Model$Session$Erased) : ((!_Utils_eq(
-					A2(
-						$author$project$Model$Scroll$getOutloop,
-						id,
-						$author$project$Model$Session$boundary(session)),
-					_List_Nil)) ? $elm$core$Result$Err(
-					$author$project$Model$Session$NonEmptyOutloop(id)) : (($elm$core$Dict$size(
-					A2(
-						$author$project$Model$Scroll$getOutloopInteractions,
-						id,
-						$author$project$Model$Session$boundary(session))) !== 1) ? $elm$core$Result$Err(
-					$author$project$Model$Session$NonSingleInloop(id)) : $elm$core$Result$Ok(_Utils_Tuple0)));
+				if (A2($author$project$Model$Session$isErased, id, session)) {
+					return $elm$core$Result$Err($author$project$Model$Session$Erased);
+				} else {
+					if (!_Utils_eq(
+						A2(
+							$author$project$Model$Scroll$getOutloop,
+							id,
+							$author$project$Model$Session$boundary(session)),
+						_List_Nil)) {
+						return $elm$core$Result$Err(
+							$author$project$Model$Session$NonEmptyOutloop(id));
+					} else {
+						var _v2 = $elm$core$Dict$toList(
+							A2(
+								$author$project$Model$Scroll$getOutloopInteractions,
+								id,
+								$author$project$Model$Session$boundary(session)));
+						if (_v2.b && (!_v2.b.b)) {
+							var _v3 = _v2.a;
+							var inloopId = _v3.a;
+							return (_Utils_eq(session.execMode, $author$project$Model$Session$Backward) && (!$elm$core$List$isEmpty(
+								A2(
+									$author$project$Model$Scroll$getChildIds,
+									inloopId,
+									$author$project$Model$Session$boundary(session))))) ? $elm$core$Result$Err(
+								$author$project$Model$Session$NonEmptyInloop(inloopId)) : $elm$core$Result$Ok(_Utils_Tuple0);
+						} else {
+							return $elm$core$Result$Err(
+								$author$project$Model$Session$NonSingleInloop(id));
+						}
+					}
+				}
 			case 'Insert':
 				var loc = action.a;
 				return A3(
@@ -18384,16 +18389,17 @@ var $author$project$Model$Session$applicable = F2(
 					src,
 					A2($author$project$Model$Scroll$getContext, tgt, session.net),
 					$author$project$Model$Session$boundary(session)))) ? $elm$core$Result$Err(
-					$author$project$Model$Session$OutOfScope(src)) : ((A2($author$project$Model$Session$isErased, src, session) || A2($author$project$Model$Session$isErased, tgt, session)) ? $elm$core$Result$Err($author$project$Model$Session$Erased) : ((!A2(
-					$author$project$Model$Scroll$isEqualIToken,
-					A2(
-						$author$project$Model$Scroll$getToken,
-						src,
-						$author$project$Model$Session$boundary(session)),
-					A2(
-						$author$project$Model$Scroll$getToken,
-						tgt,
-						$author$project$Model$Session$boundary(session)))) ? $elm$core$Result$Err(
+					$author$project$Model$Session$OutOfScope(src)) : ((A2($author$project$Model$Session$isErased, src, session) || A2($author$project$Model$Session$isErased, tgt, session)) ? $elm$core$Result$Err($author$project$Model$Session$Erased) : ((!_Utils_eq(
+					$author$project$Model$Scroll$tokenOfIToken(
+						A2(
+							$author$project$Model$Scroll$getToken,
+							src,
+							$author$project$Model$Session$boundary(session))),
+					$author$project$Model$Scroll$tokenOfIToken(
+						A2(
+							$author$project$Model$Scroll$getToken,
+							tgt,
+							$author$project$Model$Session$boundary(session))))) ? $elm$core$Result$Err(
 					A2($author$project$Model$Session$IncompatibleBoundaries, src, tgt)) : $elm$core$Result$Ok(_Utils_Tuple0))));
 			case 'Reorder':
 				return $elm$core$Result$Ok(_Utils_Tuple0);
@@ -18408,21 +18414,35 @@ var $mdgriffith$elm_ui$Internal$Model$Px = function (a) {
 	return {$: 'Px', a: a};
 };
 var $mdgriffith$elm_ui$Element$px = $mdgriffith$elm_ui$Internal$Model$Px;
-var $author$project$View$Widgets$indicator = F2(
-	function (color, content) {
+var $author$project$View$Widgets$indicator = F3(
+	function (color, content, maybeMsg) {
+		var attribs = function () {
+			if (maybeMsg.$ === 'Just') {
+				var msg = maybeMsg.a;
+				return _List_fromArray(
+					[
+						$mdgriffith$elm_ui$Element$Events$onClick(msg),
+						$mdgriffith$elm_ui$Element$pointer
+					]);
+			} else {
+				return _List_Nil;
+			}
+		}();
 		return A2(
 			$mdgriffith$elm_ui$Element$el,
-			_List_fromArray(
-				[
-					$mdgriffith$elm_ui$Element$width($mdgriffith$elm_ui$Element$shrink),
-					$mdgriffith$elm_ui$Element$height(
-					$mdgriffith$elm_ui$Element$px($author$project$View$Widgets$indicatorHeight)),
-					$mdgriffith$elm_ui$Element$Background$color(color),
-					A2($author$project$View$Style$styleAttr, 'padding-left', '5px'),
-					A2($author$project$View$Style$styleAttr, 'padding-right', '5px'),
-					A2($author$project$View$Style$styleAttr, 'border-radius', '0px'),
-					A2($author$project$View$Style$styleAttr, 'z-index', '1')
-				]),
+			_Utils_ap(
+				_List_fromArray(
+					[
+						$mdgriffith$elm_ui$Element$width($mdgriffith$elm_ui$Element$shrink),
+						$mdgriffith$elm_ui$Element$height(
+						$mdgriffith$elm_ui$Element$px($author$project$View$Widgets$indicatorHeight)),
+						$mdgriffith$elm_ui$Element$Background$color(color),
+						A2($author$project$View$Style$styleAttr, 'padding-left', '5px'),
+						A2($author$project$View$Style$styleAttr, 'padding-right', '5px'),
+						A2($author$project$View$Style$styleAttr, 'border-radius', '0px'),
+						A2($author$project$View$Style$styleAttr, 'z-index', '1')
+					]),
+				attribs),
 			$author$project$View$Style$centered(content));
 	});
 var $avh4$elm_color$Color$white = A4($avh4$elm_color$Color$RgbaSpace, 255 / 255, 255 / 255, 255 / 255, 1.0);
@@ -18481,12 +18501,14 @@ var $feathericons$elm_feather$FeatherIcons$minimize2 = A2(
 				]),
 			_List_Nil)
 		]));
-var $author$project$View$Widgets$collapseIndicator = function (color) {
-	return A2(
-		$author$project$View$Widgets$indicator,
-		color,
-		$author$project$View$Widgets$indicatorIcon($feathericons$elm_feather$FeatherIcons$minimize2));
-};
+var $author$project$View$Widgets$collapseIndicator = F2(
+	function (color, maybeMsg) {
+		return A3(
+			$author$project$View$Widgets$indicator,
+			color,
+			$author$project$View$Widgets$indicatorIcon($feathericons$elm_feather$FeatherIcons$minimize2),
+			maybeMsg);
+	});
 var $author$project$Update$App$HighlightOrigin = function (a) {
 	return {$: 'HighlightOrigin', a: a};
 };
@@ -18555,13 +18577,14 @@ var $elm$html$Html$Events$onMouseLeave = function (msg) {
 		$elm$json$Json$Decode$succeed(msg));
 };
 var $mdgriffith$elm_ui$Element$Events$onMouseLeave = A2($elm$core$Basics$composeL, $mdgriffith$elm_ui$Internal$Model$Attr, $elm$html$Html$Events$onMouseLeave);
-var $author$project$View$Widgets$interactiveIndicator = F5(
-	function (color, mkMsg, originId, originName, isHovered) {
+var $author$project$View$Widgets$interactiveIndicator = F6(
+	function (color, mkMsg, originId, originName, isHovered, maybeMsg) {
 		var backgroundColor = isHovered ? $author$project$Utils$Color$toElement($author$project$View$Style$useColor) : color;
-		var baseIndicator = A2(
+		var baseIndicator = A3(
 			$author$project$View$Widgets$indicator,
 			backgroundColor,
-			A2($author$project$View$Widgets$iterationText, originName, isHovered));
+			A2($author$project$View$Widgets$iterationText, originName, isHovered),
+			maybeMsg);
 		if (originId.$ === 'Just') {
 			var id = originId.a;
 			return A2(
@@ -18579,9 +18602,10 @@ var $author$project$View$Widgets$interactiveIndicator = F5(
 			return baseIndicator;
 		}
 	});
-var $author$project$View$Widgets$deiterationIndicator = function (color) {
-	return A2($author$project$View$Widgets$interactiveIndicator, color, $author$project$Update$App$HighlightOrigin);
-};
+var $author$project$View$Widgets$deiterationIndicator = F5(
+	function (color, originId, originName, isHovered, maybeMsg) {
+		return A6($author$project$View$Widgets$interactiveIndicator, color, $author$project$Update$App$HighlightOrigin, originId, originName, isHovered, maybeMsg);
+	});
 var $feathericons$elm_feather$FeatherIcons$x = A2(
 	$feathericons$elm_feather$FeatherIcons$makeBuilder,
 	'x',
@@ -18608,12 +18632,14 @@ var $feathericons$elm_feather$FeatherIcons$x = A2(
 				]),
 			_List_Nil)
 		]));
-var $author$project$View$Widgets$deletionIndicator = function (color) {
-	return A2(
-		$author$project$View$Widgets$indicator,
-		color,
-		$author$project$View$Widgets$indicatorIcon($feathericons$elm_feather$FeatherIcons$x));
-};
+var $author$project$View$Widgets$deletionIndicator = F2(
+	function (color, maybeMsg) {
+		return A3(
+			$author$project$View$Widgets$indicator,
+			color,
+			$author$project$View$Widgets$indicatorIcon($feathericons$elm_feather$FeatherIcons$x),
+			maybeMsg);
+	});
 var $author$project$Model$App$DragNode = function (a) {
 	return {$: 'DragNode', a: a};
 };
@@ -18776,12 +18802,48 @@ var $feathericons$elm_feather$FeatherIcons$maximize2 = A2(
 				]),
 			_List_Nil)
 		]));
-var $author$project$View$Widgets$expansionIndicator = function (color) {
-	return A2(
-		$author$project$View$Widgets$indicator,
-		color,
-		$author$project$View$Widgets$indicatorIcon($feathericons$elm_feather$FeatherIcons$maximize2));
-};
+var $author$project$View$Widgets$expansionIndicator = F2(
+	function (color, maybeMsg) {
+		return A3(
+			$author$project$View$Widgets$indicator,
+			color,
+			$author$project$View$Widgets$indicatorIcon($feathericons$elm_feather$FeatherIcons$maximize2),
+			maybeMsg);
+	});
+var $elm$core$Tuple$pair = F2(
+	function (a, b) {
+		return _Utils_Tuple2(a, b);
+	});
+var $author$project$Model$Session$findElimIndex = F2(
+	function (session, id) {
+		return $elm$core$List$maximum(
+			A2(
+				$elm$core$List$map,
+				$elm$core$Tuple$first,
+				A2(
+					$elm$core$List$filter,
+					function (_v0) {
+						var _v1 = _v0.b;
+						var locus = _v1.b;
+						return _Utils_eq(locus, id);
+					},
+					A2(
+						$elm$core$List$indexedMap,
+						$elm$core$Tuple$pair,
+						$folkertdev$elm_deque$Deque$toList(
+							A2($author$project$Model$Session$getActionsDeque, session.execMode, session))))));
+	});
+var $author$project$Model$Session$findIntroIndex = F2(
+	function (session, id) {
+		return A2(
+			$elm_community$list_extra$List$Extra$findIndex,
+			function (_v0) {
+				var locus = _v0.b;
+				return _Utils_eq(locus, id);
+			},
+			$folkertdev$elm_deque$Deque$toList(
+				A2($author$project$Model$Session$getActionsDeque, session.execMode, session)));
+	});
 var $author$project$View$Style$negativeColor = A3($mdgriffith$elm_ui$Element$rgb, 0.18, 0.2, 0.25);
 var $author$project$View$Style$positiveColor = A3($mdgriffith$elm_ui$Element$rgb, 1, 1, 1);
 var $author$project$View$Style$foregroundColor = function (polarity) {
@@ -18805,11 +18867,10 @@ var $norpan$elm_html5_drag_drop$Html5$DragDrop$getDropId = function (model) {
 	}
 };
 var $author$project$Model$Session$getHighlightedAction = function (session) {
-	var actionsDeque = A2($author$project$Model$Session$getActionsDeque, session.execMode, session);
-	return session.stepButtonFocused ? A2($author$project$Model$Session$getActionAtIndex, 0, actionsDeque) : A2(
+	return session.stepButtonFocused ? A2(
 		$author$project$Model$Session$getActionAtIndex,
-		$folkertdev$elm_deque$Deque$length(actionsDeque) - 1,
-		actionsDeque);
+		0,
+		A2($author$project$Model$Session$getActionsDeque, session.execMode, session)) : $elm$core$Maybe$Nothing;
 };
 var $feathericons$elm_feather$FeatherIcons$plus = A2(
 	$feathericons$elm_feather$FeatherIcons$makeBuilder,
@@ -18837,12 +18898,14 @@ var $feathericons$elm_feather$FeatherIcons$plus = A2(
 				]),
 			_List_Nil)
 		]));
-var $author$project$View$Widgets$insertionIndicator = function (color) {
-	return A2(
-		$author$project$View$Widgets$indicator,
-		color,
-		$author$project$View$Widgets$indicatorIcon($feathericons$elm_feather$FeatherIcons$plus));
-};
+var $author$project$View$Widgets$insertionIndicator = F2(
+	function (color, maybeMsg) {
+		return A3(
+			$author$project$View$Widgets$indicator,
+			color,
+			$author$project$View$Widgets$indicatorIcon($feathericons$elm_feather$FeatherIcons$plus),
+			maybeMsg);
+	});
 var $author$project$View$Session$isDeiterationTarget = F3(
 	function (dnd, session, id) {
 		var _v0 = $norpan$elm_html5_drag_drop$Html5$DragDrop$getDragId(dnd);
@@ -18869,9 +18932,10 @@ var $author$project$Model$Scroll$isFormula = F2(
 			return false;
 		}
 	});
-var $author$project$View$Widgets$iterationIndicator = function (color) {
-	return A2($author$project$View$Widgets$interactiveIndicator, color, $author$project$Update$App$HighlightOrigin);
-};
+var $author$project$View$Widgets$iterationIndicator = F5(
+	function (color, originId, originName, isHovered, maybeMsg) {
+		return A6($author$project$View$Widgets$interactiveIndicator, color, $author$project$Update$App$HighlightOrigin, originId, originName, isHovered, maybeMsg);
+	});
 var $mdgriffith$elm_ui$Element$Input$HiddenLabel = function (a) {
 	return {$: 'HiddenLabel', a: a};
 };
@@ -19793,6 +19857,10 @@ var $mdgriffith$elm_ui$Element$Input$text = $mdgriffith$elm_ui$Element$Input$tex
 var $author$project$Utils$Color$transparent = $avh4$elm_color$Color$fromRgba(
 	{alpha: 0, blue: 1, green: 1, red: 1});
 var $author$project$View$Style$transparent = A4($mdgriffith$elm_ui$Element$rgba, 0, 0, 0, 0);
+var $author$project$Update$App$Transform = F2(
+	function (a, b) {
+		return {$: 'Transform', a: a, b: b};
+	});
 var $author$project$Model$Session$map = F2(
 	function (f, session) {
 		return _Utils_update(
@@ -20437,6 +20505,14 @@ var $author$project$View$Session$viewNode = F3(
 							debug ? ($elm$core$String$fromInt(id) + '#') : '',
 							node.name)));
 			}();
+			var introIndicatorMsg = A2(
+				$elm$core$Maybe$map,
+				$author$project$Update$App$Exec(session.route),
+				A2($author$project$Model$Session$findIntroIndex, session, id));
+			var elimIndicatorMsg = A2(
+				$elm$core$Maybe$map,
+				$author$project$Update$App$Exec(session.route),
+				A2($author$project$Model$Session$findElimIndex, session, id));
 			var _v44 = function () {
 				var _v45 = node.justif.copy;
 				if (_v45.$ === 'Just') {
@@ -20486,7 +20562,7 @@ var $author$project$View$Session$viewNode = F3(
 			}();
 			var introColor = _v46.a;
 			var elimColor = _v46.b;
-			var elimIndicator = A2($author$project$Model$Scroll$isDeletion, polarity, node.justif) ? $author$project$View$Widgets$deletionIndicator(elimColor) : (A2($author$project$Model$Scroll$isDeiteration, polarity, node.justif) ? A4($author$project$View$Widgets$deiterationIndicator, elimColor, originId, originName, isHoveredOrigin) : (A2(
+			var elimIndicator = A2($author$project$Model$Scroll$isDeletion, polarity, node.justif) ? A2($author$project$View$Widgets$deletionIndicator, elimColor, elimIndicatorMsg) : (A2($author$project$Model$Scroll$isDeiteration, polarity, node.justif) ? A5($author$project$View$Widgets$deiterationIndicator, elimColor, originId, originName, isHoveredOrigin, elimIndicatorMsg) : (A2(
 				$elm$core$Maybe$withDefault,
 				false,
 				A2(
@@ -20496,8 +20572,8 @@ var $author$project$View$Session$viewNode = F3(
 					} : function ($) {
 						return $.opened;
 					},
-					A2($author$project$Model$Scroll$getInloopInteraction, id, session.net))) ? $author$project$View$Widgets$collapseIndicator(elimColor) : $mdgriffith$elm_ui$Element$none));
-			var introIndicator = A2($author$project$Model$Scroll$isInsertion, polarity, node.justif) ? $author$project$View$Widgets$insertionIndicator(introColor) : (A2($author$project$Model$Scroll$isIteration, polarity, node.justif) ? A4($author$project$View$Widgets$iterationIndicator, introColor, originId, originName, isHoveredOrigin) : (A2(
+					A2($author$project$Model$Scroll$getInloopInteraction, id, session.net))) ? A2($author$project$View$Widgets$collapseIndicator, elimColor, elimIndicatorMsg) : $mdgriffith$elm_ui$Element$none));
+			var introIndicator = A2($author$project$Model$Scroll$isInsertion, polarity, node.justif) ? A2($author$project$View$Widgets$insertionIndicator, introColor, introIndicatorMsg) : (A2($author$project$Model$Scroll$isIteration, polarity, node.justif) ? A5($author$project$View$Widgets$iterationIndicator, introColor, originId, originName, isHoveredOrigin, introIndicatorMsg) : (A2(
 				$elm$core$Maybe$withDefault,
 				false,
 				A2(
@@ -20507,7 +20583,7 @@ var $author$project$View$Session$viewNode = F3(
 					} : function ($) {
 						return $.closed;
 					},
-					A2($author$project$Model$Scroll$getInloopInteraction, id, session.net))) ? $author$project$View$Widgets$expansionIndicator(introColor) : $mdgriffith$elm_ui$Element$none));
+					A2($author$project$Model$Scroll$getInloopInteraction, id, session.net))) ? A2($author$project$View$Widgets$expansionIndicator, introColor, introIndicatorMsg) : $mdgriffith$elm_ui$Element$none));
 			return A2(
 				$mdgriffith$elm_ui$Element$row,
 				_List_fromArray(
@@ -20673,7 +20749,12 @@ var $author$project$View$Session$viewNodes = F4(
 		var nodeEl = function (tree) {
 			return A3($author$project$View$Session$viewNode, dnd, session, tree);
 		};
-		var neighbors = A2($author$project$Model$Scroll$getChildIdsContext, ctx, session.net);
+		var neighbors = A2(
+			$elm$core$List$filter,
+			function (id) {
+				return !A2($author$project$Model$Scroll$isInloop, id, session.net);
+			},
+			A2($author$project$Model$Scroll$getChildIdsContext, ctx, session.net));
 		var layoutAttrs = _List_fromArray(
 			[
 				$mdgriffith$elm_ui$Element$width(
@@ -20887,12 +20968,12 @@ var $author$project$View$Session$viewNodes = F4(
 			var sperse = F2(
 				function (pos, tree) {
 					var node = tree.a.node;
-					var lastDropzone = (_Utils_cmp(
+					var lastDropzone = _Utils_eq(
 						pos,
-						$elm$core$List$length(neighbors)) > -1) ? _List_fromArray(
+						$elm$core$List$length(neighbors) - 1) ? _List_fromArray(
 						[
 							$mdgriffith$elm_ui$Element$onRight(
-							dropZone(pos))
+							dropZone(pos + 1))
 						]) : _List_Nil;
 					return A2(
 						$mdgriffith$elm_ui$Element$el,
@@ -21109,6 +21190,7 @@ var $author$project$View$Session$viewSession = F2(
 						[
 							$mdgriffith$elm_ui$Element$width($mdgriffith$elm_ui$Element$fill),
 							$author$project$View$Session$sessionHeightAttr,
+							A2($author$project$View$Style$styleAttr, 'padding', '5px 20px 5px 20px'),
 							A2($author$project$View$Style$styleAttr, 'overflow-x', 'hidden'),
 							A2($author$project$View$Style$styleAttr, 'overflow-y', 'auto')
 						]),
